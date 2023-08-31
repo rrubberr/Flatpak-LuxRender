@@ -168,27 +168,27 @@ modules:
         url: https://github.com/LuxRender/Lux/
         tag: for_v1.7
 
-  - name: luxmark
-    buildsystem: simple
-    build-commands:
-      - install -Dm0755 -t /app/bin luxmark
-    sources:
-      - type: script
-        commands:
-          - cd /app/opt/luxmark
-          - ./luxmark --mode=PAUSE "${@}"
-        dest-filename: luxmark
-
-  - name: slg4
-    buildsystem: simple
-    build-commands:
-      - install -Dm0755 -t /app/bin slg4
-    sources:
-      - type: script
-        commands:
-          - cd /app/opt/luxmark
-          - ./slg4 "${@}"
-        dest-filename: slg4
+#  - name: luxmark
+#    buildsystem: simple
+#    build-commands:
+#      - install -Dm0755 -t /app/bin luxmark
+#    sources:
+#      - type: script
+#        commands:
+#          - cd /app/opt/luxmark
+#          - ./luxmark --mode=PAUSE "${@}"
+#        dest-filename: luxmark
+#
+#  - name: slg4
+#    buildsystem: simple
+#    build-commands:
+#      - install -Dm0755 -t /app/bin slg4
+#    sources:
+#      - type: script
+#        commands:
+#          - cd /app/opt/luxmark
+#          - ./slg4 "${@}"
+#        dest-filename: slg4
 
   - name: metadata
     buildsystem: simple
