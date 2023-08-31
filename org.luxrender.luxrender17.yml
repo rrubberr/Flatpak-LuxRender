@@ -148,7 +148,15 @@ modules:
     # LuxRays doesn't build with Ninja.
     buildsystem: cmake
     build-options:
-      cxxflags: -std=c++11 -Wno-narrowing -pthread -DLUXCORE_DISABLE_EMBREE_BVH_BUILDER
+      cxxflags: -std=c++11 -Wno-narrowing -DLUXCORE_DISABLE_EMBREE_BVH_BUILDER
+      no-make-install: true
+      post-install:
+      - mkdir -pv /app/include
+      - cp -av include/. /app/include/.
+      - mkdir -pv /app/lib
+      - cp -av lib/. /app/lib/.
+      - mkdir -pv /app/opt/luxrender
+      - cp -av bin/slg4 /app/opt/luxrender/slg4
     sources:
       - type: git
         url: https://github.com/LuxRender/LuxRays/
@@ -158,7 +166,7 @@ modules:
     buildsystem: cmake-ninja
     build-options:
     config-opts:
-      - -D LuxRays_HOME=/app
+      - -D LuxRays_HOME=/app 
     no-make-install: true
     post-install:
       - mkdir -pv /app/opt/luxrender
