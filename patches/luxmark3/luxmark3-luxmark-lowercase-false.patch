@@ -1,0 +1,19 @@
+commit 334927e454c7336136d42e1aaf3b87a6fc98eb50
+Author: Thomas Debesse <dev@illwieckz.net>
+Date:   Fri Oct 21 18:22:16 2022 +0200
+
+    patch: luxmark3/luxmark3-luxmark-lowercase-false.patch
+
+diff --git a/src/mainwindow.cpp b/src/mainwindow.cpp
+index 92edb4d..727d57f 100644
+--- a/src/mainwindow.cpp
++++ b/src/mainwindow.cpp
+@@ -367,7 +367,7 @@ void MainWindow::SetHardwareTreeModel(HardwareTreeModel *treeModel) {
+ }
+ 
+ bool MainWindow::event(QEvent *event) {
+-	bool retval = FALSE;
++	bool retval = false;
+ 	int eventtype = event->type();
+ 
+ 	// Check if it's one of "our" events

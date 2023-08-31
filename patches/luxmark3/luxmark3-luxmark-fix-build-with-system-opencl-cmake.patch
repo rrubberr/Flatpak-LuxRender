@@ -1,0 +1,56 @@
+commit b9e5688caac3cfbe6981fc57a29a941d29cd48ba
+Author: Thomas Debesse <dev@illwieckz.net>
+Date:   Mon Oct 24 10:25:59 2022 +0200
+
+    patch: luxmark3/luxmark3-luxmark-fix-build-with-system-opencl-cmake.patch
+
+diff --git a/CMakeLists.txt b/CMakeLists.txt
+index 48a5811..a769e36 100644
+--- a/CMakeLists.txt
++++ b/CMakeLists.txt
+@@ -131,7 +131,7 @@ if (NOT OPENIMAGEIO_FOUND)
+ 	MESSAGE(FATAL_ERROR "--> Could not locate required OpenImageIO files - Please check ${OPENIMAGEIO_SEARCH_PATH}")
+ endif()
+ 
+-if (NOT OPENCL_FOUND)
++if (NOT OpenCL_FOUND)
+ 	MESSAGE(FATAL_ERROR "--> Could not locate required OpenCL files - Please check ${OPENCL_SEARCH_PATH}")
+ endif()
+ 
+diff --git a/cmake/Dependencies.cmake b/cmake/Dependencies.cmake
+index 29f00ce..4280a8c 100644
+--- a/cmake/Dependencies.cmake
++++ b/cmake/Dependencies.cmake
+@@ -102,8 +102,8 @@ endif ()
+ set(OPENCL_ROOT                  "${OPENCL_SEARCH_PATH}")
+ find_package(OpenCL)
+ # OpenCL
+-if (OPENCL_FOUND)
+-	include_directories(SYSTEM ${OPENCL_INCLUDE_DIR} ${OPENCL_C_INCLUDE_DIR})
++if (OpenCL_FOUND)
++	include_directories(SYSTEM ${OpenCL_INCLUDE_DIR})
+ endif ()
+ 
+ # Intel Embree
+diff --git a/src/CMakeLists.txt b/src/CMakeLists.txt
+index 0e3333b..0f4bfee 100644
+--- a/src/CMakeLists.txt
++++ b/src/CMakeLists.txt
+@@ -112,7 +112,7 @@ ENDIF(APPLE)
+ 
+ IF(APPLE)
+ 	add_executable(LuxMark  ${GUI_TYPE} ${LUXMARK_SRCS})
+-	target_link_libraries(LuxMark ${LUXCORE_LIBRARY} ${SLG_LIBRARY} ${LUXRAYS_LIBRARY} ${EMBREE_LIBRARY} ${Boost_LIBRARIES} ${QT_LIBRARIES} ${QT_QTNETWORK_LIBRARIES} ${GLEW_LIBRARY} ${GLUT_LIBRARY} ${OPENGL_gl_LIBRARY} ${OPENCL_LIBRARIES} ${OPENIMAGEIO_LIBRARIES} ${TIFF_LIBRARIES} ${OPENEXR_LIBRARIES} ${PNG_LIBRARIES} ${JPEG_LIBRARIES})
++	target_link_libraries(LuxMark ${LUXCORE_LIBRARY} ${SLG_LIBRARY} ${LUXRAYS_LIBRARY} ${EMBREE_LIBRARY} ${Boost_LIBRARIES} ${QT_LIBRARIES} ${QT_QTNETWORK_LIBRARIES} ${GLEW_LIBRARY} ${GLUT_LIBRARY} ${OPENGL_gl_LIBRARY} ${OpenCL_LIBRARIES} ${OPENIMAGEIO_LIBRARIES} ${TIFF_LIBRARIES} ${OPENEXR_LIBRARIES} ${PNG_LIBRARIES} ${JPEG_LIBRARIES})
+ 
+ 	set_target_properties(LuxMark PROPERTIES MACOSX_BUNDLE_INFO_PLIST ${CMAKE_CURRENT_SOURCE_DIR}/osx-bundle/Info.plist)
+ 	ADD_CUSTOM_COMMAND(
+@@ -133,7 +133,7 @@ IF(APPLE)
+ ELSE(APPLE)
+ 	ADD_EXECUTABLE(luxmark ${LUXMARK_SRCS})
+ 
+-	TARGET_LINK_LIBRARIES(luxmark ${LUXCORE_LIBRARY} ${SLG_LIBRARY} ${LUXRAYS_LIBRARY} ${EMBREE_LIBRARY} ${Boost_LIBRARIES} ${QT_LIBRARIES} ${QT_QTNETWORK_LIBRARIES} ${GLEW_LIBRARY} ${GLUT_LIBRARY} ${OPENGL_gl_LIBRARY} ${OPENCL_LIBRARIES} ${OPENIMAGEIO_LIBRARIES} ${TIFF_LIBRARIES} ${OPENEXR_LIBRARIES} ${PNG_LIBRARIES} ${JPEG_LIBRARIES})
++	TARGET_LINK_LIBRARIES(luxmark ${LUXCORE_LIBRARY} ${SLG_LIBRARY} ${LUXRAYS_LIBRARY} ${EMBREE_LIBRARY} ${Boost_LIBRARIES} ${QT_LIBRARIES} ${QT_QTNETWORK_LIBRARIES} ${GLEW_LIBRARY} ${GLUT_LIBRARY} ${OPENGL_gl_LIBRARY} ${OpenCL_LIBRARIES} ${OPENIMAGEIO_LIBRARIES} ${TIFF_LIBRARIES} ${OPENEXR_LIBRARIES} ${PNG_LIBRARIES} ${JPEG_LIBRARIES})
+ 	
+ 	# This instructs FREEGLUT to emit a pragma for the static version
+ 	SET_TARGET_PROPERTIES(luxmark PROPERTIES COMPILE_DEFINITIONS FREEGLUT_STATIC)

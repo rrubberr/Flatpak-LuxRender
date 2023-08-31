@@ -1,0 +1,112 @@
+commit 07768d07cc65d64862d4a55e031e09a998404928
+Author: Thomas Debesse <dev@illwieckz.net>
+Date:   Sat Oct 22 09:14:22 2022 +0200
+
+    patch: luxmark3/luxmark3-luxcore-use-simde-on-non-i686.patch
+
+diff --git a/CMakeLists.txt b/CMakeLists.txt
+index 9c668e1f3..92b03bfa3 100644
+--- a/CMakeLists.txt
++++ b/CMakeLists.txt
+@@ -108,7 +108,10 @@ if (LUXRAYS_DISABLE_OPENCL)
+ endif()
+ 
+ if(NOT WIN32 AND NOT APPLE)
+-	ADD_DEFINITIONS(-msse2 -mfpmath=sse -ftree-vectorize -funroll-loops -Wall -fPIC -DHAVE_PTHREAD_H)
++	ADD_DEFINITIONS(-ftree-vectorize -funroll-loops -Wall -fPIC -DHAVE_PTHREAD_H)
++	if(NOT USE_SIMDE)
++		ADD_DEFINITIONS(-msse2 -mfpmath=sse)
++	endif()
+ endif()
+ 
+ ################################################################################
+diff --git a/cmake/PlatformSpecific.cmake b/cmake/PlatformSpecific.cmake
+index 50d0e067f..4aa15ad17 100644
+--- a/cmake/PlatformSpecific.cmake
++++ b/cmake/PlatformSpecific.cmake
+@@ -16,6 +16,16 @@
+ # limitations under the License.
+ ################################################################################
+ 
++set(USE_CPU_ARCH "" CACHE STRING "Processor architecture")
++if(USE_CPU_ARCH)
++	if("${USE_CPU_ARCH}" STREQUAL "x86")
++	elseif("${USE_CPU_ARCH}" STREQUAL "x86_64")
++	else()
++		set(USE_SIMDE ON)
++		add_definitions(-DLUXCORE_USE_SIMDE)
++	endif()
++endif()
++
+ # Use relative paths
+ # This is mostly to reduce path size for command-line limits on windows
+ if(WIN32)
+@@ -24,7 +34,6 @@ if(WIN32)
+   set(CMAKE_SUPPRESS_REGENERATION true)
+ endif(WIN32)
+ 
+-
+ ###########################################################################
+ #
+ # Compiler Flags
+@@ -141,7 +150,9 @@ ENDIF(MSVC)
+ IF(CMAKE_COMPILER_IS_GNUCC OR CMAKE_COMPILER_IS_GNUCXX)
+   # Update if necessary
+   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wno-long-long -pedantic")
+-  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -msse -msse2 -msse3 -mssse3")
++  if(NOT USE_SIMDE)
++    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -msse -msse2 -msse3 -mssse3")
++  endif()
+   IF(NOT CYGWIN)
+ 	  SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fPIC")
+   ENDIF(NOT CYGWIN)
+@@ -228,7 +239,10 @@ IF(APPLE)
+ 	endif()
+ 	#### OSX-flags by jensverwiebe
+ 	ADD_DEFINITIONS(-Wall -DHAVE_PTHREAD_H -fvisibility=hidden -fvisibility-inlines-hidden) # global compile definitions
+-	set(OSX_FLAGS_RELEASE "-ftree-vectorize -msse -msse2 -msse3 -mssse3") # only additional flags
++	set(OSX_FLAGS_RELEASE "-ftree-vectorize") # only additional flags
++	if(NOT USE_SIMDE)
++		set(OSX_FLAGS_RELEASE "$[OSX_FLAGS_RELEASE} -msse -msse2 -msse3 -mssse3")
++	endif()
+ 	set(CMAKE_C_FLAGS_RELEASE "${CMAKE_C_FLAGS_RELEASE} ${OSX_FLAGS_RELEASE}") # cmake emits "-O3 -DNDEBUG" for Release by default, "-O0 -g" for Debug
+ 	set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} ${OSX_FLAGS_RELEASE}")
+ 	set(CMAKE_EXE_LINKER_FLAGS "-Wl,-unexported_symbols_list -Wl,${CMAKE_SOURCE_DIR}/include/luxrays/utils/unexported_symbols.map")
+diff --git a/include/luxrays/accelerators/mqbvhaccel.h b/include/luxrays/accelerators/mqbvhaccel.h
+index b68249dcd..35ccab6ee 100644
+--- a/include/luxrays/accelerators/mqbvhaccel.h
++++ b/include/luxrays/accelerators/mqbvhaccel.h
+@@ -19,7 +19,14 @@
+ #ifndef _LUXRAYS_MQBVHACCEL_H
+ #define	_LUXRAYS_MQBVHACCEL_H
+ 
++#ifdef LUXCORE_USE_SIMDE
++#define SIMDE_ENABLE_NATIVE_ALIASES 1
++#include <simde/x86/mmx.h>
++#include <simde/x86/sse.h>
++#include <simde/x86/sse2.h>
++#else
+ #include <xmmintrin.h>
++#endif
+ 
+ #include "luxrays/luxrays.h"
+ #include "luxrays/core/accelerator.h"
+diff --git a/include/luxrays/accelerators/qbvhaccel.h b/include/luxrays/accelerators/qbvhaccel.h
+index 5e13689af..3f025b3b1 100644
+--- a/include/luxrays/accelerators/qbvhaccel.h
++++ b/include/luxrays/accelerators/qbvhaccel.h
+@@ -19,7 +19,14 @@
+ #ifndef _LUXRAYS_QBVHACCEL_H
+ #define	_LUXRAYS_QBVHACCEL_H
+ 
++#ifdef LUXCORE_USE_SIMDE
++#define SIMDE_ENABLE_NATIVE_ALIASES 1
++#include <simde/x86/mmx.h>
++#include <simde/x86/sse.h>
++#include <simde/x86/sse2.h>
++#else
+ #include <xmmintrin.h>
++#endif
+ 
+ #include "luxrays/luxrays.h"
+ #include "luxrays/core/accelerator.h"

@@ -1,0 +1,67 @@
+commit 7d2c613e76d76f5c9544c8b0b66ce5994fe142c1
+Author: Thomas Debesse <dev@illwieckz.net>
+Date:   Fri Oct 21 18:21:11 2022 +0200
+
+    patch: luxmark3/luxmark3-luxcore-catch-opencl-errors-on-device-listing.patch
+
+diff --git a/include/luxrays/core/ocldevice.h b/include/luxrays/core/ocldevice.h
+index fb7f00774..05df99956 100644
+--- a/include/luxrays/core/ocldevice.h
++++ b/include/luxrays/core/ocldevice.h
+@@ -113,7 +113,8 @@ public:
+ protected:
+ 	static std::string GetDeviceType(const cl_int type);
+ 	static DeviceType GetOCLDeviceType(const cl_device_type type);
+-	static void AddDeviceDescs(const cl::Platform &oclPlatform, const DeviceType filter,
++	static void AddDeviceDescs(const Context *context,
++		const cl::Platform &oclPlatform, const DeviceType filter,
+ 		std::vector<DeviceDescription *> &descriptions);
+ 
+ 	size_t deviceIndex;
+diff --git a/src/luxrays/core/context.cpp b/src/luxrays/core/context.cpp
+index 7703ffbdd..30f9166b9 100644
+--- a/src/luxrays/core/context.cpp
++++ b/src/luxrays/core/context.cpp
+@@ -58,7 +58,7 @@ Context::Context(LuxRaysDebugHandler handler, const int openclPlatformIndex) {
+ 			// Just use all the platforms available
+ 			for (size_t i = 0; i < platforms.size(); ++i)
+ 				OpenCLDeviceDescription::AddDeviceDescs(
+-					platforms[i], DEVICE_TYPE_OPENCL_ALL,
++					this, platforms[i], DEVICE_TYPE_OPENCL_ALL,
+ 					deviceDescriptions);
+ 		} else
+ 			LR_LOG(this, "No OpenCL platform available");
+@@ -67,7 +67,7 @@ Context::Context(LuxRaysDebugHandler handler, const int openclPlatformIndex) {
+ 			throw std::runtime_error("Unable to find an appropriate OpenCL platform");
+ 		else {
+ 			OpenCLDeviceDescription::AddDeviceDescs(
+-				platforms[openclPlatformIndex],
++				this, platforms[openclPlatformIndex],
+ 				DEVICE_TYPE_OPENCL_ALL, deviceDescriptions);
+ 		}
+ 	}
+diff --git a/src/luxrays/core/device.cpp b/src/luxrays/core/device.cpp
+index ecee56df3..1585fbf15 100644
+--- a/src/luxrays/core/device.cpp
++++ b/src/luxrays/core/device.cpp
+@@ -169,12 +169,18 @@ DeviceType OpenCLDeviceDescription::GetOCLDeviceType(const cl_device_type type)
+ 	}
+ }
+ 
+-void OpenCLDeviceDescription::AddDeviceDescs(const cl::Platform &oclPlatform,
++void OpenCLDeviceDescription::AddDeviceDescs(const Context *context,
++	const cl::Platform &oclPlatform,
+ 	const DeviceType filter, std::vector<DeviceDescription *> &descriptions)
+ {
+ 	// Get the list of devices available on the platform
+ 	VECTOR_CLASS<cl::Device> oclDevices;
+-	oclPlatform.getDevices(CL_DEVICE_TYPE_ALL, &oclDevices);
++
++	try {
++		oclPlatform.getDevices(CL_DEVICE_TYPE_ALL, &oclDevices);
++	} catch (cl::Error err) {
++		LR_LOG(context, "OpenCL ERROR: " << err.what() << "(" << oclErrorString(err.err()) << ")");
++	}
+ 
+ 	// Build the descriptions
+ 	for (size_t i = 0; i < oclDevices.size(); ++i) {

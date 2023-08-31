@@ -1,0 +1,235 @@
+commit e08ee848747f435624741c68f7e6b8b50fec6aa0
+Author: Thomas Debesse <dev@illwieckz.net>
+Date:   Sat Oct 22 08:43:11 2022 +0200
+
+    patch: luxmark3/luxmark3-luxmark-do-not-ship-cmake-files.patch
+
+diff --git a/cmake/Packages/FindGLEW.cmake b/cmake/Packages/FindGLEW.cmake
+deleted file mode 100644
+index 48270ff..0000000
+--- a/cmake/Packages/FindGLEW.cmake
++++ /dev/null
+@@ -1,54 +0,0 @@
+-#
+-# From: http://code.google.com/p/nvidia-texture-tools/source/browse/trunk/cmake/FindGLEW.cmake?r=96 
+-#
+-# Try to find GLEW library and include path.
+-# Once done this will define
+-#
+-# GLEW_FOUND
+-# GLEW_INCLUDE_PATH
+-# GLEW_LIBRARY
+-# 
+-
+-IF (WIN32)
+-	FIND_PATH( GLEW_INCLUDE_PATH GL/glew.h
+-		${GLEW_ROOT}/include
+-		$ENV{PROGRAMFILES}/GLEW/include
+-		${LuxRays_SOURCE_DIR}/../glew/include
+-		${PROJECT_SOURCE_DIR}/src/nvgl/glew/include
+-		DOC "The directory where GL/glew.h resides")
+-	FIND_LIBRARY( GLEW_LIBRARY
+-		NAMES glew GLEW glew32 glew32s glew64 glew64s
+-		PATHS
+-		${GLEW_LIBRARYDIR}
+-		${GLEW_ROOT}/lib
+-		$ENV{PROGRAMFILES}/GLEW/lib
+-		${LuxRays_SOURCE_DIR}/../glew/lib
+-		${PROJECT_SOURCE_DIR}/src/nvgl/glew/bin
+-		${PROJECT_SOURCE_DIR}/src/nvgl/glew/lib
+-		DOC "The GLEW library")
+-ELSE (WIN32)
+-	FIND_PATH( GLEW_INCLUDE_PATH GL/glew.h
+-		/usr/include
+-		/usr/local/include
+-		/sw/include
+-		/opt/local/include
+-		DOC "The directory where GL/glew.h resides")
+-	FIND_LIBRARY( GLEW_LIBRARY
+-		NAMES GLEW glew
+-		PATHS
+-		/usr/lib64
+-		/usr/lib
+-		/usr/local/lib64
+-		/usr/local/lib
+-		/sw/lib
+-		/opt/local/lib
+-		DOC "The GLEW library")
+-ENDIF (WIN32)
+-
+-IF (GLEW_INCLUDE_PATH)
+-	SET( GLEW_FOUND 1 CACHE STRING "Set to 1 if GLEW is found, 0 otherwise")
+-ELSE (GLEW_INCLUDE_PATH)
+-	SET( GLEW_FOUND 0 CACHE STRING "Set to 1 if GLEW is found, 0 otherwise")
+-ENDIF (GLEW_INCLUDE_PATH)
+-
+-MARK_AS_ADVANCED( GLEW_FOUND )
+\ No newline at end of file
+diff --git a/cmake/Packages/FindGLUT.cmake b/cmake/Packages/FindGLUT.cmake
+deleted file mode 100644
+index eb9f4c0..0000000
+--- a/cmake/Packages/FindGLUT.cmake
++++ /dev/null
+@@ -1,56 +0,0 @@
+-#
+-# From: http://code.google.com/p/nvidia-texture-tools/source/browse/trunk/cmake/FindGLEW.cmake?r=96 
+-#
+-# Try to find GLUT library and include path.
+-# Once done this will define
+-#
+-# GLUT_FOUND
+-# GLUT_INCLUDE_PATH
+-# GLUT_LIBRARY
+-# 
+-
+-IF (WIN32)
+-	FIND_PATH( GLUT_INCLUDE_PATH GL/glut.h
+-		${GLUT_ROOT}
+-		${GLUT_ROOT}/include
+-		$ENV{PROGRAMFILES}/GLUT/include
+-		${LuxRays_SOURCE_DIR}/../freeglut/include
+-		${LuxRays_SOURCE_DIR}/../glut/include
+-		DOC "The directory where GL/glut.h resides")
+-	FIND_LIBRARY( GLUT_LIBRARY
+-		NAMES glut GLUT glut32 glut32s freeglut freeglut_static
+-		PATH_SUFFIXES "" x64 x86
+-		PATHS
+-		${GLUT_ROOT}
+-		${GLUT_LIBRARYDIR}
+-		${GLUT_ROOT}/lib
+-		$ENV{PROGRAMFILES}/GLUT/lib
+-		${LuxRays_SOURCE_DIR}/../freeglut/lib
+-		${LuxRays_SOURCE_DIR}/../glut/lib
+-		DOC "The GLUT library")
+-ELSE (WIN32)
+-	FIND_PATH( GLUT_INCLUDE_PATH GL/glut.h
+-		/usr/include
+-		/usr/local/include
+-		/sw/include
+-		/opt/local/include
+-		DOC "The directory where GL/glut.h resides")
+-	FIND_LIBRARY( GLUT_LIBRARY
+-		NAMES glut GLUT freeglut freeglut32 freeglut_static
+-		PATHS
+-		/usr/lib64
+-		/usr/lib
+-		/usr/local/lib64
+-		/usr/local/lib
+-		/sw/lib
+-		/opt/local/lib
+-		DOC "The GLUT library")
+-ENDIF (WIN32)
+-
+-IF (GLUT_INCLUDE_PATH)
+-	SET( GLUT_FOUND 1 CACHE STRING "Set to 1 if GLUT is found, 0 otherwise")
+-ELSE (GLUT_INCLUDE_PATH)
+-	SET( GLUT_FOUND 0 CACHE STRING "Set to 1 if GLUT is found, 0 otherwise")
+-ENDIF (GLUT_INCLUDE_PATH)
+-
+-MARK_AS_ADVANCED( GLUT_FOUND )
+diff --git a/cmake/Packages/FindOpenCL.cmake b/cmake/Packages/FindOpenCL.cmake
+deleted file mode 100644
+index c627f3c..0000000
+--- a/cmake/Packages/FindOpenCL.cmake
++++ /dev/null
+@@ -1,100 +0,0 @@
+-###########################################################################
+-#   Copyright (C) 1998-2013 by authors (see AUTHORS.txt)                  #
+-#                                                                         #
+-#   This file is part of Lux.                                             #
+-#                                                                         #
+-#   Lux is free software; you can redistribute it and/or modify           #
+-#   it under the terms of the GNU General Public License as published by  #
+-#   the Free Software Foundation; either version 3 of the License, or     #
+-#   (at your option) any later version.                                   #
+-#                                                                         #
+-#   Lux is distributed in the hope that it will be useful,                #
+-#   but WITHOUT ANY WARRANTY; without even the implied warranty of        #
+-#   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the         #
+-#   GNU General Public License for more details.                          #
+-#                                                                         #
+-#   You should have received a copy of the GNU General Public License     #
+-#   along with this program.  If not, see <http://www.gnu.org/licenses/>. #
+-#                                                                         #
+-#   Lux website: http://www.luxrender.net                                 #
+-###########################################################################
+-
+-# Try to find OpenCL library and include path.
+-# Once done this will define
+-#
+-# OPENCL_FOUND
+-# OPENCL_INCLUDE_DIR
+-# OPENCL_LIBRARIES
+-# 
+-
+-# Lookup user provide path first
+-SET(OPENCL_INC_SUFFIXES "" include/opencl cuda/include include Include Headers Dist Source)
+-FIND_PATH(OPENCL_INCLUDE_DIR
+-	NAMES CL/cl.hpp OpenCL/cl.hpp
+-	PATHS ${OPENCL_ROOT}
+-	PATH_SUFFIXES ${OPENCL_INC_SUFFIXES}
+-	DOC "The directory where CL/cl.hpp resides")
+-FIND_PATH(OPENCL_INCLUDE_DIR
+-	NAMES CL/cl.hpp OpenCL/cl.hpp
+-	PATHS /usr /usr/local /sw /opt/local $ENV{ATISTREAMSDKROOT} $ENV{AMDAPPSDKROOT} $ENV{CUDA_PATH} $ENV{INTELOCLSDKROOT}
+-	PATH_SUFFIXES ${OPENCL_INC_SUFFIXES}
+-	DOC "The directory where CL/cl.hpp resides")
+-FIND_PATH(OPENCL_C_INCLUDE_DIR
+-	NAMES CL/opencl.h OpenCL/opencl.h
+-	PATHS $ENV{ATISTREAMSDKROOT} $ENV{AMDAPPSDKROOT} $ENV{CUDA_PATH} $ENV{INTELOCLSDKROOT}
+-	PATH_SUFFIXES ${OPENCL_INC_SUFFIXES}
+-	DOC "The directory where CL/opencl.h resides")
+-SET(OPENCL_NAMES_REL opencl OpenCL)
+-SET(OPENCL_LIB_SUFFIXES "" lib/x86_64 lib/x86 lib64 lib Lib lib/opencl Libs Dist Release Debug lib/x64 lib/Win32)
+-SET(OPENCL_LIB_SUFFIXES_REL)
+-SET(OPENCL_LIB_SUFFIXES_DBG)
+-FOREACH(i ${OPENCL_LIB_SUFFIXES})
+-	SET(OPENCL_LIB_SUFFIXES_REL ${OPENCL_LIB_SUFFIXES_REL}
+-		"${i}" "${i}/release" "${i}/relwithdebinfo" "${i}/minsizerel" "${i}/dist")
+-	SET(OPENCL_LIB_SUFFIXES_DBG ${OPENCL_LIB_SUFFIXES_DBG}
+-		"${i}" "${i}/debug" "${i}/dist")
+-ENDFOREACH(i)
+-SET(OPENCL_NAMES_DBG)
+-FOREACH(i ${OPENCL_NAMES_REL})
+-	SET(OPENCL_NAMES_DBG ${OPENCL_NAMES_DBG} "${i}d" "${i}D" "${i}_d" "${i}_D" "${i}_debug")
+-ENDFOREACH(i)
+-FIND_LIBRARY(OPENCL_LIBRARY_REL
+-	NAMES ${OPENCL_NAMES_REL}
+-	PATHS "${OPENCL_ROOT}"
+-	PATH_SUFFIXES ${OPENCL_LIB_SUFFIXES_REL}
+-	NO_DEFAULT_PATH
+-	DOC "The OpenCL release library"
+-)
+-FIND_LIBRARY(OPENCL_LIBRARY_REL
+-	NAMES ${OPENCL_NAMES_REL}
+-	PATHS /usr/local /usr /sw /opt/local /opt/csw /opt $ENV{ATISTREAMSDKROOT} $ENV{AMDAPPSDKROOT} $ENV{CUDA_PATH} $ENV{INTELOCLSDKROOT}
+-	PATH_SUFFIXES ${OPENCL_LIB_SUFFIXES_REL}
+-	DOC "The OpenCL release library"
+-)
+-FIND_LIBRARY(OPENCL_LIBRARY_DBG
+-	NAMES ${OPENCL_NAMES_DBG}
+-	PATHS "${OPENCL_ROOT}"
+-	PATH_SUFFIXES ${OPENCL_LIB_SUFFIXES_DBG}
+-	NO_DEFAULT_PATH
+-	DOC "The OpenCL debug library"
+-)
+-FIND_LIBRARY(OPENCL_LIBRARY_DBG
+-	NAMES ${OPENCL_NAMES_DBG}
+-	PATHS /usr/local /usr /sw /opt/local /opt/csw /opt $ENV{ATISTREAMSDKROOT} $ENV{AMDAPPSDKROOT} $ENV{CUDA_PATH} $ENV{INTELOCLSDKROOT}
+-	PATH_SUFFIXES ${OPENCL_LIB_SUFFIXES_DBG}
+-	DOC "The OpenCL debug library"
+-)
+-IF (OPENCL_LIBRARY_REL AND OPENCL_LIBRARY_DBG)
+-	SET(OPENCL_LIBRARIES
+-		optimized ${OPENCL_LIBRARY_REL}
+-		debug ${OPENCL_LIBRARY_DBG})
+-ELSEIF (OPENCL_LIBRARY_REL)
+-	SET(OPENCL_LIBRARIES ${OPENCL_LIBRARY_REL})
+-ELSEIF (OPENCL_LIBRARY_DBG)
+-	SET(OPENCL_LIBRARIES ${OPENCL_LIBRARY_DBG})
+-ENDIF (OPENCL_LIBRARY_REL AND OPENCL_LIBRARY_DBG)
+-
+-INCLUDE(FindPackageHandleStandardArgs)
+-FIND_PACKAGE_HANDLE_STANDARD_ARGS(OPENCL  DEFAULT_MSG  OPENCL_LIBRARIES OPENCL_INCLUDE_DIR OPENCL_C_INCLUDE_DIR)
+-
+-MARK_AS_ADVANCED(OPENCL_LIBRARIES OPENCL_INCLUDE_DIR OPENCL_C_INCLUDE_DIR)

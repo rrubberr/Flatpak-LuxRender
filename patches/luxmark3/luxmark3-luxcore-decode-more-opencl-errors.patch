@@ -1,0 +1,19 @@
+commit 7b143b72502647e2b9f5a557edbc1395f23c0192
+Author: Thomas Debesse <dev@illwieckz.net>
+Date:   Mon Oct 24 11:09:22 2022 +0200
+
+    patch: luxmark3/luxmark3-luxcore-decode-more-opencl-errors.patch
+
+diff --git a/src/luxrays/utils/ocl.cpp b/src/luxrays/utils/ocl.cpp
+index ab476452f..a2fb6ac2b 100644
+--- a/src/luxrays/utils/ocl.cpp
++++ b/src/luxrays/utils/ocl.cpp
+@@ -136,6 +136,8 @@ std::string luxrays::oclErrorString(cl_int error) {
+ 			return "CL_INVALID_MIP_LEVEL";
+ 		case CL_INVALID_GLOBAL_WORK_SIZE:
+ 			return "CL_INVALID_GLOBAL_WORK_SIZE";
++		case CL_PLATFORM_NOT_FOUND_KHR:
++			return "CL_PLATFORM_NOT_FOUND_KHR";
+ 		default:
+ 			return boost::lexical_cast<std::string > (error);
+ 	}

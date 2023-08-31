@@ -1,0 +1,89 @@
+commit 851e6b3e0d4d9d8e9c2aa30d6c48d37bad9d4d00
+Author: Thomas Debesse <dev@illwieckz.net>
+Date:   Sun Oct 23 22:39:43 2022 +0200
+
+    patch: luxmark3/luxmark3-luxcore-fix-luxcorerender-website-url.patch
+
+diff --git a/README.txt b/README.txt
+index 2f996d384..e2def9dd9 100644
+--- a/README.txt
++++ b/README.txt
+@@ -3,21 +3,21 @@ LuxRays
+ 
+ LuxRays is the part of LuxRender dedicated to accelerate the ray intersection
+ process by using GPUs. You can find more information about the ongoing effort of
+-integrating OpenCL support in LuxRender at http://www.luxrender.net/wiki/index.php?title=Luxrender_and_OpenCL
+-and at http://www.luxrender.net/wiki/index.php?title=LuxRays
++integrating OpenCL support in LuxRender at https://wiki.luxcorerender.org/Render_Configuration
++and at https://wiki.luxcorerender.org
+ 
+ LuxCore
+ =======
+ 
+ LuxCore is the new LuxRender v2.x C++ and Python API. It is released under Apache Public License v2.0
+ and can be freely used in open source and commercial applications. You can find more
+-information about the API at http://www.luxrender.net/wiki/LuxCore
++information about the API at https://wiki.luxcorerender.org/LuxCore_API
+ 
+ SLG (SmallLuxGPU)
+ =================
+ 
+ SmallLuxGPU is a LuxCore/LuxRays demo and was a LuxRender v0.8 "proof of concept". You can find
+-more information about SLG at http://www.luxrender.net/wiki/index.php?title=SLG
++more information about SLG at https://wiki.luxcorerender.org/LuxCoreRender_Render_Settings#SLG_renderer
+ 
+ Donate
+ ======
+@@ -29,7 +29,7 @@ benefit all the member projects, and the rest will be made available to LuxRende
+ In the United States, you can benefit from tax deductions according to the
+ Conservancy 501(c)(3) not for profit organization status.
+ 
+-You can donate at http://www.luxrender.net/en_GB/donate
++You can donate at https://luxcorerender.org/donate/
+ 
+ Authors
+ =======
+diff --git a/include/luxrays/core/geometry/matrix3x3.h b/include/luxrays/core/geometry/matrix3x3.h
+index 8cc446da7..870b8bb39 100644
+--- a/include/luxrays/core/geometry/matrix3x3.h
++++ b/include/luxrays/core/geometry/matrix3x3.h
+@@ -17,7 +17,7 @@
+  *   along with this program.  If not, see <http://www.gnu.org/licenses/>. *
+  *                                                                         *
+  *   This project is based on PBRT ; see http://www.pbrt.org               *
+- *   Lux Renderer website : http://www.luxrender.net                       *
++ *   Lux Renderer website : https://luxcorerender.org                      *
+  ***************************************************************************/
+ 
+ #ifndef _LUXRAYS_MATRIX3X3_H
+diff --git a/samples/smallluxgpu4/displayfunc.cpp b/samples/smallluxgpu4/displayfunc.cpp
+index 46dbd0ca1..ba7b1a484 100644
+--- a/samples/smallluxgpu4/displayfunc.cpp
++++ b/samples/smallluxgpu4/displayfunc.cpp
+@@ -44,8 +44,8 @@ using namespace std;
+ using namespace luxrays;
+ using namespace luxcore;
+ 
+-const string SLG_LABEL = "SmallLuxGPU v" LUXCORE_VERSION_MAJOR "." LUXCORE_VERSION_MINOR " (LuxCore demo: http://www.luxrender.net)";
+-const string LUXVR_LABEL = "LuxVR v" LUXCORE_VERSION_MAJOR "." LUXCORE_VERSION_MINOR " (http://www.luxrender.net)";
++const string SLG_LABEL = "SmallLuxGPU v" LUXCORE_VERSION_MAJOR "." LUXCORE_VERSION_MINOR " (LuxCore demo: https://luxcorerender.org)";
++const string LUXVR_LABEL = "LuxVR v" LUXCORE_VERSION_MAJOR "." LUXCORE_VERSION_MINOR " (https://luxcorerender.org)";
+ 
+ static void PrintString(void *font, const char *string) {
+ 	int len, i;
+diff --git a/scenes/cornell/cornell.blend b/scenes/cornell/cornell.blend
+index be4fb892e..e6e30836b 100644
+Binary files a/scenes/cornell/cornell.blend and b/scenes/cornell/cornell.blend differ
+diff --git a/src/luxcore/luxparser/luxparse.y b/src/luxcore/luxparser/luxparse.y
+index 444fd2739..41c8698aa 100644
+--- a/src/luxcore/luxparser/luxparse.y
++++ b/src/luxcore/luxparser/luxparse.y
+@@ -18,7 +18,7 @@
+  *   along with this program.  If not, see <http://www.gnu.org/licenses/>. *
+  *                                                                         *
+  *   This project is based on PBRT ; see http://www.pbrt.org               *
+- *   Lux Renderer website : http://www.luxrender.net                       *
++ *   Lux Renderer website : https://luxcorerender.org                      *
+  ***************************************************************************/
+ 
+ %name-prefix "luxcore_parserlxs_yy"

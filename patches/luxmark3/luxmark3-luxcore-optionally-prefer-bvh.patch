@@ -1,0 +1,23 @@
+commit 32b0ad8f48629a8c2d15e2d94800cd419d07e0f1
+Author: Thomas Debesse <dev@illwieckz.net>
+Date:   Fri Oct 21 18:21:11 2022 +0200
+
+    patch: luxmark3/luxmark3-luxcore-optionally-prefer-bvh.patch
+
+diff --git a/src/luxrays/idevices/openclidevice.cpp b/src/luxrays/idevices/openclidevice.cpp
+index ecbb7d41b..5cefbd5f9 100644
+--- a/src/luxrays/idevices/openclidevice.cpp
++++ b/src/luxrays/idevices/openclidevice.cpp
+@@ -235,8 +235,11 @@ void OpenCLIntersectionDevice::SetDataSet(DataSet *newDataSet) {
+ 		if (accelType != ACCEL_AUTO) {
+ 			accel = dataSet->GetAccelerator(accelType);
+ 		} else {
++			const char* env_prefer_bvh = getenv("LUXCORE_PREFER_BVH");
++			const bool prefer_bvh = (env_prefer_bvh != nullptr && strlen(env_prefer_bvh) != 0);
++
+ 			// Check if the OpenCL device prefer float4 or float1
+-			if (deviceDesc->GetNativeVectorWidthFloat() >= 4) {
++			if (!prefer_bvh && deviceDesc->GetNativeVectorWidthFloat() >= 4) {
+ 				// The device prefers float4
+ 				if (dataSet->RequiresInstanceSupport() || dataSet->RequiresMotionBlurSupport()) {
+ 					accel = dataSet->GetAccelerator(ACCEL_MQBVH);

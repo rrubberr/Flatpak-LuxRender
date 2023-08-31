@@ -1,0 +1,21 @@
+commit c67fe9acc641060cb9d5caa2dab36c37c6c77192
+Author: Thomas Debesse <dev@illwieckz.net>
+Date:   Fri Oct 21 18:21:11 2022 +0200
+
+    patch: luxmark3/luxmark3-luxcore-optionally-disable-image.patch
+
+diff --git a/src/luxrays/idevices/openclidevice.cpp b/src/luxrays/idevices/openclidevice.cpp
+index 5cefbd5f9..e026523d7 100644
+--- a/src/luxrays/idevices/openclidevice.cpp
++++ b/src/luxrays/idevices/openclidevice.cpp
+@@ -280,6 +280,10 @@ void OpenCLIntersectionDevice::Start() {
+ 
+ 	kernels = nullptr;
+ 
++	const char* env_disable_image = getenv("LUXCORE_DISABLE_IMAGE");
++	const bool disable_image = (env_disable_image != nullptr && strlen(env_disable_image) != 0);
++	enableImageStorage = (enableImageStorage && !disable_image);
++
+ 	oclQueues.clear();
+ 	if (dataParallelSupport) {
+ 		// Compile all required kernels

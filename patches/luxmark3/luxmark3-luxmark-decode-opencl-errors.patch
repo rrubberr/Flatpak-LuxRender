@@ -1,0 +1,32 @@
+commit 21418b3723b00a05423696195af60cfe5ff8371f
+Author: Thomas Debesse <dev@illwieckz.net>
+Date:   Mon Oct 24 03:21:06 2022 +0200
+
+    patch: luxmark3/luxmark3-luxmark-decode-opencl-errors.patch
+
+diff --git a/src/hardwaretree.cpp b/src/hardwaretree.cpp
+index 7822c36..35f1a7a 100644
+--- a/src/hardwaretree.cpp
++++ b/src/hardwaretree.cpp
+@@ -103,7 +103,7 @@ HardwareTreeModel::HardwareTreeModel(MainWindow *w) : QAbstractItemModel() {
+ 	try {
+ 		ctx = new Context(LuxRaysErrorHandler);
+ 	} catch (cl::Error err) {
+-		LM_ERROR("OpenCL ERROR: " << err.what() << "(" << err.err() << ")");
++		LM_ERROR("OpenCL ERROR: " << err.what() << "(" << oclErrorString(err.err()) << ")");
+ 	} catch (runtime_error err) {
+ 		LM_ERROR("RUNTIME ERROR: " << err.what());
+ 	} catch (exception err) {
+diff --git a/src/luxmarkapp.cpp b/src/luxmarkapp.cpp
+index 50a0fbc..f77c3d5 100644
+--- a/src/luxmarkapp.cpp
++++ b/src/luxmarkapp.cpp
+@@ -260,7 +260,7 @@ void LuxMarkApp::EngineInitThreadImpl(LuxMarkApp *app) {
+ 		app->renderingStartTime = luxrays::WallClockTime();
+ 		app->engineInitDone = true;
+ 	} catch (cl::Error err) {
+-		LM_ERROR("OpenCL ERROR: " << err.what() << "(" << err.err() << ")");
++		LM_ERROR("OpenCL ERROR: " << err.what() << "(" << oclErrorString(err.err()) << ")");
+ 	} catch (runtime_error err) {
+ 		LM_ERROR("RUNTIME ERROR: " << err.what());
+ 	} catch (exception err) {

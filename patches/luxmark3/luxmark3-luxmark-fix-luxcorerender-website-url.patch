@@ -1,0 +1,416 @@
+commit 4fb06db005f715564239eb55f03768164de6e27a
+Author: Thomas Debesse <dev@illwieckz.net>
+Date:   Sun Oct 23 22:29:59 2022 +0200
+
+    patch: luxmark3/luxmark3-luxmark-fix-luxcorerender-website-url.patch
+
+diff --git a/CMakeLists.txt b/CMakeLists.txt
+index 1e37569..48a5811 100644
+--- a/CMakeLists.txt
++++ b/CMakeLists.txt
+@@ -16,7 +16,7 @@
+ #   You should have received a copy of the GNU General Public License     #
+ #   along with this program.  If not, see <http://www.gnu.org/licenses/>. #
+ #                                                                         #
+-#   LuxMark website: http://www.luxrender.net                             #
++#   LuxMark website: https://luxcorerender.org                            #
+ ###########################################################################
+ 
+ MESSAGE(STATUS "CMAKE VERSION DETECTED " ${CMAKE_VERSION})
+diff --git a/Configuration.cmake b/Configuration.cmake
+index e0f4ef5..05cc612 100644
+--- a/Configuration.cmake
++++ b/Configuration.cmake
+@@ -16,7 +16,7 @@
+ #   You should have received a copy of the GNU General Public License     #
+ #   along with this program.  If not, see <http://www.gnu.org/licenses/>. #
+ #                                                                         #
+-#   LuxMark website: http://www.luxrender.net                             #
++#   LuxMark website: https://luxcorerender.org                            #
+ ###########################################################################
+ 
+ ###########################################################################
+diff --git a/README.txt b/README.txt
+index f9b74fd..fa0feae 100644
+--- a/README.txt
++++ b/README.txt
+@@ -1,15 +1,15 @@
+ LuxMark
+ =======
+ 
+-LuxMark is OpenCL benchmark based on LuxCore, the new LuxRender (http://www.luxrender.net)
+-v2.x API. You can find more information about LuxMark at http://www.luxrender.net/wiki/index.php?title=LuxMark
++LuxMark is OpenCL benchmark based on LuxCore, the new LuxRender (https://luxcorerender.org)
++v2.x API. You can find more information about LuxMark at http://wiki.luxcorerender.org/LuxMark_v3
+ 
+ LuxCore
+ =======
+ 
+ LuxCore is the new LuxRender v2.x C++ and Python API. It is released under Apache Public License v2.0
+ and can be freely used in open source and commercial applications. You can find more
+-information about the API at http://www.luxrender.net/wiki/LuxCore
++information about the API at https://wiki.luxcorerender.org/LuxCore_API
+ 
+ Donate
+ ======
+@@ -21,7 +21,7 @@ benefit all the member projects, and the rest will be made available to LuxRende
+ In the United States, you can benefit from tax deductions according to the
+ Conservancy 501(c)(3) not for profit organization status.
+ 
+-You can donate at http://www.luxrender.net/en_GB/donate
++You can donate at https://luxcorerender.org/donate/
+ 
+ Authors
+ =======
+diff --git a/cmake/AssembleBinDirs.cmake b/cmake/AssembleBinDirs.cmake
+index 1df6082..8e48f41 100644
+--- a/cmake/AssembleBinDirs.cmake
++++ b/cmake/AssembleBinDirs.cmake
+@@ -16,7 +16,7 @@
+ #   You should have received a copy of the GNU General Public License     #
+ #   along with this program.  If not, see <http://www.gnu.org/licenses/>. #
+ #                                                                         #
+-#   LuxMark website: http://www.luxrender.net                             #
++#   LuxMark website: https://luxcorerender.org                            #
+ ###########################################################################
+ 
+ ###########################################################################
+diff --git a/cmake/Dependencies.cmake b/cmake/Dependencies.cmake
+index f7a3a0a..29f00ce 100644
+--- a/cmake/Dependencies.cmake
++++ b/cmake/Dependencies.cmake
+@@ -16,7 +16,7 @@
+ #   You should have received a copy of the GNU General Public License     #
+ #   along with this program.  If not, see <http://www.gnu.org/licenses/>. #
+ #                                                                         #
+-#   LuxMark website: http://www.luxrender.net                             #
++#   LuxMark website: https://luxcorerender.org                            #
+ ###########################################################################
+ 
+ include(FindPkgMacros)
+diff --git a/cmake/PlatformSpecific.cmake b/cmake/PlatformSpecific.cmake
+index f90c63e..9e49d82 100644
+--- a/cmake/PlatformSpecific.cmake
++++ b/cmake/PlatformSpecific.cmake
+@@ -16,7 +16,7 @@
+ #   You should have received a copy of the GNU General Public License     #
+ #   along with this program.  If not, see <http://www.gnu.org/licenses/>. #
+ #                                                                         #
+-#   LuxMark website: http://www.luxrender.net                             #
++#   LuxMark website: https://luxcorerender.org                            #
+ ###########################################################################
+ 
+ option(USE_SIMDE "Use SIMDE to provide SSE intrinsics" OFF)
+diff --git a/src/CMakeLists.txt b/src/CMakeLists.txt
+index 0e8bad2..0e3333b 100644
+--- a/src/CMakeLists.txt
++++ b/src/CMakeLists.txt
+@@ -16,7 +16,7 @@
+ #   You should have received a copy of the GNU General Public License     #
+ #   along with this program.  If not, see <http://www.gnu.org/licenses/>. #
+ #                                                                         #
+-#   LuxMark website: http://www.luxrender.net                             #
++#   LuxMark website: https://luxcorerender.org                            #
+ ###########################################################################
+ 
+ set(LUXMARK_VERSION_MAJOR 3)
+diff --git a/src/aboutdialog.cpp b/src/aboutdialog.cpp
+index d5c9dda..09cb9c4 100644
+--- a/src/aboutdialog.cpp
++++ b/src/aboutdialog.cpp
+@@ -16,7 +16,7 @@
+  *   You should have received a copy of the GNU General Public License     *
+  *   along with this program.  If not, see <http://www.gnu.org/licenses/>. *
+  *                                                                         *
+- *   LuxMark website: http://www.luxrender.net                             *
++ *   LuxMark website: https://luxcorerender.org                            *
+  ***************************************************************************/
+ 
+ #include "aboutdialog.h"
+diff --git a/src/aboutdialog.h b/src/aboutdialog.h
+index ff4fba7..b9458ff 100644
+--- a/src/aboutdialog.h
++++ b/src/aboutdialog.h
+@@ -16,7 +16,7 @@
+  *   You should have received a copy of the GNU General Public License     *
+  *   along with this program.  If not, see <http://www.gnu.org/licenses/>. *
+  *                                                                         *
+- *   LuxMark website: http://www.luxrender.net                             *
++ *   LuxMark website: https://luxcorerender.org                            *
+  ***************************************************************************/
+ 
+ #ifndef _ABOUTDIALOG_H
+diff --git a/src/aboutdialog.ui b/src/aboutdialog.ui
+index 8f3c72b..cd22994 100644
+--- a/src/aboutdialog.ui
++++ b/src/aboutdialog.ui
+@@ -70,11 +70,11 @@ p, li { white-space: pre-wrap; }
+ &lt;/style&gt;&lt;/head&gt;&lt;body style=&quot; font-family:'Ubuntu'; font-size:11pt; font-weight:400; font-style:normal;&quot;&gt;
+ &lt;p style=&quot; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;&quot;&gt;&lt;span style=&quot; font-family:'Sans'; font-size:10pt; font-weight:600;&quot;&gt;LuxRays&lt;/span&gt;&lt;/p&gt;
+ &lt;p style=&quot;-qt-paragraph-type:empty; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px; font-family:'Sans'; font-size:10pt;&quot;&gt;&lt;br /&gt;&lt;/p&gt;
+-&lt;p align=&quot;justify&quot; style=&quot; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;&quot;&gt;&lt;span style=&quot; font-family:'Sans'; font-size:10pt;&quot;&gt;LuxRays is the part of &lt;/span&gt;&lt;a href=&quot;http://www.luxrender.net&quot;&gt;&lt;span style=&quot; font-family:'Sans'; font-size:10pt; text-decoration: underline; color:#0000ff;&quot;&gt;LuxRender&lt;/span&gt;&lt;/a&gt;&lt;span style=&quot; font-family:'Sans'; font-size:10pt;&quot;&gt; dedicated to accelerate the ray intersection process by using GPUs. You can find more information about the ongoing effort of integrating OpenCL support in LuxRender at &lt;/span&gt;&lt;a href=&quot;http://www.luxrender.net/wiki/index.php?title=Luxrender_and_OpenCL&quot;&gt;&lt;span style=&quot; font-family:'Sans'; font-size:10pt; text-decoration: underline; color:#0000ff;&quot;&gt;LuxRender and OpenCL Wiki &lt;/span&gt;&lt;/a&gt;&lt;span style=&quot; font-family:'Sans'; font-size:10pt;&quot;&gt;and at &lt;/span&gt;&lt;a href=&quot;http://www.luxrender.net/wiki/index.php?title=LuxRays&quot;&gt;&lt;span style=&quot; font-family:'Sans'; font-size:10pt; text-decoration: underline; color:#0000ff;&quot;&gt;LuxRays Wiki&lt;/span&gt;&lt;/a&gt;&lt;span style=&quot; font-family:'Sans'; font-size:10pt;&quot;&gt;.&lt;/span&gt;&lt;/p&gt;
++&lt;p align=&quot;justify&quot; style=&quot; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;&quot;&gt;&lt;span style=&quot; font-family:'Sans'; font-size:10pt;&quot;&gt;LuxRays is the part of &lt;/span&gt;&lt;a href=&quot;https://luxcorerender.org&quot;&gt;&lt;span style=&quot; font-family:'Sans'; font-size:10pt; text-decoration: underline; color:#0000ff;&quot;&gt;LuxRender&lt;/span&gt;&lt;/a&gt;&lt;span style=&quot; font-family:'Sans'; font-size:10pt;&quot;&gt; dedicated to accelerate the ray intersection process by using GPUs. You can find more information about the ongoing effort of integrating OpenCL support in LuxRender at &lt;/span&gt;&lt;a href=&quot;https://wiki.luxcorerender.org/Render_Configuration&quot;&gt;&lt;span style=&quot; font-family:'Sans'; font-size:10pt; text-decoration: underline; color:#0000ff;&quot;&gt;LuxRender and OpenCL Wiki &lt;/span&gt;&lt;/a&gt;&lt;span style=&quot; font-family:'Sans'; font-size:10pt;&quot;&gt;and at &lt;/span&gt;&lt;a href=&quot;https://wiki.luxcorerender.org&quot;&gt;&lt;span style=&quot; font-family:'Sans'; font-size:10pt; text-decoration: underline; color:#0000ff;&quot;&gt;LuxRays Wiki&lt;/span&gt;&lt;/a&gt;&lt;span style=&quot; font-family:'Sans'; font-size:10pt;&quot;&gt;.&lt;/span&gt;&lt;/p&gt;
+ &lt;p align=&quot;justify&quot; style=&quot;-qt-paragraph-type:empty; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px; font-family:'Sans'; font-size:10pt;&quot;&gt;&lt;br /&gt;&lt;/p&gt;
+ &lt;p style=&quot; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;&quot;&gt;&lt;span style=&quot; font-family:'Sans'; font-size:10pt; font-weight:600;&quot;&gt;LuxCore&lt;/span&gt;&lt;/p&gt;
+ &lt;p style=&quot;-qt-paragraph-type:empty; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px; font-family:'Sans'; font-size:10pt;&quot;&gt;&lt;br /&gt;&lt;/p&gt;
+-&lt;p style=&quot; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;&quot;&gt;&lt;span style=&quot; font-family:'Sans'; font-size:10pt;&quot;&gt;LuxCore is the new LuxRender v2.x C++ and Python API. It is released under Apache Public License 2.0 and can be freely used in open source and commercial applications. You can find more information about the API at &lt;/span&gt;&lt;a href=&quot;http://www.luxrender.net/wiki/LuxCore&quot;&gt;&lt;span style=&quot; text-decoration: underline; color:#0000ff;&quot;&gt;LuxCore Wiki&lt;/span&gt;&lt;/a&gt;&lt;/p&gt;
++&lt;p style=&quot; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;&quot;&gt;&lt;span style=&quot; font-family:'Sans'; font-size:10pt;&quot;&gt;LuxCore is the new LuxRender v2.x C++ and Python API. It is released under Apache Public License 2.0 and can be freely used in open source and commercial applications. You can find more information about the API at &lt;/span&gt;&lt;a href=&quot;https://luxcorerender.org/wiki/LuxCore&quot;&gt;&lt;span style=&quot; text-decoration: underline; color:#0000ff;&quot;&gt;LuxCore Wiki&lt;/span&gt;&lt;/a&gt;&lt;/p&gt;
+ &lt;p align=&quot;justify&quot; style=&quot;-qt-paragraph-type:empty; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px; font-family:'Sans'; font-size:10pt;&quot;&gt;&lt;br /&gt;&lt;/p&gt;
+ &lt;p align=&quot;justify&quot; style=&quot; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;&quot;&gt;&lt;span style=&quot; font-family:'Sans'; font-size:10pt; font-weight:600;&quot;&gt;LuxMark&lt;/span&gt;&lt;/p&gt;
+ &lt;p align=&quot;justify&quot; style=&quot;-qt-paragraph-type:empty; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px; font-family:'Sans'; font-size:10pt;&quot;&gt;&lt;br /&gt;&lt;/p&gt;
+@@ -85,7 +85,7 @@ p, li { white-space: pre-wrap; }
+ &lt;p style=&quot; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;&quot;&gt;&lt;span style=&quot; font-family:'Sans'; font-size:10pt;&quot;&gt;LuxRender is now part of the &lt;/span&gt;&lt;a href=&quot;http://sfconservancy.org&quot;&gt;&lt;span style=&quot; text-decoration: underline; color:#0000ff;&quot;&gt;Software Freedom Conservancy&lt;/span&gt;&lt;/a&gt;&lt;span style=&quot; font-family:'Sans'; font-size:10pt;&quot;&gt;, which allows us to receive donations to foster the development and cover the expenses of the LuxRender project. For each donation you'll do, a small amount will go to the Conservancy so that it can&lt;/span&gt;&lt;/p&gt;
+ &lt;p style=&quot; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;&quot;&gt;&lt;span style=&quot; font-family:'Sans'; font-size:10pt;&quot;&gt;benefit all the member projects, and the rest will be made available to LuxRender. In the United States, you can benefit from tax deductions according to the Conservancy 501(c)(3) not for profit organization status.&lt;/span&gt;&lt;/p&gt;
+ &lt;p style=&quot;-qt-paragraph-type:empty; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px; font-family:'Sans'; font-size:10pt;&quot;&gt;&lt;br /&gt;&lt;/p&gt;
+-&lt;p style=&quot; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;&quot;&gt;&lt;span style=&quot; font-family:'Sans'; font-size:10pt;&quot;&gt;You can donate at &lt;/span&gt;&lt;a href=&quot;http://www.luxrender.net/en_GB/donate&quot;&gt;&lt;span style=&quot; text-decoration: underline; color:#0000ff;&quot;&gt;LuxRender Donate Page&lt;/span&gt;&lt;/a&gt;&lt;/p&gt;
++&lt;p style=&quot; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;&quot;&gt;&lt;span style=&quot; font-family:'Sans'; font-size:10pt;&quot;&gt;You can donate at &lt;/span&gt;&lt;a href=&quot;https://luxcorerender.org/donate/&quot;&gt;&lt;span style=&quot; text-decoration: underline; color:#0000ff;&quot;&gt;LuxRender Donate Page&lt;/span&gt;&lt;/a&gt;&lt;/p&gt;
+ &lt;p align=&quot;justify&quot; style=&quot;-qt-paragraph-type:empty; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px; font-family:'Sans'; font-size:10pt;&quot;&gt;&lt;br /&gt;&lt;/p&gt;
+ &lt;p align=&quot;justify&quot; style=&quot; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;&quot;&gt;&lt;span style=&quot; font-family:'Sans'; font-size:10pt; font-weight:600;&quot;&gt;Authors&lt;/span&gt;&lt;/p&gt;
+ &lt;p style=&quot;-qt-paragraph-type:empty; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px; font-family:'Sans'; font-size:10pt;&quot;&gt;&lt;br /&gt;&lt;/p&gt;
+diff --git a/src/hardwaretree.cpp b/src/hardwaretree.cpp
+index 1abf818..a50942c 100644
+--- a/src/hardwaretree.cpp
++++ b/src/hardwaretree.cpp
+@@ -16,7 +16,7 @@
+  *   You should have received a copy of the GNU General Public License     *
+  *   along with this program.  If not, see <http://www.gnu.org/licenses/>. *
+  *                                                                         *
+- *   LuxMark website: http://www.luxrender.net                             *
++ *   LuxMark website: https://luxcorerender.org                            *
+  ***************************************************************************/
+ 
+ #include <sstream>
+diff --git a/src/hardwaretree.h b/src/hardwaretree.h
+index 3e21d33..15f7b80 100644
+--- a/src/hardwaretree.h
++++ b/src/hardwaretree.h
+@@ -16,7 +16,7 @@
+  *   You should have received a copy of the GNU General Public License     *
+  *   along with this program.  If not, see <http://www.gnu.org/licenses/>. *
+  *                                                                         *
+- *   LuxMark website: http://www.luxrender.net                             *
++ *   LuxMark website: https://luxcorerender.org                            *
+  ***************************************************************************/
+ 
+ #ifndef _HARDWARETREE_H
+diff --git a/src/luxmarkapp.cpp b/src/luxmarkapp.cpp
+index ceac3d1..7c39ea3 100644
+--- a/src/luxmarkapp.cpp
++++ b/src/luxmarkapp.cpp
+@@ -16,7 +16,7 @@
+  *   You should have received a copy of the GNU General Public License     *
+  *   along with this program.  If not, see <http://www.gnu.org/licenses/>. *
+  *                                                                         *
+- *   LuxMark website: http://www.luxrender.net                             *
++ *   LuxMark website: https://luxcorerender.org                            *
+  ***************************************************************************/
+ 
+ #include <limits>
+diff --git a/src/luxmarkapp.h b/src/luxmarkapp.h
+index f3d568e..a619fc1 100644
+--- a/src/luxmarkapp.h
++++ b/src/luxmarkapp.h
+@@ -16,7 +16,7 @@
+  *   You should have received a copy of the GNU General Public License     *
+  *   along with this program.  If not, see <http://www.gnu.org/licenses/>. *
+  *                                                                         *
+- *   LuxMark website: http://www.luxrender.net                             *
++ *   LuxMark website: https://luxcorerender.org                            *
+  ***************************************************************************/
+ 
+ #ifndef _LUXMARKAPP_H
+diff --git a/src/luxmarkcfg.h b/src/luxmarkcfg.h
+index e3ffb51..883a322 100644
+--- a/src/luxmarkcfg.h
++++ b/src/luxmarkcfg.h
+@@ -16,7 +16,7 @@
+  *   You should have received a copy of the GNU General Public License     *
+  *   along with this program.  If not, see <http://www.gnu.org/licenses/>. *
+  *                                                                         *
+- *   LuxMark website: http://www.luxrender.net                             *
++ *   LuxMark website: https://luxcorerender.org                            *
+  ***************************************************************************/
+ 
+ #ifndef _LUXMARK_CFG_H
+diff --git a/src/luxmarkcfg.h.in b/src/luxmarkcfg.h.in
+index c49aa9c..ac19fbf 100644
+--- a/src/luxmarkcfg.h.in
++++ b/src/luxmarkcfg.h.in
+@@ -16,7 +16,7 @@
+  *   You should have received a copy of the GNU General Public License     *
+  *   along with this program.  If not, see <http://www.gnu.org/licenses/>. *
+  *                                                                         *
+- *   LuxMark website: http://www.luxrender.net                             *
++ *   LuxMark website: https://luxcorerender.org                            *
+  ***************************************************************************/
+ 
+ #ifndef _LUXMARK_CFG_H
+diff --git a/src/luxmarkdefs.h b/src/luxmarkdefs.h
+index 87d7649..c77b07d 100644
+--- a/src/luxmarkdefs.h
++++ b/src/luxmarkdefs.h
+@@ -16,7 +16,7 @@
+  *   You should have received a copy of the GNU General Public License     *
+  *   along with this program.  If not, see <http://www.gnu.org/licenses/>. *
+  *                                                                         *
+- *   LuxMark website: http://www.luxrender.net                             *
++ *   LuxMark website: https://luxcorerender.org                            *
+  ***************************************************************************/
+ 
+ #ifndef _LUXMARKDEFS_H
+diff --git a/src/luxrendersession.cpp b/src/luxrendersession.cpp
+index 105e4bc..fb5a9d5 100644
+--- a/src/luxrendersession.cpp
++++ b/src/luxrendersession.cpp
+@@ -16,7 +16,7 @@
+  *   You should have received a copy of the GNU General Public License     *
+  *   along with this program.  If not, see <http://www.gnu.org/licenses/>. *
+  *                                                                         *
+- *   LuxMark website: http://www.luxrender.net                             *
++ *   LuxMark website: https://luxcorerender.org                            *
+  ***************************************************************************/
+ 
+ #include <boost/thread.hpp>
+diff --git a/src/luxrendersession.h b/src/luxrendersession.h
+index 18c3828..686797f 100644
+--- a/src/luxrendersession.h
++++ b/src/luxrendersession.h
+@@ -16,7 +16,7 @@
+  *   You should have received a copy of the GNU General Public License     *
+  *   along with this program.  If not, see <http://www.gnu.org/licenses/>. *
+  *                                                                         *
+- *   LuxMark website: http://www.luxrender.net                             *
++ *   LuxMark website: https://luxcorerender.org                            *
+  ***************************************************************************/
+ 
+ #ifndef LUXRENDERSESSION_H
+diff --git a/src/luxvrdialog.cpp b/src/luxvrdialog.cpp
+index 7d2b796..8823ed2 100644
+--- a/src/luxvrdialog.cpp
++++ b/src/luxvrdialog.cpp
+@@ -16,7 +16,7 @@
+  *   You should have received a copy of the GNU General Public License     *
+  *   along with this program.  If not, see <http://www.gnu.org/licenses/>. *
+  *                                                                         *
+- *   LuxMark website: http://www.luxrender.net                             *
++ *   LuxMark website: https://luxcorerender.org                            *
+  ***************************************************************************/
+ 
+ #include <boost/lexical_cast.hpp>
+diff --git a/src/luxvrdialog.h b/src/luxvrdialog.h
+index 623bc5c..6e6898c 100644
+--- a/src/luxvrdialog.h
++++ b/src/luxvrdialog.h
+@@ -16,7 +16,7 @@
+  *   You should have received a copy of the GNU General Public License     *
+  *   along with this program.  If not, see <http://www.gnu.org/licenses/>. *
+  *                                                                         *
+- *   LuxMark website: http://www.luxrender.net                             *
++ *   LuxMark website: https://luxcorerender.org                            *
+  ***************************************************************************/
+ 
+ #ifndef _LUXVRDIALOG_H
+diff --git a/src/main.cpp b/src/main.cpp
+index 7a93275..09e875f 100644
+--- a/src/main.cpp
++++ b/src/main.cpp
+@@ -16,7 +16,7 @@
+  *   You should have received a copy of the GNU General Public License     *
+  *   along with this program.  If not, see <http://www.gnu.org/licenses/>. *
+  *                                                                         *
+- *   LuxMark website: http://www.luxrender.net                             *
++ *   LuxMark website: https://luxcorerender.org                            *
+  ***************************************************************************/
+ 
+ #include <cstdio>
+diff --git a/src/mainwindow.cpp b/src/mainwindow.cpp
+index 727d57f..731cffa 100644
+--- a/src/mainwindow.cpp
++++ b/src/mainwindow.cpp
+@@ -16,7 +16,7 @@
+  *   You should have received a copy of the GNU General Public License     *
+  *   along with this program.  If not, see <http://www.gnu.org/licenses/>. *
+  *                                                                         *
+- *   LuxMark website: http://www.luxrender.net                             *
++ *   LuxMark website: https://luxcorerender.org                            *
+  ***************************************************************************/
+ 
+ #include <QTextEdit>
+diff --git a/src/mainwindow.h b/src/mainwindow.h
+index 9abf6a7..211619b 100644
+--- a/src/mainwindow.h
++++ b/src/mainwindow.h
+@@ -16,7 +16,7 @@
+  *   You should have received a copy of the GNU General Public License     *
+  *   along with this program.  If not, see <http://www.gnu.org/licenses/>. *
+  *                                                                         *
+- *   LuxMark website: http://www.luxrender.net                             *
++ *   LuxMark website: https://luxcorerender.org                            *
+  ***************************************************************************/
+ 
+ #ifndef _MAINWINDOW_H
+diff --git a/src/resultdialog.cpp b/src/resultdialog.cpp
+index a1c2e3b..09f5e91 100644
+--- a/src/resultdialog.cpp
++++ b/src/resultdialog.cpp
+@@ -16,7 +16,7 @@
+  *   You should have received a copy of the GNU General Public License     *
+  *   along with this program.  If not, see <http://www.gnu.org/licenses/>. *
+  *                                                                         *
+- *   LuxMark website: http://www.luxrender.net                             *
++ *   LuxMark website: https://luxcorerender.org                            *
+  ***************************************************************************/
+ 
+ #include <QFile>
+diff --git a/src/resultdialog.h b/src/resultdialog.h
+index 9fb48a9..686abf8 100644
+--- a/src/resultdialog.h
++++ b/src/resultdialog.h
+@@ -16,7 +16,7 @@
+  *   You should have received a copy of the GNU General Public License     *
+  *   along with this program.  If not, see <http://www.gnu.org/licenses/>. *
+  *                                                                         *
+- *   LuxMark website: http://www.luxrender.net                             *
++ *   LuxMark website: https://luxcorerender.org                            *
+  ***************************************************************************/
+ 
+ #ifndef _RESULTDIALOG_H
+diff --git a/src/resultdialog.ui b/src/resultdialog.ui
+index 7cf8f10..6af5f96 100644
+--- a/src/resultdialog.ui
++++ b/src/resultdialog.ui
+@@ -202,7 +202,7 @@
+       <number>1</number>
+      </property>
+      <property name="text">
+-      <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p align=&quot;justify&quot;&gt;LuxRender is now part of the &lt;a href=&quot;http://sfconservancy.org&quot;&gt;&lt;span style=&quot; text-decoration: underline; color:#0000ff;&quot;&gt;Software Freedom Conservancy&lt;/span&gt;&lt;/a&gt;, which allows us to receive donations to foster the development and cover the expenses of the LuxRender project. For each donation you'll do, a small amount will go to the Conservancy so that it can benefit all the member projects, and the rest will be made available to LuxRender.&lt;/p&gt;&lt;p align=&quot;justify&quot;&gt;In the United States, you can benefit from tax deductions according to the Conservancy 501(c)(3) not for profit organization status.&lt;/p&gt;&lt;p align=&quot;center&quot;&gt;You can donate at &lt;a href=&quot;http://www.luxrender.net/en_GB/donate&quot;&gt;&lt;span style=&quot; text-decoration: underline; color:#0000ff;&quot;&gt;here&lt;/span&gt;&lt;/a&gt;&lt;a href=&quot;http://www.luxrender.net/en_GB/donate&quot;&gt;&lt;span style=&quot; color:#0000ff;&quot;&gt;.&lt;/span&gt;&lt;/a&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
++      <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p align=&quot;justify&quot;&gt;LuxRender is now part of the &lt;a href=&quot;http://sfconservancy.org&quot;&gt;&lt;span style=&quot; text-decoration: underline; color:#0000ff;&quot;&gt;Software Freedom Conservancy&lt;/span&gt;&lt;/a&gt;, which allows us to receive donations to foster the development and cover the expenses of the LuxRender project. For each donation you'll do, a small amount will go to the Conservancy so that it can benefit all the member projects, and the rest will be made available to LuxRender.&lt;/p&gt;&lt;p align=&quot;justify&quot;&gt;In the United States, you can benefit from tax deductions according to the Conservancy 501(c)(3) not for profit organization status.&lt;/p&gt;&lt;p align=&quot;center&quot;&gt;You can donate at &lt;a href=&quot;https://luxcorerender.org/donate/&quot;&gt;&lt;span style=&quot; text-decoration: underline; color:#0000ff;&quot;&gt;here&lt;/span&gt;&lt;/a&gt;&lt;a href=&quot;https://luxcorerender.org/donate/&quot;&gt;&lt;span style=&quot; color:#0000ff;&quot;&gt;.&lt;/span&gt;&lt;/a&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+      </property>
+      <property name="textFormat">
+       <enum>Qt::RichText</enum>
+diff --git a/src/submitdialog.cpp b/src/submitdialog.cpp
+index aec081d..c07bb4d 100644
+--- a/src/submitdialog.cpp
++++ b/src/submitdialog.cpp
+@@ -16,7 +16,7 @@
+  *   You should have received a copy of the GNU General Public License     *
+  *   along with this program.  If not, see <http://www.gnu.org/licenses/>. *
+  *                                                                         *
+- *   LuxMark website: http://www.luxrender.net                             *
++ *   LuxMark website: https://luxcorerender.org                            *
+  ***************************************************************************/
+ 
+ #include <QDateTime>
+diff --git a/src/submitdialog.h b/src/submitdialog.h
+index 151fb01..79ef1c5 100644
+--- a/src/submitdialog.h
++++ b/src/submitdialog.h
+@@ -16,7 +16,7 @@
+  *   You should have received a copy of the GNU General Public License     *
+  *   along with this program.  If not, see <http://www.gnu.org/licenses/>. *
+  *                                                                         *
+- *   LuxMark website: http://www.luxrender.net                             *
++ *   LuxMark website: https://luxcorerender.org                            *
+  ***************************************************************************/
+ 
+ #ifndef _SUBMITDIALOG_H

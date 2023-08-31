@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<component type="desktop-application">
+  <id>org.luxrender.luxrender17</id>
+  <metadata_license>Apache-2.0</metadata_license>
+  <project_license>GPL-3.0-or-later-AND-Apache-2.0</project_license>
+  <developer_name>LuxRender contributors</developer_name>
+  <name>LuxRender 1.7</name>
+  <summary>LuxRender is a physically based and unbiased rendering engine.</summary>
+
+  <description>
+    <p>
+      LuxRender is a physically based and unbiased rendering engine.
+    </p>
+  </description>
+
+  <launchable type="desktop-id">org.luxrender.luxrender17.desktop</launchable>
+
+  <screenshots>
+    <screenshot type="default">
+      <image type="source">https://upload.wikimedia.org/wikipedia/en/d/de/Luxrender_0.7_Screenshot.png</image>
+    </screenshot>
+  </screenshots>
+
+  <url type="homepage">https://web.archive.org/web/20160504014115/http://www.luxrender.net/en_GB/index</url>
+  <url type="bugtracker">https://github.com/LuxRender/Lux/issues</url>
+  <url type="help">https://web.archive.org/web/20160504014238/http://www.luxrender.net/wiki/Main_Page</url>
+
+  <releases>
+    <release version="1.7" date="2016-3-5">
+      <description>
+        <p>
+          This version includes vast enhancements to the LuxCore architecture.
+        </p>
+      </description>
+      <url>https://web.archive.org/web/20161203183525/http://www.luxrender.net/wiki/New_in_1-7</url>
+    </release>
+  </releases>
+
+  <recommends>
+    <memory>8192</memory> <!-- 8GiB RAM -->
+  </recommends>
+
+  <requires>
+    <control>pointing</control>
+    <control>keyboard</control>
+  </requires>
+
+  <content_rating type="oars-1.1">
+  </content_rating>
+
+  <provides>
+    <binary>luxrender</binary>
+  </provides>
+</component>

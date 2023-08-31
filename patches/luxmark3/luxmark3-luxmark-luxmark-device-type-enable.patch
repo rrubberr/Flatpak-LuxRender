@@ -1,0 +1,56 @@
+commit 8d90da2d3ca5dc1348d6ba9166edc708a6b555eb
+Author: Thomas Debesse <dev@illwieckz.net>
+Date:   Fri Oct 21 18:22:16 2022 +0200
+
+    patch: luxmark3/luxmark3-luxmark-luxmark-device-type-enable.patch
+
+diff --git a/src/hardwaretree.cpp b/src/hardwaretree.cpp
+index 7822c36..1abf818 100644
+--- a/src/hardwaretree.cpp
++++ b/src/hardwaretree.cpp
+@@ -204,17 +204,40 @@ HardwareTreeModel::HardwareTreeModel(MainWindow *w) : QAbstractItemModel() {
+ 			newNode->appendChild(new HardwareTreeItem(ss.str().c_str()));
+ 
+ 			bool isCPUDev = (odevDesc->GetType() == DEVICE_TYPE_OPENCL_CPU);
++
++			// The default mode is GPU-only
++			bool cpuEnable = false;
++			bool gpuEnable = true;
++
++			QString enable = qgetenv("LUXMARK_DEVICE_TYPE_ENABLE");
++
++			if ( enable == "gpu" ) {
++				// Default.
++			}
++			else if ( enable == "cpu" ) {
++				cpuEnable = true;
++				gpuEnable = false;
++			}
++			else if ( enable == "all" ) {
++				cpuEnable = true;
++				gpuEnable = true;
++			}
++			else if ( enable == "none" ) {
++				cpuEnable = false;
++				gpuEnable = false;
++			}
++
+ 			if (isCPUDev) {
+-				// The default mode is GPU-only
+-				newNode->setChecked(false);
++				newNode->setChecked(cpuEnable);
+ 				oclCPUDev->appendChild(newNode);
++				deviceSelection.push_back(cpuEnable);
+ 			} else {
+-				newNode->setChecked(true);
++				newNode->setChecked(gpuEnable);
+ 				oclGPUDev->appendChild(newNode);
++				deviceSelection.push_back(gpuEnable);
+ 			}
+ 
+-            deviceDescs.push_back(deviceDesc);
+-			deviceSelection.push_back(!isCPUDev);
++			deviceDescs.push_back(deviceDesc);
+ 			isCPU.push_back(isCPUDev);
+ 		}
+ 	}
