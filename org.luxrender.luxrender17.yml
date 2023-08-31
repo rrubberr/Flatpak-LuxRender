@@ -108,13 +108,8 @@ modules:
       - -D EMBREE_TUTORIALS=OFF
     sources:
       - type: git
-        url: https://github.com/rrubberr/embree-bvh-build-2.8.0-lux.git
-        tag: main
-        post-install:
-        - mkdir -pv /app/include
-        - cp -av /luxrender/include/. /app/include/.
-        - mkdir -pv /app/lib
-        - cp -av /luxrender/lib/. /app/lib/.
+        url: https://github.com/embree/embree/
+        tag: v2.17.7
 
   - name: OpenCL-Headers
     buildsystem: cmake-ninja
@@ -153,13 +148,7 @@ modules:
     # LuxRays doesn't build with Ninja.
     buildsystem: cmake
     build-options:
-      cxxflags: -std=c++11 -Wno-narrowing -pthread
-    no-make-install: true
-    post-install:
-      - cp -av include/. /app/include/.
-      - cp -av lib/. /app/lib/.
-      - mkdir -pv /app/opt/luxrays
-      - cp -av bin/slg4 /app/opt/luxrays/slg4
+      cxxflags: -std=c++11 -Wno-narrowing -pthread -DLUXCORE_DISABLE_EMBREE_BVH_BUILDER
     sources:
       - type: git
         url: https://github.com/LuxRender/LuxRays/
