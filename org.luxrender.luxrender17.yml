@@ -23,8 +23,8 @@ cleanup:
 
 modules:
 
+  - shared-modules/qt4/qt4-4.8.7-minimal.json
   - shared-modules/python2.7/python-2.7.json
-  - shared-modules/glew/glew.json
 
   - name: IlmBase
     # IlmBase doesn't build with Ninja.
@@ -36,7 +36,7 @@ modules:
     sources: &openexr_sources
       - type: git
         url: https://github.com/AcademySoftwareFoundation/openexr.git
-        tag: v2.1.0
+        tag: v2.2.0
 
   - name: OpenEXR
     buildsystem: cmake-ninja
@@ -52,12 +52,12 @@ modules:
     build-commands:
       # For OpenImageIO up to thread.
       # For LuxCore from program_options.
-      - ./bootstrap.sh --prefix=/app --with-libraries=headers,filesystem,regex,system,thread,program_options,serialization,iostreams
+      - ./bootstrap.sh --prefix=/app
       - ./b2 install variant=release link=shared runtime-link=shared cxxflags="${CXXFLAGS}" linkflags="${LDFLAGS}" -j "${FLATPAK_BUILDER_N_JOBS}"
     sources:
       - type: archive
-        url: https://boostorg.jfrog.io/artifactory/main/release/1.65.1/source/boost_1_65_1.tar.bz2
-        sha256: 9807a5d16566c57fd74fb522764e0b134a8bbe6b6e8967b83afefd30dcd3be81
+        url: https://boostorg.jfrog.io/artifactory/main/release/1.64.0/source/boost_1_64_0.tar.bz2
+        sha256: 7bcc5caace97baa948931d712ea5f37038dbb1c5d89b43ad4def4ed7cb683332
 
   - name: OpenImageIO
     buildsystem: cmake-ninja
@@ -88,7 +88,6 @@ modules:
         path: patches/luxmark3/luxmark3-oiio-gpstag-redefinition.patch
         use-git-am: false
 
-  # https://github.com/flathub/org.paraview.ParaView/blob/aedc57ad9b8905ccb06bab8998d915fe2cc08444/org.paraview.ParaView.yaml
   - name: TBB
     buildsystem: cmake
     build-options:
@@ -101,34 +100,21 @@ modules:
       - type: patch
         path: patches/tbb/tbb_cmake.patch
 
-  - name: sse2neon
-    only-arches:
-      - aarch64
-    buildsystem: simple
-    build-commands:
-      - mkdir -pv /app/include
-      - cp -av sse2neon.h /app/include/sse2neon.h
-    sources:
-      - type: git
-        url: https://github.com/DLTcollab/sse2neon.git
-        commit: c0a1262d4d797d3fd19177a7c7149f4507c44aa3
-
   - name: Embree
     buildsystem: cmake-ninja
     build-options:
-      arch:
-        aarch64:
-          config-opts:
-            -D USE_CPU_ARCH=aarch64
     config-opts:
       - -D EMBREE_ISPC_SUPPORT=OFF
       - -D EMBREE_TUTORIALS=OFF
     sources:
       - type: git
-        url: https://github.com/embree/embree.git
-        tag: v2.17.7
-      - type: patch
-        path: patches/luxmark3/luxmark3-embree-build-aarch64-with-sse2neon.patch
+        url: https://github.com/rrubberr/embree-bvh-build-2.8.0-lux.git
+        tag: main
+        post-install:
+        - mkdir -pv /app/include
+        - cp -av /luxrender/include/. /app/include/.
+        - mkdir -pv /app/lib
+        - cp -av /luxrender/lib/. /app/lib/.
 
   - name: OpenCL-Headers
     buildsystem: cmake-ninja
@@ -163,122 +149,35 @@ modules:
         url: https://sourceforge.net/projects/freeglut/files/freeglut/3.2.2/freeglut-3.2.2.tar.gz
         sha256: c5944a082df0bba96b5756dddb1f75d0cd72ce27b5395c6c1dde85c2ff297a50
 
-  - name: SIMDe
-    only-arches:
-      - aarch64
-    buildsystem: meson
-    config-opts:
-      - -Dtests=false
-    sources:
-      - type: git
-        url: https://github.com/simd-everywhere/simde.git
-        commit: dd0b662fd8cf4b1617dbbb4d08aa053e512b08e4
-
-  - name: LuxCore
-    # LuxCore doesn't build with Ninja.
+  - name: LuxRays
+    # LuxRays doesn't build with Ninja.
     buildsystem: cmake
     build-options:
-      # Building LuxCore with Debian 11 on aarch64 required -pthread for unknown reasons.
       cxxflags: -std=c++11 -Wno-narrowing -pthread
-      arch:
-        aarch64:
-          config-opts:
-            -D USE_CPU_ARCH=aarch64
     no-make-install: true
     post-install:
-      - mkdir -pv /app/include
       - cp -av include/. /app/include/.
-      - mkdir -pv /app/lib
       - cp -av lib/. /app/lib/.
-      - mkdir -pv /app/opt/luxmark
-      - cp -av bin/slg4 /app/opt/luxmark/slg4
+      - mkdir -pv /app/opt/luxrays
+      - cp -av bin/slg4 /app/opt/luxrays/slg4
     sources:
       - type: git
-        url: https://github.com/LuxCoreRender/LuxCore.git
-        tag: luxmark_v3.1
-      - type: patch
-        path: patches/luxmark3/luxmark3-luxcore-no-samples.patch
-      - type: patch
-        path: patches/luxmark3/luxmark3-luxcore-no-pyluxcore.patch
-      - type: patch
-        path: patches/luxmark3/luxmark3-luxcore-no-division-by-zero-pdf-clamp.patch
-      - type: patch
-        path: patches/luxmark3/luxmark3-luxcore-do-not-crash-on-kernel-build-failure.patch
-      - type: patch
-        path: patches/luxmark3/luxmark3-luxcore-catch-opencl-errors-on-platform-listing.patch
-      - type: patch
-        path: patches/luxmark3/luxmark3-luxcore-catch-opencl-errors-on-device-listing.patch
-      - type: patch
-        path: patches/luxmark3/luxmark3-luxcore-decode-more-opencl-errors.patch
-      - type: patch
-        path: patches/luxmark3/luxmark3-luxcore-optionally-print-opencl-build-log.patch
-      - type: patch
-        path: patches/luxmark3/luxmark3-luxcore-optionally-prefer-bvh.patch
-      - type: patch
-        path: patches/luxmark3/luxmark3-luxcore-optionally-disable-image.patch
-      - type: patch
-        path: patches/luxmark3/luxmark3-luxcore-fix-build-with-system-opencl-cmake.patch
-      - type: patch
-        path: patches/luxmark3/luxmark3-luxcore-do-not-ship-cmake-files.patch
-      - type: patch
-        path: patches/luxmark3/luxmark3-luxcore-enable-slg4-build.patch
-      - type: patch
-        path: patches/luxmark3/luxmark3-luxcore-use-simde-on-non-i686.patch
-      - type: patch
-        path: patches/luxmark3/luxmark3-luxcore-fix-luxcorerender-website-url.patch
+        url: https://github.com/LuxRender/LuxRays/
+        tag: for_v1.7
 
-  - name: LuxMark
+  - name: LuxRender
     buildsystem: cmake-ninja
     build-options:
-      arch:
-        aarch64:
-          config-opts:
-            -D USE_CPU_ARCH=aarch64
     config-opts:
       - -D LuxRays_HOME=/app
     no-make-install: true
     post-install:
-      - mkdir -pv /app/opt/luxmark
-      - cp -av bin/luxmark /app/opt/luxmark/luxmark
+      - mkdir -pv /app/opt/luxrender
+      - cp -av bin/luxmark /app/opt/luxrender/luxrender
     sources:
       - type: git
-        url: https://github.com/LuxCoreRender/LuxMark.git
-        tag: luxmark_v3.1
-      - type: patch
-        path: patches/luxmark3/luxmark3-luxmark-port-to-qt5.patch
-      - type: patch
-        path: patches/luxmark3/luxmark3-luxmark-lowercase-false.patch
-      - type: patch
-        path: patches/luxmark3/luxmark3-luxmark-catch-context-errors.patch
-      - type: patch
-        path: patches/luxmark3/luxmark3-luxmark-decode-opencl-errors.patch
-      - type: patch
-        path: patches/luxmark3/luxmark3-luxmark-read-opencl-compiler-options-from-environment.patch
-      - type: patch
-        path: patches/luxmark3/luxmark3-luxmark-also-print-debug-log-on-stderr.patch
-      - type: patch
-        path: patches/luxmark3/luxmark3-luxmark-luxmark-device-type-enable.patch
-      - type: patch
-        path: patches/luxmark3/luxmark3-luxmark-fill-submission-form-from-environment.patch
-      - type: patch
-        path: patches/luxmark3/luxmark3-luxmark-fix-build-with-system-opencl-cmake.patch
-      - type: patch
-        path: patches/luxmark3/luxmark3-luxmark-do-not-ship-cmake-files.patch
-      - type: patch
-        path: patches/luxmark3/luxmark3-luxmark-use-simde-on-non-i686.patch
-      - type: patch
-        path: patches/luxmark3/luxmark3-luxmark-fix-luxcorerender-website-url.patch
-
-  - name: scenes
-    buildsystem: simple
-    build-commands:
-      - mkdir -pv /app/opt/luxmark/scenes
-      - cp -av scenes/. /app/opt/luxmark/scenes/.
-    sources:
-      - type: archive
-        dest: scenes
-        url: https://github.com/LuxCoreRender/LuxMark/releases/download/luxmark_v3.1/scenes-v3.1.zip
-        sha512: 1b1288fb171e663e5892031be2e544de4d11b86594a7a3f754987fd7b636a6a3cf0a6c2775331a9e7e67ac1263839027592fbb2e4b4baba6c9522869076432bd
+        url: https://github.com/LuxRender/Lux/
+        tag: for_v1.7
 
   - name: luxmark
     buildsystem: simple
@@ -305,13 +204,13 @@ modules:
   - name: metadata
     buildsystem: simple
     build-commands:
-       - install -Dm0644 -t /app/share/metainfo/ info.luxmark.luxmark3.metainfo.xml
-       - install -Dm0644 -t /app/share/applications/ info.luxmark.luxmark3.desktop
-       - install -Dm0644 -t /app/share/icons/hicolor/64x64/apps/ info.luxmark.luxmark3.png
+       - install -Dm0644 -t /app/share/metainfo/ org.luxrender.luxrender17.metainfo.xml
+       - install -Dm0644 -t /app/share/applications/ org.luxrender.luxrender17.desktop
+       - install -Dm0644 -t /app/share/icons/hicolor/64x64/apps/ org.luxrender.luxrender17.png
     sources:
       - type: file
-        path: info.luxmark.luxmark3.metainfo.xml
+        path: org.luxrender.luxrender17.metainfo.xml
       - type: file
-        path: info.luxmark.luxmark3.desktop
+        path: org.luxrender.luxrender17.desktop
       - type: file
-        path: info.luxmark.luxmark3.png
+        path: org.luxrender.luxrender17.png
