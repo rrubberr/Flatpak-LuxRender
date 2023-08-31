@@ -1,0 +1,10 @@
+[Desktop Entry]
+Version=1.7
+Name=LuxRender 1.7
+Comment=LuxRender is a physically based and unbiased rendering engine.
+Type=Application
+Terminal=false
+Exec=luxrender
+Categories=System;
+Icon=info.luxrender.luxrender17
+Keywords=benchmark;opencl;luxcore;luxcorerender

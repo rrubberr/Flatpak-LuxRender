@@ -1,8 +1,8 @@
-app-id: info.luxmark.luxmark3
+app-id: org.luxrender.luxrender17
 runtime: org.kde.Platform
 runtime-version: 5.15-22.08
 sdk: org.kde.Sdk
-command: luxmark
+command: luxrender
 
 finish-args:
   - --device=dri
