@@ -39,7 +39,7 @@ modules:
         tag: v2.2.0
 
   - name: OpenEXR
-    buildsystem: cmake-ninja
+    buildsystem: cmake
     build-options:
       cxxflags: -std=c++11 -I /app/include/OpenEXR
     subdir:
@@ -50,19 +50,30 @@ modules:
   - name: Boost
     buildsystem: simple
     build-commands:
-      # For OpenImageIO up to thread.
-      # For LuxCore from program_options.
-      - ./bootstrap.sh --prefix=/app
-      - ./b2 install variant=release link=shared runtime-link=shared cxxflags="${CXXFLAGS}" linkflags="${LDFLAGS}" -j "${FLATPAK_BUILDER_N_JOBS}"
+      - ./bootstrap.sh --prefix=/app --without-libraries=locale,context
+      - ./b2 install variant=release link=shared runtime-link=shared cxxflags="${CXXFLAGS}" linkflags="${LDFLAGS}" -j "32"
     sources:
       - type: archive
-        url: https://boostorg.jfrog.io/artifactory/main/release/1.64.0/source/boost_1_64_0.tar.bz2
-        sha256: 7bcc5caace97baa948931d712ea5f37038dbb1c5d89b43ad4def4ed7cb683332
+        url: http://sourceforge.net/projects/boost/files/boost/1.52.0/boost_1_52_0.tar.bz2
+        sha1: cddd6b4526a09152ddc5db856463eaa1dc29c5d9
+
+  - name: TBB
+    buildsystem: cmake
+    build-options:
+      cflags: -O2 -D_FORTIFY_SOURCE=2 -fstack-protector-strong -funwind-tables -fasynchronous-unwind-tables -fstack-clash-protection -flto -fno-fat-lto-objects
+      cxxflags: -O2 -D_FORTIFY_SOURCE=2 -fstack-protector-strong -funwind-tables -fasynchronous-unwind-tables -fstack-clash-protection -flto -fno-fat-lto-objects
+    sources:
+      - type: archive
+        url: https://github.com/oneapi-src/oneTBB/archive/2019_U8.tar.gz
+        sha256: 6b540118cbc79f9cbc06a35033c18156c21b84ab7b6cf56d773b168ad2b68566
+      - type: patch
+        path: patches/tbb/tbb_cmake.patch
 
   - name: OpenImageIO
-    buildsystem: cmake-ninja
+    buildsystem: cmake
     build-options:
       cxxflags: -std=c++11 -Wno-error=stringop-truncation -Wno-error=class-memaccess -Wno-error=sizeof-pointer-memaccess -Wno-error=unused-function -Wno-error=deprecated-declarations -Wno-error=maybe-uninitialized -Wno-error=stringop-overflow= -Wno-error=misleading-indentation -Wno-error=format-truncation= -Wno-error=aligned-new= -Wno-error=mismatched-new-delete
+    builddir: true
     config-opts:
       - -D BUILD_TESTING=OFF
       - -D INSTALL_DOCS=OFF
@@ -82,24 +93,9 @@ modules:
         url: https://github.com/OpenImageIO/oiio.git
         tag: Release-1.6.3dev
       - type: patch
-        path: patches/luxmark3/luxmark3-oiio-boost-placeholders-rewrite.patch
-        use-git-am: false
-      - type: patch
         path: patches/luxmark3/luxmark3-oiio-gpstag-redefinition.patch
         use-git-am: false
-
-  - name: TBB
-    buildsystem: cmake
-    build-options:
-      cflags: -O2 -D_FORTIFY_SOURCE=2 -fstack-protector-strong -funwind-tables -fasynchronous-unwind-tables -fstack-clash-protection -flto -fno-fat-lto-objects
-      cxxflags: -O2 -D_FORTIFY_SOURCE=2 -fstack-protector-strong -funwind-tables -fasynchronous-unwind-tables -fstack-clash-protection -flto -fno-fat-lto-objects
-    sources:
-      - type: archive
-        url: https://github.com/oneapi-src/oneTBB/archive/2019_U8.tar.gz
-        sha256: 6b540118cbc79f9cbc06a35033c18156c21b84ab7b6cf56d773b168ad2b68566
-      - type: patch
-        path: patches/tbb/tbb_cmake.patch
-
+        
   - name: Embree
     buildsystem: cmake-ninja
     build-options:
@@ -148,8 +144,8 @@ modules:
     # LuxRays doesn't build with Ninja.
     buildsystem: cmake
     build-options:
-      cxxflags: -std=c++11 -Wno-narrowing -pthread -DLUXCORE_DISABLE_EMBREE_BVH_BUILDER
-      no-make-install: true
+      cxxflags: -std=c++11 -Wno-narrowing -pthread -DLUXCORE_DISABLE_EMBREE_BVH_BUILDER -I /usr/include/gtk-3.0 -I /usr/include/gtk-3.0/gtk -I /usr/include/pango-1.0/ -I /usr/include/harfbuzz -I /usr/include/cairo -I /usr/include/gdk-pixbuf-2.0 -I /usr/include/atk-1.0
+      cflags: -I /usr/include/gtk-3.0 -I /usr/include/gtk-3.0/gtk -I /usr/include/glib-2.0 -I /usr/lib/x86_64-linux-gnu/glib-2.0/include/ -I /usr/include/pango-1.0/ -I /usr/include/harfbuzz -I /usr/include/cairo -I /usr/include/gdk-pixbuf-2.0 -I /usr/include/atk-1.0
       post-install:
       - mkdir -pv /app/include
       - cp -av include/. /app/include/.
@@ -159,7 +155,7 @@ modules:
       - cp -av bin/slg4 /app/opt/luxrender/slg4
     sources:
       - type: git
-        url: https://github.com/LuxRender/LuxRays/
+        url: https://github.com/rrubberr/LuxRays/
         tag: for_v1.7
 
   - name: LuxRender
