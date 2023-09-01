@@ -23,7 +23,6 @@ cleanup:
 
 modules:
 
-  - shared-modules/qt4/qt4-4.8.7-minimal.json
   - shared-modules/python2.7/python-2.7.json
 
   - name: IlmBase
