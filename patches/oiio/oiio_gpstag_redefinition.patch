@@ -1,11 +1,6 @@
-commit c72bac4c563b975aee8be68200d90b561b427e27
-Author: Thomas Debesse <dev@illwieckz.net>
-Date:   Fri Oct 21 18:18:02 2022 +0200
-
-    patch: luxmark3/luxmark3-oiio-gpstag-redefinition.patch
+    patch: oiio/oiio_gpstag_redefinition.patch
 
 diff --git a/src/libOpenImageIO/exif.cpp b/src/libOpenImageIO/exif.cpp
-index 391f622d..6b1626c0 100644
 --- a/src/libOpenImageIO/exif.cpp
 +++ b/src/libOpenImageIO/exif.cpp
 @@ -209,63 +209,63 @@ static const EXIF_tag_info exif_tag_table[] = {
