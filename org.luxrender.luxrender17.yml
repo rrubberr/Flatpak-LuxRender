@@ -50,12 +50,14 @@ modules:
   - name: Boost
     buildsystem: simple
     build-commands:
-      - ./bootstrap.sh --prefix=/app --without-libraries=locale,context
+      - ./bootstrap.sh --prefix=/app --without-libraries=locale
       - ./b2 install variant=release link=shared runtime-link=shared cxxflags="${CXXFLAGS}" linkflags="${LDFLAGS}" -j "32"
     sources:
       - type: archive
         url: http://sourceforge.net/projects/boost/files/boost/1.52.0/boost_1_52_0.tar.bz2
         sha1: cddd6b4526a09152ddc5db856463eaa1dc29c5d9
+      - type: patch
+        path: patches/boost/fix_boost_fcontext_includes.patch
 
   - name: TBB
     buildsystem: cmake
