@@ -30,7 +30,7 @@ modules:
     # IlmBase doesn't build with Ninja.
     buildsystem: cmake
     build-options:
-      cxxflags: -std=c++11
+      cxxflags: -w -std=c++11
     subdir:
       IlmBase
     sources: &openexr_sources
@@ -41,7 +41,7 @@ modules:
   - name: OpenEXR
     buildsystem: cmake
     build-options:
-      cxxflags: -std=c++11 -I /app/include/OpenEXR
+      cxxflags: -w -std=c++11 -I /app/include/OpenEXR
     subdir:
       OpenEXR
     sources:
@@ -54,18 +54,19 @@ modules:
       - ./b2 install variant=release link=shared runtime-link=shared cxxflags="${CXXFLAGS}" linkflags="${LDFLAGS}" -j "32"
     sources:
       - type: archive
-        url: http://sourceforge.net/projects/boost/files/boost/1.52.0/boost_1_52_0.tar.bz2
-        sha1: cddd6b4526a09152ddc5db856463eaa1dc29c5d9
+        url: http://sourceforge.net/projects/boost/files/boost/1.53.0/boost_1_53_0.tar.bz2
+        sha1: e6dd1b62ceed0a51add3dda6f3fc3ce0f636a7f3
       - type: patch
-        path: patches/boost/fix_boost_fcontext_includes.patch
+        path: patches/boost/fix_boost_atomic_includes.patch
       - type: patch
         path: patches/boost/fix_boost_formatter_overloaded_func.patch
+        
 
   - name: TBB
     buildsystem: cmake
     build-options:
       cflags: -O2 -D_FORTIFY_SOURCE=2 -fstack-protector-strong -funwind-tables -fasynchronous-unwind-tables -fstack-clash-protection -flto -fno-fat-lto-objects
-      cxxflags: -O2 -D_FORTIFY_SOURCE=2 -fstack-protector-strong -funwind-tables -fasynchronous-unwind-tables -fstack-clash-protection -flto -fno-fat-lto-objects
+      cxxflags: -w -O2 -D_FORTIFY_SOURCE=2 -fstack-protector-strong -funwind-tables -fasynchronous-unwind-tables -fstack-clash-protection -flto -fno-fat-lto-objects
     sources:
       - type: archive
         url: https://github.com/oneapi-src/oneTBB/archive/2019_U8.tar.gz
@@ -76,7 +77,7 @@ modules:
   - name: OpenImageIO
     buildsystem: cmake
     build-options:
-      cxxflags: -std=c++11 -Wno-error=stringop-truncation -Wno-error=class-memaccess -Wno-error=sizeof-pointer-memaccess -Wno-error=unused-function -Wno-error=deprecated-declarations -Wno-error=maybe-uninitialized -Wno-error=stringop-overflow= -Wno-error=misleading-indentation -Wno-error=format-truncation= -Wno-error=aligned-new= -Wno-error=mismatched-new-delete
+      cxxflags: -w -std=c++11 -Wno-error=stringop-truncation -Wno-error=class-memaccess -Wno-error=sizeof-pointer-memaccess -Wno-error=unused-function -Wno-error=deprecated-declarations -Wno-error=maybe-uninitialized -Wno-error=stringop-overflow= -Wno-error=misleading-indentation -Wno-error=format-truncation= -Wno-error=aligned-new= -Wno-error=mismatched-new-delete
     builddir: true
     config-opts:
       - -D BUILD_TESTING=OFF
@@ -135,8 +136,7 @@ modules:
   - name: freeglut
     buildsystem: cmake
     build-options:
-    # https://github.com/flathub/org.openscad.OpenSCAD/blob/ce6220f8674bcd738d09244feb753204cd9a5904/org.openscad.OpenSCAD.json
-      - cflags: -fcommon
+      - cflags: -w -fcommon
     config-opts:
       - -D FREEGLUT_BUILD_STATIC_LIBS=OFF
     sources:
@@ -148,7 +148,7 @@ modules:
     # LuxRays doesn't build with Ninja.
     buildsystem: cmake
     build-options:
-      cxxflags: -std=c++11 -Wno-narrowing -pthread -DLUXCORE_DISABLE_EMBREE_BVH_BUILDER -I /usr/include/gtk-3.0 -I /usr/include/gtk-3.0/gtk -I /usr/include/pango-1.0/ -I /usr/include/harfbuzz -I /usr/include/cairo -I /usr/include/gdk-pixbuf-2.0 -I /usr/include/atk-1.0
+      cxxflags: -w -std=c++11 -Wno-narrowing -pthread -DLUXCORE_DISABLE_EMBREE_BVH_BUILDER -I /usr/include/gtk-3.0 -I /usr/include/gtk-3.0/gtk -I /usr/include/pango-1.0/ -I /usr/include/harfbuzz -I /usr/include/cairo -I /usr/include/gdk-pixbuf-2.0 -I /usr/include/atk-1.0
       cflags: -I /usr/include/gtk-3.0 -I /usr/include/gtk-3.0/gtk -I /usr/include/glib-2.0 -I /usr/lib/x86_64-linux-gnu/glib-2.0/include/ -I /usr/include/pango-1.0/ -I /usr/include/harfbuzz -I /usr/include/cairo -I /usr/include/gdk-pixbuf-2.0 -I /usr/include/atk-1.0
       post-install:
       - mkdir -pv /app/include
