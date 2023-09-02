@@ -168,7 +168,7 @@ modules:
         url: https://github.com/rrubberr/LuxRays/
         tag: for_v1.7
 
-  - shared-modules/qt4/qt4-4.8.7-minimal.json
+  - shared-modules/qt4/qt4-4.8.6.json
 
   - name: LuxRender
     buildsystem: cmake-ninja
