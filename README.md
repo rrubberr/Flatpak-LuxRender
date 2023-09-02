@@ -8,6 +8,14 @@ This repository provides the sources for building the LuxRender 1.7 Flatpak pack
 ## Building and running the Flatpak
 
 ```sh
+apt install flatpak flatpak-builder
+```
+
+```sh
+git clone https://github.com/rrubberr/flatpak-luxrender
+```
+
+```sh
 flatpak remote-add --user --if-not-exists \
 	flathub https://flathub.org/repo/flathub.flatpakrepo
 ```
