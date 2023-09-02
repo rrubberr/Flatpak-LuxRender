@@ -29,7 +29,7 @@ flatpak-builder --install --install-deps-from=flathub \
 
 ## Running the Flatpak
 
-Running LuxMark:
+Running LuxRender:
 
 ```sh
 flatpak run org.luxrender/luxrender17
@@ -38,17 +38,4 @@ flatpak run org.luxrender/luxrender17
 
 ## Known limitations
 
-The Flatpak's Mesa Clover OpenCL platform does not ship the `/usr/include/clc/clc.h` file and others. This will result on such error:
-
-```
-QBVH compilation error: :1:10: fatal error: 'clc/clc.h' file not found 
-OpenCL ERROR: clBuildProgram(CL_BUILD_PROGRAM_FAILURE)
-```
-
-You can workaround it this way:
-
-```sh
-gl_runtime="${XDG_DATA_HOME:-${HOME}/.local/share}/flatpak/runtime/org.freedesktop.Platform.GL.default/$(uname -m)/*/active/files"
-mkdir "${gl_runtime}/include"
-cp -a /usr/include/clc "${gl_runtime}/include"
-```
+Currently, the LuxRender Flatpak cannot be invoked by LuxBlend25 (i.e. launched from Blender) beause the binaries are dynamically linked within a Flatpak. This will be resolved in the future by statically linking the binaries.
