@@ -12,7 +12,7 @@ apt install flatpak flatpak-builder
 ```
 
 ```sh
-git clone https://github.com/rrubberr/flatpak-luxrender
+git clone https://github.com/rrubberr/flatpak-luxrender && cd flatpak-luxrender
 ```
 
 ```sh
