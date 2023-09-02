@@ -10,11 +10,7 @@ finish-args:
   - --share=ipc
   - --socket=x11
   - --socket=wayland
-  - --filesystem=xdg-download:rw
-  - --filesystem=xdg-music:rw
-  - --filesystem=xdg-documents:rw
-  - --filesystem=xdg-pictures:rw
-  - --filesystem=xdg-videos:rw
+  - --filesystem=xdg-host:rw
 
 cleanup:
   - /include
