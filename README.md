@@ -38,4 +38,4 @@ flatpak run org.luxrender/luxrender17
 
 ## Known limitations
 
-Currently, the LuxRender Flatpak cannot be invoked by LuxBlend25 (i.e. launched from Blender) beause the binaries are dynamically linked within a Flatpak. This will be resolved in the future by statically linking the binaries.
+Currently, the LuxRender Flatpak cannot be invoked by LuxBlend25 (i.e. launched from Blender) beause the binaries are dynamically linked within the Flatpak. This will be resolved in the future by statically linking the binaries.
