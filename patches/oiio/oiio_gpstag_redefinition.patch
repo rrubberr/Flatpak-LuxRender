@@ -1,4 +1,5 @@
-    patch: oiio/oiio_gpstag_redefinition.patch
+
+    from https://github.com/illwieckz/flathub/tree/luxmark3
 
 diff --git a/src/libOpenImageIO/exif.cpp b/src/libOpenImageIO/exif.cpp
 --- a/src/libOpenImageIO/exif.cpp

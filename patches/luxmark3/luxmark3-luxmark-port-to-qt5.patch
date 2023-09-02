@@ -1,8 +1,5 @@
-commit cc6a000cb7f65356a1a41cd8a96664cabb16c306
-Author: Thomas Debesse <dev@illwieckz.net>
-Date:   Fri Oct 21 18:22:16 2022 +0200
 
-    patch: luxmark3/luxmark3-luxmark-port-to-qt5.patch
+    from https://github.com/illwieckz/flathub/tree/luxmark3
 
 diff --git a/src/CMakeLists.txt b/src/CMakeLists.txt
 index e9fb5ba..0e8bad2 100644

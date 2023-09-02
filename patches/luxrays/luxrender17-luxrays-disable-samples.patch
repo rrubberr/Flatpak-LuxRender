@@ -1,8 +1,0 @@
-    patch: lxurays/luxrender17-luxrays-disable-samples.patch
-
-diff --git a/CMakeLists.txt b/CMakeLists.txt 
---- a/CMakeLists.txt 
-+++ b/CMakeLists.txt 
-@@ -137,1 +137,1 @@ public:
--if(NOT APPLE OR OSX_BUILD_DEMOS)
-+if(NOT LINUX OR OSX_BUILD_DEMOS)

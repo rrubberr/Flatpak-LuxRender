@@ -1,8 +1,5 @@
-commit ee494145187a295c2d05dba29dddf6da0e14785d
-Author: Thomas Debesse <dev@illwieckz.net>
-Date:   Mon Oct 24 10:26:41 2022 +0200
 
-    patch: luxmark3/luxmark3-luxcore-enable-slg4-build.patch
+    from https://github.com/illwieckz/flathub/tree/luxmark3
 
 diff --git a/CMakeLists.txt b/CMakeLists.txt
 index 42f753061..f165c991c 100644

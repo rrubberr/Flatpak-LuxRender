@@ -111,6 +111,7 @@ modules:
   - name: Embree
     buildsystem: cmake-ninja
     build-options:
+      cxxflags: -w
     config-opts:
       - -D EMBREE_ISPC_SUPPORT=OFF
       - -D EMBREE_TUTORIALS=OFF
@@ -151,6 +152,8 @@ modules:
         url: https://sourceforge.net/projects/freeglut/files/freeglut/3.2.2/freeglut-3.2.2.tar.gz
         sha256: c5944a082df0bba96b5756dddb1f75d0cd72ce27b5395c6c1dde85c2ff297a50
 
+#Using the modified LuxRays git is currently required; https://github.com/LuxRender/LuxRays will not build.
+
   - name: LuxRays
     buildsystem: cmake
     build-options:
@@ -183,6 +186,8 @@ modules:
 
   - shared-modules/qt4/qt4-4.8.7-minimal.json
 
+#Using the modified Lux git is currently required; https://github.com/LuxRender/Lux will not build.
+
   - name: LuxRender
     buildsystem: cmake
     build-options:
@@ -200,17 +205,6 @@ modules:
       - type: git
         url: https://github.com/rrubberr/Lux
         tag: for_v1.7
-
-#  - name: slg4
-#    buildsystem: simple
-#    build-commands:
-#      - install -Dm0755 -t /app/bin slg4
-#    sources:
-#      - type: script
-#        commands:
-#          - cd /app/opt/luxrender
-#          - ./slg4 "${@}"
-#        dest-filename: slg4
 
   - name: metadata
     buildsystem: simple
