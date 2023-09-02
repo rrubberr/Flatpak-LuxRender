@@ -6,5 +6,5 @@ Type=Application
 Terminal=false
 Exec=luxrender
 Categories=System;
-Icon=info.luxrender.luxrender17
+Icon=org.luxrender.luxrender17
 Keywords=benchmark;opencl;luxcore;luxcorerender

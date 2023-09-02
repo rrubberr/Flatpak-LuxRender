@@ -46,20 +46,27 @@ modules:
     sources:
       *openexr_sources
 
+#  - name: Boost
+#    buildsystem: simple
+#    build-commands:
+#      - ./bootstrap.sh --prefix=/app
+#      - ./b2 install variant=release link=shared runtime-link=shared cxxflags="${CXXFLAGS} -w -I boost" linkflags="${LDFLAGS}" -j "32"
+#    sources:
+#      - type: archive
+#        url: http://sourceforge.net/projects/boost/files/boost/1.53.0/boost_1_53_0.tar.bz2
+#        sha1: e6dd1b62ceed0a51add3dda6f3fc3ce0f636a7f3
+#      - type: patch
+#        path: patches/boost/fix_boost_formatter_overloaded_func.patch
+
   - name: Boost
     buildsystem: simple
     build-commands:
       - ./bootstrap.sh --prefix=/app
-      - ./b2 install variant=release link=shared runtime-link=shared cxxflags="${CXXFLAGS} -w" linkflags="${LDFLAGS}" -j "32"
+      - ./b2 install variant=release link=shared runtime-link=shared cxxflags="${CXXFLAGS} -w" linkflags="${LDFLAGS}" -j "${FLATPAK_BUILDER_N_JOBS}"
     sources:
       - type: archive
-        url: http://sourceforge.net/projects/boost/files/boost/1.53.0/boost_1_53_0.tar.bz2
-        sha1: e6dd1b62ceed0a51add3dda6f3fc3ce0f636a7f3
-      - type: patch
-        path: patches/boost/fix_boost_atomic_includes.patch
-      - type: patch
-        path: patches/boost/fix_boost_formatter_overloaded_func.patch
-        
+        url: http://sourceforge.net/projects/boost/files/boost/1.56.0/boost_1_56_0.tar.bz2
+        sha1: f94bb008900ed5ba1994a1072140590784b9b5df      
 
   - name: TBB
     buildsystem: cmake
@@ -144,7 +151,6 @@ modules:
         sha256: c5944a082df0bba96b5756dddb1f75d0cd72ce27b5395c6c1dde85c2ff297a50
 
   - name: LuxRays
-    # LuxRays doesn't build with Ninja.
     buildsystem: cmake
     build-options:
       cxxflags: -w -std=c++11 -Wno-narrowing -pthread -DLUXCORE_DISABLE_EMBREE_BVH_BUILDER -DCL_TARGET_OPENCL_VERSION=300 -I /usr/include/gtk-3.0 -I /usr/include/gtk-3.0/gtk -I /usr/include/glib-2.0 -I /usr/lib/x86_64-linux-gnu/glib-2.0/include/ -I /usr/include/pango-1.0/ -I /usr/include/harfbuzz -I /usr/include/cairo -I /usr/include/gdk-pixbuf-2.0 -I /usr/include/atk-1.0
@@ -162,42 +168,45 @@ modules:
         url: https://github.com/rrubberr/LuxRays/
         tag: for_v1.7
 
+  - shared-modules/qt4/qt4-4.8.7-minimal.json
+
   - name: LuxRender
     buildsystem: cmake-ninja
     build-options:
-      cxxflags: -w -std=c++11 -Wno-narrowing -pthread 
+      cxxflags: -w -std=c++11 -pthread -I /app/lib -L /app/lib
+    builddir: true
     config-opts:
       - -D LuxRays_HOME=/app 
-    no-make-install: true
-    post-install:
-      - mkdir -pv /app/opt/luxrender
-      - cp -av bin/luxmark /app/opt/luxrender/luxrender
+      - -D PYTHON_CUSTOM=TRUE
+      - -D PYTHON_INCLUDE_PATH=/app/include/python2.7/
+      - -D PYTHON_LIBRARIES=/app/lib/libpython2.7.so
+      - -D PYTHON_HOME=/app/bin
     sources:
       - type: git
-        url: https://github.com/LuxRender/Lux/
+        url: https://github.com/rrubberr/Lux
         tag: for_v1.7
 
-#  - name: luxmark
-#    buildsystem: simple
-#    build-commands:
-#      - install -Dm0755 -t /app/bin luxmark
-#    sources:
-#      - type: script
-#        commands:
-#          - cd /app/opt/luxmark
-#          - ./luxmark --mode=PAUSE "${@}"
-#        dest-filename: luxmark
-#
-#  - name: slg4
-#    buildsystem: simple
-#    build-commands:
-#      - install -Dm0755 -t /app/bin slg4
-#    sources:
-#      - type: script
-#        commands:
-#          - cd /app/opt/luxmark
-#          - ./slg4 "${@}"
-#        dest-filename: slg4
+  - name: LuxRender-UI
+    buildsystem: simple
+    build-commands:
+      - install -Dm0755 -t /app/bin luxrender
+    sources:
+      - type: script
+        commands:
+          - cd /app/opt/luxrender
+          - ./luxrender
+        dest-filename: luxrender
+
+  - name: slg4
+    buildsystem: simple
+    build-commands:
+      - install -Dm0755 -t /app/bin slg4
+    sources:
+      - type: script
+        commands:
+          - cd /app/opt/luxrender
+          - ./slg4 "${@}"
+        dest-filename: slg4
 
   - name: metadata
     buildsystem: simple
