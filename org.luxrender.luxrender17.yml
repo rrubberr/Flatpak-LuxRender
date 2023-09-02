@@ -10,7 +10,7 @@ finish-args:
   - --share=ipc
   - --socket=x11
   - --socket=wayland
-  - --filesystem=xdg-host:rw
+  - --filesystem=host:rw
 
 cleanup:
   - /include
