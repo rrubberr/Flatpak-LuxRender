@@ -10,6 +10,11 @@ finish-args:
   - --share=ipc
   - --socket=x11
   - --socket=wayland
+  - --filesystem=xdg-download:rw
+  - --filesystem=xdg-music:rw
+  - --filesystem=xdg-documents:rw
+  - --filesystem=xdg-pictures:rw
+  - --filesystem=xdg-videos:rw
 
 cleanup:
   - /include
@@ -168,23 +173,24 @@ modules:
         url: https://github.com/rrubberr/LuxRays/
         tag: for_v1.7
 
-  - name: Qt5
-    buildsystem: simple
-    build-options:
-      cxxflags: -w -std=c++11
-    build-commands:
-      - ./configure -opensource -nomake examples -nomake tests
-      - make install prefix=/app -j "${FLATPAK_BUILDER_N_JOBS}"
-    sources:
-      - type: archive
-        url: https://download.qt.io/archive/qt/5.15/5.15.10/single/qt-everywhere-opensource-src-5.15.10.tar.xz
-        sha256: b545cb83c60934adc9a6bbd27e2af79e5013de77d46f5b9f5bb2a3c762bf55ca
+#  - name: Qt5
+#    buildsystem: simple
+#    build-options:
+#      cxxflags: -w -std=c++11
+#    build-commands:
+#      - ./configure -developer-build -opensource -nomake examples -nomake tests
+#      - make -j "${FLATPAK_BUILDER_N_JOBS}"
+#    sources:
+#     - type: archive
+#       url: https://download.qt.io/archive/qt/5.15/5.15.10/single/qt-everywhere-opensource-src-5.15.10.tar.xz
+#       sha256: b545cb83c60934adc9a6bbd27e2af79e5013de77d46f5b9f5bb2a3c762bf55ca
 
+  - shared-modules/qt4/qt4-4.8.7-minimal.json
 
   - name: LuxRender
-    buildsystem: cmake-ninja
+    buildsystem: cmake
     build-options:
-      cxxflags: -w -std=c++11 -pthread -I /app/lib -L /app/lib -L /usr/lib/x86_64-linux-gnu -I /usr/lib/x86_64-linux-gnu
+      cxxflags: -w -std=c++11 -pthread -L /app/lib -L /app/lib -L /usr/lib/x86_64-linux-gnu -DCL_TARGET_OPENCL_VERSION=300
     builddir: true
     config-opts:
       - -D LuxRays_HOME=/app 
@@ -192,32 +198,23 @@ modules:
       - -D PYTHON_INCLUDE_PATH=/app/include/python2.7/
       - -D PYTHON_LIBRARIES=/app/lib/libpython2.7.so
       - -D PYTHON_HOME=/app/bin
+    post-install:
+      - cp -rv ${FLATPAK_BUILDER_BUILDDIR}/_flatpak_build/* /app/bin/
     sources:
       - type: git
         url: https://github.com/rrubberr/Lux
-        tag: for_v1.7_qt5
+        tag: for_v1.7
 
-  - name: LuxRender-UI
-    buildsystem: simple
-    build-commands:
-      - install -Dm0755 -t /app/bin luxrender
-    sources:
-      - type: script
-        commands:
-          - cd /app/opt/luxrender
-          - ./luxrender
-        dest-filename: luxrender
-
-  - name: slg4
-    buildsystem: simple
-    build-commands:
-      - install -Dm0755 -t /app/bin slg4
-    sources:
-      - type: script
-        commands:
-          - cd /app/opt/luxrender
-          - ./slg4 "${@}"
-        dest-filename: slg4
+#  - name: slg4
+#    buildsystem: simple
+#    build-commands:
+#      - install -Dm0755 -t /app/bin slg4
+#    sources:
+#      - type: script
+#        commands:
+#          - cd /app/opt/luxrender
+#          - ./slg4 "${@}"
+#        dest-filename: slg4
 
   - name: metadata
     buildsystem: simple
