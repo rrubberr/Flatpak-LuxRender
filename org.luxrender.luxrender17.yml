@@ -168,12 +168,23 @@ modules:
         url: https://github.com/rrubberr/LuxRays/
         tag: for_v1.7
 
-  - shared-modules/qt4/qt4-4.8.6.json
+  - name: Qt5
+    buildsystem: simple
+    build-options:
+      cxxflags: -w -std=c++11
+    build-commands:
+      - ./configure -opensource -nomake examples -nomake tests
+      - make install prefix=/app -j "${FLATPAK_BUILDER_N_JOBS}"
+    sources:
+      - type: archive
+        url: https://download.qt.io/archive/qt/5.15/5.15.10/single/qt-everywhere-opensource-src-5.15.10.tar.xz
+        sha256: b545cb83c60934adc9a6bbd27e2af79e5013de77d46f5b9f5bb2a3c762bf55ca
+
 
   - name: LuxRender
     buildsystem: cmake-ninja
     build-options:
-      cxxflags: -w -std=c++11 -pthread -I /app/lib -L /app/lib
+      cxxflags: -w -std=c++11 -pthread -I /app/lib -L /app/lib -L /usr/lib/x86_64-linux-gnu -I /usr/lib/x86_64-linux-gnu
     builddir: true
     config-opts:
       - -D LuxRays_HOME=/app 
@@ -184,7 +195,7 @@ modules:
     sources:
       - type: git
         url: https://github.com/rrubberr/Lux
-        tag: for_v1.7
+        tag: for_v1.7_qt5
 
   - name: LuxRender-UI
     buildsystem: simple
