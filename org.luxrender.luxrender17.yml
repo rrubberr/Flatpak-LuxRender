@@ -47,18 +47,6 @@ modules:
     sources:
       *openexr_sources
 
-#  - name: Boost
-#    buildsystem: simple
-#    build-commands:
-#      - ./bootstrap.sh --prefix=/app
-#      - ./b2 install variant=release link=shared runtime-link=shared cxxflags="${CXXFLAGS} -w -I boost" linkflags="${LDFLAGS}" -j "32"
-#    sources:
-#      - type: archive
-#        url: http://sourceforge.net/projects/boost/files/boost/1.53.0/boost_1_53_0.tar.bz2
-#        sha1: e6dd1b62ceed0a51add3dda6f3fc3ce0f636a7f3
-#      - type: patch
-#        path: patches/boost/fix_boost_formatter_overloaded_func.patch
-
   - name: Boost
     buildsystem: simple
     build-commands:
@@ -106,7 +94,6 @@ modules:
         tag: Release-1.6.3dev
       - type: patch
         path: patches/oiio/oiio_gpstag_redefinition.patch
-        use-git-am: false
         
   - name: Embree
     buildsystem: cmake
@@ -168,33 +155,32 @@ modules:
       - cp -av include/. /app/include/.
       - mkdir -pv /app/lib
       - cp -av lib/. /app/lib/.
-      - mkdir -pv /app/opt/luxrender
-      - cp -av bin/slg4 /app/opt/luxrender/slg4
+      - cp -av bin/slg4 /app/bin/slg4
     sources:
       - type: git
         url: https://github.com/rrubberr/LuxRays 
         tag: for_v1.7
 
-#  - name: Qt5
-#    buildsystem: simple
-#    build-options:
-#      cxxflags: -w -std=c++11
-#    build-commands:
-#      - ./configure -developer-build -opensource -nomake examples -nomake tests
-#      - make -j "${FLATPAK_BUILDER_N_JOBS}"
-#    sources:
-#     - type: archive
-#       url: https://download.qt.io/archive/qt/5.15/5.15.10/single/qt-everywhere-opensource-src-5.15.10.tar.xz
-#       sha256: b545cb83c60934adc9a6bbd27e2af79e5013de77d46f5b9f5bb2a3c762bf55ca
+#- shared-modules/qt4/qt4-4.8.7-minimal.json
 
-  - shared-modules/qt4/qt4-4.8.7-minimal.json
+  - name: Qt5
+    buildsystem: simple
+    build-options:
+      cxxflags: -w -std=c++11
+    build-commands:
+      - ./configure -prefix "/app" -release -opensource -nomake examples -nomake tests
+      - make install -j "${FLATPAK_BUILDER_N_JOBS}"
+    sources:
+     - type: archive
+       url: https://download.qt.io/archive/qt/5.15/5.15.10/submodules/qtbase-everywhere-opensource-src-5.15.10.tar.xz
+       sha256: c0d06cb18d20f10bf7ad53552099e097ec39362d30a5d6f104724f55fa1c8fb9
 
 #Using the modified Lux git is currently required; https://github.com/LuxRender/Lux will not build.
 
   - name: LuxRender
     buildsystem: cmake
     build-options:
-      cxxflags: -w -std=c++11 -pthread -L /app/lib -L /app/lib -L /usr/lib/x86_64-linux-gnu -DCL_TARGET_OPENCL_VERSION=300
+      cxxflags: -w -std=c++11 -pthread -I /app/bin -I /app/lib -I /app/lib/cmake/ -I /app/lib/cmake/Qt5 -L /app/lib -lQt5Core -lQt5Gui -lQt5Widgets -L /usr/lib/x86_64-linux-gnu -DCL_TARGET_OPENCL_VERSION=300
     builddir: true
     config-opts:
       - -D LuxRays_HOME=/app 
@@ -202,12 +188,15 @@ modules:
       - -D PYTHON_INCLUDE_PATH=/app/include/python2.7/
       - -D PYTHON_LIBRARIES=/app/lib/libpython2.7.so
       - -D PYTHON_HOME=/app/bin
+      - -D Qt5_DIR=/app/lib/cmake/Qt5
+      - -D CMAKE_PREFIX_PATH=/app/lib/cmake/Qt5
+      - -D CMAKE_FIND_PACKAGE_PREFER_CONFIG=TRUE
     post-install:
       - cp -rv ${FLATPAK_BUILDER_BUILDDIR}/_flatpak_build/* /app/bin/
     sources:
       - type: git
         url: https://github.com/rrubberr/Lux
-        tag: for_v1.7
+        tag: for_v1.7_qt5
 
   - name: metadata
     buildsystem: simple
