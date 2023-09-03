@@ -157,10 +157,10 @@ modules:
   - name: LuxRays
     buildsystem: cmake
     build-options:
-      cxxflags: -w -std=c++11 -Wno-narrowing -pthread -DLUXCORE_DISABLE_EMBREE_BVH_BUILDER -DCL_TARGET_OPENCL_VERSION=300 -I /usr/include/gtk-3.0 -I /usr/include/gtk-3.0/gtk -I /usr/include/glib-2.0 -I /usr/lib/x86_64-linux-gnu/glib-2.0/include/ -I /usr/include/pango-1.0/ -I /usr/include/harfbuzz -I /usr/include/cairo -I /usr/include/gdk-pixbuf-2.0 -I /usr/include/atk-1.0
+      cxxflags: -w -L /app/lib -lpython2.7 -std=c++11  -Wno-narrowing -pthread -DLUXCORE_DISABLE_EMBREE_BVH_BUILDER -DCL_TARGET_OPENCL_VERSION=300 -I /usr/include/gtk-3.0 -I /usr/include/gtk-3.0/gtk -I /usr/include/glib-2.0 -I /usr/lib/x86_64-linux-gnu/glib-2.0/include/ -I /usr/include/pango-1.0/ -I /usr/include/harfbuzz -I /usr/include/cairo -I /usr/include/gdk-pixbuf-2.0 -I /usr/include/atk-1.0
       cflags: -L /usr/lib/x86_64-linux-gnu -lpthread -lgobject-2.0 -lgtk-3 -lglib-2.0 -I /usr/include/gtk-3.0 -I /usr/include/gtk-3.0/gtk -I /usr/include/glib-2.0 -I /usr/lib/x86_64-linux-gnu/glib-2.0/include/ -I /usr/include/pango-1.0/ -I /usr/include/harfbuzz -I /usr/include/cairo -I /usr/include/gdk-pixbuf-2.0 -I /usr/include/atk-1.0
     config-opts:
-      - -D PYTHON_INCLUDE_DIR=/app/include/python2.7/
+      - -D PYTHON_INCLUDE_DIR=/app/include/python2.7
       - -D PYTHON_LIBRARY=/app/lib/libpython2.7.so
     no-make-install: true
     post-install:
@@ -172,7 +172,7 @@ modules:
       - cp -av bin/slg4 /app/opt/luxrender/slg4
     sources:
       - type: git
-        url: https://github.com/rrubberr/LuxRays/
+        url: https://github.com/rrubberr/LuxRays 
         tag: for_v1.7
 
 #  - name: Qt5
