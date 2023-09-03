@@ -109,7 +109,7 @@ modules:
         use-git-am: false
         
   - name: Embree
-    buildsystem: cmake-ninja
+    buildsystem: cmake
     build-options:
       cxxflags: -w
     config-opts:
@@ -152,13 +152,16 @@ modules:
         url: https://sourceforge.net/projects/freeglut/files/freeglut/3.2.2/freeglut-3.2.2.tar.gz
         sha256: c5944a082df0bba96b5756dddb1f75d0cd72ce27b5395c6c1dde85c2ff297a50
 
-#Using the modified LuxRays git is currently required; https://github.com/LuxRender/LuxRays will not build.
+#Using the modified LuxRays git is NOT currently required; https://github.com/LuxRender/LuxRays will build.
 
   - name: LuxRays
     buildsystem: cmake
     build-options:
       cxxflags: -w -std=c++11 -Wno-narrowing -pthread -DLUXCORE_DISABLE_EMBREE_BVH_BUILDER -DCL_TARGET_OPENCL_VERSION=300 -I /usr/include/gtk-3.0 -I /usr/include/gtk-3.0/gtk -I /usr/include/glib-2.0 -I /usr/lib/x86_64-linux-gnu/glib-2.0/include/ -I /usr/include/pango-1.0/ -I /usr/include/harfbuzz -I /usr/include/cairo -I /usr/include/gdk-pixbuf-2.0 -I /usr/include/atk-1.0
       cflags: -L /usr/lib/x86_64-linux-gnu -lpthread -lgobject-2.0 -lgtk-3 -lglib-2.0 -I /usr/include/gtk-3.0 -I /usr/include/gtk-3.0/gtk -I /usr/include/glib-2.0 -I /usr/lib/x86_64-linux-gnu/glib-2.0/include/ -I /usr/include/pango-1.0/ -I /usr/include/harfbuzz -I /usr/include/cairo -I /usr/include/gdk-pixbuf-2.0 -I /usr/include/atk-1.0
+    config-opts:
+      - -D PYTHON_INCLUDE_DIR=/app/include/python2.7/
+      - -D PYTHON_LIBRARY=/app/lib/libpython2.7.so
     no-make-install: true
     post-install:
       - mkdir -pv /app/include
