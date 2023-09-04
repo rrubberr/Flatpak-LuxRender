@@ -5,7 +5,9 @@ cp ~/.local/share/flatpak/app/org.luxrender.luxrender17/current/active/files/bin
 cp ~/.local/share/flatpak/app/org.luxrender.luxrender17/current/active/files/bin/luxrender .
 cp ~/.local/share/flatpak/app/org.luxrender.luxrender17/current/active/files/bin/luxvr .
 cp ~/.local/share/flatpak/app/org.luxrender.luxrender17/current/active/files/bin/slg4 .
+cp ~/.local/share/flatpak/app/org.luxrender.luxrender17/current/active/files/bin/pylux.so .
 cp ~/.local/share/flatpak/app/org.luxrender.luxrender17/current/active/files/lib64/liblux.so .
+cp ~/.local/share/flatpak/app/org.luxrender.luxrender17/current/active/files/lib/pyluxcore.so .
 cp ~/.local/share/flatpak/app/org.luxrender.luxrender17/current/active/files/lib/libOpenImageIO.so.1.6.3 ./libOpenImageIO.so.1.6
 cp ~/.local/share/flatpak/app/org.luxrender.luxrender17/current/active/files/lib/libboost_thread.so.1.56.0 .
 cp ~/.local/share/flatpak/app/org.luxrender.luxrender17/current/active/files/lib/libboost_program_options.so.1.56.0 .
