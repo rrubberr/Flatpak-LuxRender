@@ -27,7 +27,6 @@ modules:
   - shared-modules/python2.7/python-2.7.json
 
   - name: IlmBase
-    # IlmBase doesn't build with Ninja.
     buildsystem: cmake
     build-options:
       cxxflags: -w -std=c++11
@@ -139,7 +138,7 @@ modules:
         url: https://sourceforge.net/projects/freeglut/files/freeglut/3.2.2/freeglut-3.2.2.tar.gz
         sha256: c5944a082df0bba96b5756dddb1f75d0cd72ce27b5395c6c1dde85c2ff297a50
 
-#Using the modified LuxRays git is NOT currently required; https://github.com/LuxRender/LuxRays will build.
+#Using the modified LuxRays git is currently NOT REQUIRED; https://github.com/LuxRender/LuxRays will build from tag "for_v1.7".
 
   - name: LuxRays
     buildsystem: cmake
@@ -161,8 +160,6 @@ modules:
         url: https://github.com/rrubberr/LuxRays 
         tag: for_v1.7
 
-#- shared-modules/qt4/qt4-4.8.7-minimal.json
-
   - name: Qt5
     buildsystem: simple
     build-options:
@@ -175,7 +172,7 @@ modules:
        url: https://download.qt.io/archive/qt/5.15/5.15.10/submodules/qtbase-everywhere-opensource-src-5.15.10.tar.xz
        sha256: c0d06cb18d20f10bf7ad53552099e097ec39362d30a5d6f104724f55fa1c8fb9
 
-#Using the modified Lux git is currently required; https://github.com/LuxRender/Lux will not build.
+#Using the modified Lux git is currently REQUIRED; https://github.com/LuxRender/Lux will not build.
 
   - name: LuxRender
     buildsystem: cmake
