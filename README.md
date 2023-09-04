@@ -5,7 +5,7 @@
 This repository provides the sources for building the LuxRender 1.7 Flatpak package.
 
 
-## Building and running the Flatpak
+## Building the Flatpak
 
 ```sh
 apt install flatpak flatpak-builder
