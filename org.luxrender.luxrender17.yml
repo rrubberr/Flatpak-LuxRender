@@ -195,7 +195,7 @@ modules:
       - cp -rv ${FLATPAK_BUILDER_BUILDDIR}/_flatpak_build/* /app/bin/
     sources:
       - type: git
-        url: https://github.com/rrubberr/Lux
+        path: Lux/
         tag: for_v1.7_qt5
 
   - name: metadata
