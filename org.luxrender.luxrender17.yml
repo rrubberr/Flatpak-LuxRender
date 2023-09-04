@@ -206,4 +206,4 @@ modules:
       - type: file
         path: org.luxrender.luxrender17.desktop
       - type: file
-        path: org.luxrender.luxrender17.png
+        path: images/org.luxrender.luxrender17.png
