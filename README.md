@@ -33,7 +33,7 @@ Running LuxRender:
 ```sh
 flatpak run org.luxrender/luxrender17
 ```
-
+![LuxRender](org.luxrender.luxrender17_screenshot.png)
 
 ## Known limitations
 
