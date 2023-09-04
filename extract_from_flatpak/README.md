@@ -16,7 +16,7 @@ sh run_LuxRender.sh
 ```
 
 
-## Setting the Correct Qt5 Theme
+## Setting a Qt5 Theme
 
 Install the Qt5 Configuration Tool.
 
