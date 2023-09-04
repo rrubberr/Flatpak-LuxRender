@@ -21,3 +21,6 @@ cp ~/.local/share/flatpak/app/org.luxrender.luxrender17/current/active/files/lib
 cp ~/.local/share/flatpak/app/org.luxrender.luxrender17/current/active/files/lib/libHalf.so.12.0.0 ./libHalf.so.12
 cp ~/.local/share/flatpak/app/org.luxrender.luxrender17/current/active/files/lib/libIex-2_2.so.12.0.0 ./libIex-2_2.so.12
 cp ~/.local/share/flatpak/app/org.luxrender.luxrender17/current/active/files/lib/libIlmThread-2_2.so.12.0.0 ./libIlmThread-2_2.so.12
+cp ~/.local/share/flatpak/app/org.luxrender.luxrender17/current/active/files/lib/libembree.so.2.17.7 ./libembree.so.2
+cp ~/.local/share/flatpak/app/org.luxrender.luxrender17/current/active/files/lib/libtbb.so ./libtbb.so
+cp ~/.local/share/flatpak/app/org.luxrender.luxrender17/current/active/files/lib/libtbbmalloc.so ./libtbbmalloc.so
