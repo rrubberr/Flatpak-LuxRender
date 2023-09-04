@@ -1,4 +1,4 @@
 [submodule "Lux"]
 	path = Lux
-	url = https://github.com/rrubberr/Lux
-	branch = origin/for_v1.7_qt5
+	url = https://github.com/rrubberr/Lux.git
+	branch = for_v1.7_qt5
