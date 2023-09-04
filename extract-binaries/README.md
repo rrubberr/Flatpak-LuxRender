@@ -1,18 +1,18 @@
-# extract_from_flatpak.sh
+# extract-binaries.sh
 
 This script extracts LuxRender and its supporting shared objects from the Flatpak install, after it has been built.
 
-Be sure to run LuxRender from the included 'run_LuxRender.sh' to apply your system Qt5 theme.
+Be sure to run LuxRender from the included 'run-luxrender.sh' to apply your system Qt5 theme.
 
 
 ## Using the Scripts
 
 ```
-sh extract_from_flatpak.sh
+sh extract-binaries.sh
 ```
 
 ```
-sh run_LuxRender.sh
+sh run-luxrender.sh
 ```
 
 
