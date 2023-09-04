@@ -191,9 +191,8 @@ modules:
     post-install:
       - cp -rv ${FLATPAK_BUILDER_BUILDDIR}/_flatpak_build/* /app/bin/
     sources:
-      - type: git
+      - type: path
         path: Lux/
-        tag: for_v1.7_qt5
 
   - name: metadata
     buildsystem: simple
