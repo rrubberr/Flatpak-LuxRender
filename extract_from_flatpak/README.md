@@ -7,10 +7,12 @@ Be sure to run LuxRender from the included 'run_LuxRender.sh' to apply your syst
 
 ## Using the Scripts
 
-```sh extract_from_flatpak.sh
+```
+sh extract_from_flatpak.sh
 ```
 
-```sh run_LuxRender.sh
+```
+sh run_LuxRender.sh
 ```
 
 
@@ -18,9 +20,10 @@ Be sure to run LuxRender from the included 'run_LuxRender.sh' to apply your syst
 
 Install the Qt5 Configuration Tool.
 
-```sudo apt install qt5ct
+```
+sudo apt install qt5ct
 ```
 
 Set the system Qt5 theme to "Adwaita-Dark" as shown in the included screenshot.
 
-![LuxRender](org.luxrender.luxrender17_Qt5_Theming.png)
+![Theming](org.luxrender.luxrender17_Qt5_Theming.png)
