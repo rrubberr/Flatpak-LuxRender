@@ -16,7 +16,7 @@ flatpak remote-add --user --if-not-exists \
 ```
 
 ```sh
-git clone --recursive https://github.com/rrubberr/flatpak-luxrender && cd flatpak-luxrender
+git clone --recursive https://github.com/rrubberr/Flatpak-LuxRender && cd Flatpak-LuxRender
 ```
 
 ```sh
