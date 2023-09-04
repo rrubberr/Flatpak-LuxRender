@@ -191,7 +191,7 @@ modules:
     post-install:
       - cp -rv ${FLATPAK_BUILDER_BUILDDIR}/_flatpak_build/* /app/bin/
     sources:
-      - type: path
+      - type: dir
         path: Lux/
 
   - name: metadata
