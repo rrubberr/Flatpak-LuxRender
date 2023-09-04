@@ -10,14 +10,13 @@ This repository provides the sources for building the LuxRender 1.7 Flatpak pack
 ```sh
 apt install flatpak flatpak-builder
 ```
-
-```sh
-git clone https://github.com/rrubberr/flatpak-luxrender && cd flatpak-luxrender
-```
-
 ```sh
 flatpak remote-add --user --if-not-exists \
 	flathub https://flathub.org/repo/flathub.flatpakrepo
+```
+
+```sh
+git clone --recursive https://github.com/rrubberr/flatpak-luxrender && cd flatpak-luxrender
 ```
 
 ```sh
@@ -38,4 +37,4 @@ flatpak run org.luxrender/luxrender17
 
 ## Known limitations
 
-Currently, the LuxRender Flatpak cannot be invoked by LuxBlend25 (i.e. launched from Blender) beause the binaries are dynamically linked within the Flatpak. This will be resolved in the future by statically linking the binaries.
+Currently, the LuxRender Flatpak cannot be invoked by LuxBlend25 (i.e. launched from Blender) beause the binaries are dynamically linked within the Flatpak. This will be resolved in the future.
