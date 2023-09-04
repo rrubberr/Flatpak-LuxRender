@@ -1,6 +1,6 @@
 # LuxRender 1.7 Flatpak
 
-![LuxRender](org.luxrender.luxrender17.png)
+![LuxRender](images/org.luxrender.luxrender17.png)
 
 This repository provides the sources for building the LuxRender 1.7 Flatpak package.
 
@@ -46,8 +46,8 @@ sudo apt install qt5ct
 
 Set the system Qt5 theme to "Adwaita-Dark" as shown in the included screenshot. Adjust the font size to your taste.
 
-![Theming](/extract_from_flatpak/org.luxrender.luxrender17_Qt5_Theming.png)
-![Theming](/extract_from_flatpak/org.luxrender.luxrender17_Qt5_Theming2.png)
+![Theming](images/extract_from_flatpak/org.luxrender.luxrender17_Qt5_Theming.png)
+![Theming](images/extract_from_flatpak/org.luxrender.luxrender17_Qt5_Theming2.png)
 
 
 ## Known limitations
