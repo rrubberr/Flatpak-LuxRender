@@ -157,7 +157,7 @@ modules:
       - cp -av bin/slg4 /app/bin/slg4
     sources:
       - type: git
-        url: https://github.com/rrubberr/Flatpakl-LuxRays 
+        url: https://github.com/rrubberr/Flatpak-LuxRays 
         tag: for_v1.7
 
   - name: Qt5
