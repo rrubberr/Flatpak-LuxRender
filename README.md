@@ -52,4 +52,3 @@ Set the system Qt5 theme to "Adwaita-Dark" as shown in the included screenshot. 
 
 ## Known limitations
 
-Currently, the LuxRender Flatpak cannot be invoked by LuxBlend25 (i.e. launched from Blender) beause the binaries are dynamically linked within the Flatpak. This will be resolved in the future.
