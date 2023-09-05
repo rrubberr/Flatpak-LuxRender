@@ -159,8 +159,11 @@ modules:
       - type: git
         url: https://github.com/KhronosGroup/OpenCL-CLHPP.git
         tag: v2.0.11
+
   - shared-modules/glew/glew.json
+
   - shared-modules/glu/glu-9.json
+
   - name: freeglut
     buildsystem: cmake
     build-options:
