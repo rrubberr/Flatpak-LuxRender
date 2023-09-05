@@ -1,6 +1,6 @@
 # LuxRender 1.7 Flatpak
 
-![LuxRender](images/org.luxrender.luxrender17.png)
+![LuxRender](org.luxrender.luxrender17.png)
 
 This repository provides the sources for building the LuxRender 1.7 Flatpak package.
 
