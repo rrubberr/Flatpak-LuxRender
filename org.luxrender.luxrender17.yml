@@ -48,10 +48,6 @@ modules:
       - type: archive
         url: https://www.python.org/ftp/python/3.5.10/Python-3.5.10.tar.xz
         md5: 75c9c268703654aa6f6f2ae67303dde4
-#        url: https://www.python.org/ftp/python/3.5.3/Python-3.5.3.tar.xz
-#        md5: 57d1f8bfbabf4f2500273fb0706e6f21
-#        url: https://www.python.org/ftp/python/3.4.4/Python-3.4.4.tar.xz
-#        md5: 8d526b7128affed5fbe72ceac8d2fc63
 #        url: https://www.python.org/ftp/python/3.4.10/Python-3.4.10.tar.xz
 #        md5: f88a98bce17a03c43a6a5f8a66ab2e62
 
