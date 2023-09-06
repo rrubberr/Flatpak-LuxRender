@@ -30,7 +30,7 @@ modules:
       - ./config shared -fPIC -w
       - make install INSTALL_PREFIX=/app INSTALLTOP=/
     post-install:
-      - chmod --recursive 777 $FLATPAK_DEST/lib/*    
+      - chmod --recursive 777 $FLATPAK_DEST/lib/*
     sources:
       - type: git
         url: https://github.com/openssl/openssl/
@@ -46,10 +46,8 @@ modules:
       - chmod 644 $FLATPAK_DEST/lib/libpython3.so
     sources:
       - type: archive
-        url: https://www.python.org/ftp/python/3.5.10/Python-3.5.10.tar.xz
-        md5: 75c9c268703654aa6f6f2ae67303dde4
-#        url: https://www.python.org/ftp/python/3.4.10/Python-3.4.10.tar.xz
-#        md5: f88a98bce17a03c43a6a5f8a66ab2e62
+        url: https://www.python.org/ftp/python/3.5.3/Python-3.5.3.tar.xz
+        md5: 57d1f8bfbabf4f2500273fb0706e6f21
 
   - name: IlmBase
     buildsystem: cmake
@@ -75,7 +73,7 @@ modules:
     buildsystem: simple
     build-commands:
       - ./bootstrap.sh --prefix=/app --with-python=/app/bin/python3 --with-python-root=/app
-      - ./b2 install variant=release link=shared runtime-link=shared cxxflags="${CXXFLAGS} -w -fpermissive -I /app/include/python3.5m" linkflags="${LDFLAGS}" -j "${FLATPAK_BUILDER_N_JOBS}"
+      - ./b2 install variant=release link=shared runtime-link=shared cxxflags="${CXXFLAGS} -O3 -w -fpermissive -msse2 -mfpmath=sse -funsafe-math-optimizations -ftree-vectorize -funroll-loops -I /app/include/python3.5m" linkflags="${LDFLAGS}" -j "${FLATPAK_BUILDER_N_JOBS}"
     sources:
       - type: archive
         url: http://sourceforge.net/projects/boost/files/boost/1.56.0/boost_1_56_0.tar.bz2
@@ -84,8 +82,8 @@ modules:
   - name: TBB
     buildsystem: cmake
     build-options:
-      cflags: -O2 -D_FORTIFY_SOURCE=2 -fstack-protector-strong -funwind-tables -fasynchronous-unwind-tables -fstack-clash-protection -flto -fno-fat-lto-objects
-      cxxflags: -w -O2 -D_FORTIFY_SOURCE=2 -fstack-protector-strong -funwind-tables -fasynchronous-unwind-tables -fstack-clash-protection -flto -fno-fat-lto-objects
+      cflags: -O3 -funwind-tables -ftree-vectorize -funroll-loops -fasynchronous-unwind-tables -flto -fno-fat-lto-objects
+      cxxflags: -w -O3 -funwind-tables -ftree-vectorize -funroll-loops -fasynchronous-unwind-tables -flto -fno-fat-lto-objects
     sources:
       - type: archive
         url: https://github.com/oneapi-src/oneTBB/archive/2019_U8.tar.gz
@@ -171,12 +169,24 @@ modules:
         url: https://sourceforge.net/projects/freeglut/files/freeglut/3.2.2/freeglut-3.2.2.tar.gz
         sha256: c5944a082df0bba96b5756dddb1f75d0cd72ce27b5395c6c1dde85c2ff297a50
 
+  - name: Qt5
+    buildsystem: simple
+    build-options:
+      cxxflags: -w -std=c++11
+    build-commands:
+      - ./configure -prefix "/app" -release -opensource -nomake examples -nomake tests
+      - make install -j "${FLATPAK_BUILDER_N_JOBS}"
+    sources:
+     - type: archive
+       url: https://download.qt.io/archive/qt/5.15/5.15.10/submodules/qtbase-everywhere-opensource-src-5.15.10.tar.xz
+       sha256: c0d06cb18d20f10bf7ad53552099e097ec39362d30a5d6f104724f55fa1c8fb9
+
 #Using the modified LuxRays git is currently NOT REQUIRED; https://github.com/LuxRender/LuxRays will build from tag "for_v1.7".
 
   - name: LuxRays
     buildsystem: cmake
     build-options:
-      cxxflags: -w -L /app/lib -I /app/include/python3.5m -lpython3.5m -std=c++11  -Wno-narrowing -pthread -DLUXCORE_DISABLE_EMBREE_BVH_BUILDER -DCL_TARGET_OPENCL_VERSION=300 -I /usr/include/gtk-3.0 -I /usr/include/gtk-3.0/gtk -I /usr/include/glib-2.0 -I /usr/lib/x86_64-linux-gnu/glib-2.0/include/ -I /usr/include/pango-1.0/ -I /usr/include/harfbuzz -I /usr/include/cairo -I /usr/include/gdk-pixbuf-2.0 -I /usr/include/atk-1.0
+      cxxflags: -w -std=c++11 -L /app/lib -I /app/include/python3.5m -lpython3.5m -Wno-narrowing -pthread -DLUXCORE_DISABLE_EMBREE_BVH_BUILDER -DCL_TARGET_OPENCL_VERSION=300 -I /usr/include/gtk-3.0 -I /usr/include/gtk-3.0/gtk -I /usr/include/glib-2.0 -I /usr/lib/x86_64-linux-gnu/glib-2.0/include/ -I /usr/include/pango-1.0/ -I /usr/include/harfbuzz -I /usr/include/cairo -I /usr/include/gdk-pixbuf-2.0 -I /usr/include/atk-1.0 -DCMAKE_BUILD_TYPE=Release
       cflags: -L /app/lib -lpython3.5m -I /app/include/python3.5m -L /usr/lib/x86_64-linux-gnu -lpthread -lgobject-2.0 -lgtk-3 -lglib-2.0 -I /usr/include/gtk-3.0 -I /usr/include/gtk-3.0/gtk -I /usr/include/glib-2.0 -I /usr/lib/x86_64-linux-gnu/glib-2.0/include/ -I /usr/include/pango-1.0/ -I /usr/include/harfbuzz -I /usr/include/cairo -I /usr/include/gdk-pixbuf-2.0 -I /usr/include/atk-1.0
     config-opts:
       - -D PYTHON_INCLUDE_DIR=/app/include/python3.5m
@@ -195,24 +205,12 @@ modules:
         url: https://github.com/rrubberr/Flatpak-LuxRays 
         tag: for_v1.7
 
-  - name: Qt5
-    buildsystem: simple
-    build-options:
-      cxxflags: -w -std=c++11
-    build-commands:
-      - ./configure -prefix "/app" -release -opensource -nomake examples -nomake tests
-      - make install -j "${FLATPAK_BUILDER_N_JOBS}"
-    sources:
-     - type: archive
-       url: https://download.qt.io/archive/qt/5.15/5.15.10/submodules/qtbase-everywhere-opensource-src-5.15.10.tar.xz
-       sha256: c0d06cb18d20f10bf7ad53552099e097ec39362d30a5d6f104724f55fa1c8fb9
-
 #Using the modified Lux git is currently REQUIRED; https://github.com/LuxRender/Lux will not build.
 
   - name: LuxRender
     buildsystem: cmake
     build-options:
-      cxxflags: -w -std=c++11 -pthread -I /app/bin -I /app/lib -I /app/include/python3.5m -lpython3.5m -I /app/lib/cmake/ -I /app/lib/cmake/Qt5 -L /app/lib -lQt5Core -lQt5Gui -lQt5Widgets -L /usr/lib/x86_64-linux-gnu -DCL_TARGET_OPENCL_VERSION=300
+      cxxflags: -w -std=c++11 -pthread -I /app/bin -I /app/lib -I /app/include/python3.5m -lpython3.5m -I /app/lib/cmake/ -I /app/lib/cmake/Qt5 -L /app/lib -lQt5Core -lQt5Gui -lQt5Widgets -L /usr/lib/x86_64-linux-gnu -DCL_TARGET_OPENCL_VERSION=300 -DCMAKE_BUILD_TYPE=Release
     builddir: true
     config-opts:
       - -D LuxRays_HOME=/app 
