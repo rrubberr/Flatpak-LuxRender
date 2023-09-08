@@ -13,7 +13,6 @@ cp ~/.local/share/flatpak/app/org.luxrender.luxrender17/current/active/files/bin
 cp ~/.local/share/flatpak/app/org.luxrender.luxrender17/current/active/files/bin/luxcorescenedemo .
 cp ~/.local/share/flatpak/app/org.luxrender.luxrender17/current/active/files/bin/luxcoreui .
 cp ~/.local/share/flatpak/app/org.luxrender.luxrender17/current/active/files/bin/benchsimple .
-cp ~/.local/share/flatpak/app/org.luxrender.luxrender17/current/active/files/lib/pyluxcore.so .
 cp ~/.local/share/flatpak/app/org.luxrender.luxrender17/current/active/files/lib/libpython3.so .
 cp ~/.local/share/flatpak/app/org.luxrender.luxrender17/current/active/files/lib/libpython3.5m.so.1.0 .
 cp ~/.local/share/flatpak/app/org.luxrender.luxrender17/current/active/files/lib/libOpenImageIO.so.1.6.3 ./libOpenImageIO.so.1.6
