@@ -1,6 +1,6 @@
 {
   "name": "glu",
-  "config-opts": ["--disable-static"],
+  "config-opts": [""],
   "sources": [
     {
       "type": "archive",
