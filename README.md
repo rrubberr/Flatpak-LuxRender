@@ -7,6 +7,8 @@ This repository provides the sources for building the LuxRender 1.7 Flatpak pack
 
 ## Building the Flatpak
 
+This script requires the zlib, bzip2, lzma, jpeg, tiff, png, freetype, and fftw development packages to be installed from your distribution's package manager.
+
 ```sh
 apt install flatpak flatpak-builder
 ```
@@ -52,3 +54,4 @@ Set the system Qt5 theme to "Adwaita-Dark" as shown in the included screenshot. 
 
 ## Known limitations
 
+LuxBlend25's LuxCore features may not function.

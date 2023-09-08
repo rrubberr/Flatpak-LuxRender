@@ -24,7 +24,7 @@ cleanup:
 
 modules:
 
-#This script requires zlib, bzip2, lzma, jpeg, tiff, png, freetype, and fftw development packages to tbe installed at the system level.
+#This script requires the zlib, bzip2, lzma, jpeg, tiff, png, freetype, and fftw development packages to be installed from your distribution's package manager.
 
   - name: OpenSSL
     buildsystem: simple
