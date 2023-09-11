@@ -51,6 +51,20 @@ modules:
         url: https://www.python.org/ftp/python/3.5.3/Python-3.5.3.tar.xz
         md5: 57d1f8bfbabf4f2500273fb0706e6f21
 
+#Binaries extracted from the Flatpak using extract-binaries.sh require libdeflate.
+
+  - name: libdeflate
+    buildsystem: cmake
+    build-options:
+      cxxflags: -w -std=c++14
+      build-args:
+      config-opts:
+        - -D LIBDEFLATE_BUILD_TESTS=OFF
+    sources:
+      - type: git
+        url: https://github.com/ebiggers/libdeflate
+        branch: master
+
   - name: OpenEXR
     buildsystem: cmake
     build-options:
@@ -90,6 +104,8 @@ modules:
       - type: patch
         path: patches/tbb/tbb_cmake.patch
 
+#Dependencies for building OpenImageIO 2.x.
+
   - name: libjpeg-turbo
     buildsystem: cmake
     build-options:
@@ -111,19 +127,60 @@ modules:
       - -D FMT_CUDA_TEST=OFF
     sources:
       - type: git
-        url: https://github.com/fmtlib/fmt
+        url: https://github.com/fmtlib/fmt.git
         branch: master
+
+  - name: Imath
+    buildsystem: cmake
+    build-options:
+      cxxflags: -w -std=c++14 -I /app/bin -I /app/include/python3.5m -L /app/lib -lpython3.5m -Wno-error=stringop-truncation -Wno-error=class-memaccess -Wno-error=sizeof-pointer-memaccess -Wno-error=unused-function -Wno-error=deprecated-declarations -Wno-error=maybe-uninitialized -Wno-error=stringop-overflow= -Wno-error=misleading-indentation -Wno-error=format-truncation= -Wno-error=aligned-new= -Wno-error=mismatched-new-delete
+    builddir: true
+    config-opts:
+      - -D USE_PYTHON=OFF
+      - -D USE_PYTHON3=ON
+      - -D PYTHON_INCLUDE_DIR=/app/include/python3.5m
+      - -D PYTHON_LIBRARY=/app/lib/libpython3.5m.so
+      - -D PYTHON_HOME=/app/bin
+      - -D BUILD_TESTING=OFF
+      - -D INSTALL_DOCS=OFF
+      - -D JPEGTurbo_ROOT=/app/include/
+      - -D CMAKE_CXX_STANDARD=14
+    sources:
+      - type: git
+        url: https://github.com/AcademySoftwareFoundation/Imath.git
+        tag: v3.1.9
+
+  - name: robin-map
+    buildsystem: simple
+    build-commands:
+      - cmake .
+      - cmake --build .
+    post-install:
+      - cp -rv ${FLATPAK_BUILDER_BUILDDIR}/include/* /app/include
+    sources:
+      - type: git
+        url: https://github.com/Tessil/robin-map.git
+        tag: v1.2.1
+
+  - name: pybind11
+    buildsystem: cmake
+    build-options:
+      cxxflags: -w -std=c++14 -I /app/include/python3.5m
+    builddir: true
+    post-install:
+      - cp -rv ${FLATPAK_BUILDER_BUILDDIR}/include/* /app/include
+    sources:
+      - type: git
+        url: https://github.com/pybind/pybind11/
+        tag: v2.9.2
 
   - name: OpenImageIO
     buildsystem: cmake
     build-options:
       cxxflags: -w -std=c++14 -I /app/bin -I /app/include/python3.5m -L /app/lib -lpython3.5m -Wno-error=stringop-truncation -Wno-error=class-memaccess -Wno-error=sizeof-pointer-memaccess -Wno-error=unused-function -Wno-error=deprecated-declarations -Wno-error=maybe-uninitialized -Wno-error=stringop-overflow= -Wno-error=misleading-indentation -Wno-error=format-truncation= -Wno-error=aligned-new= -Wno-error=mismatched-new-delete
-      build-args:
-        - --share=network
     builddir: true
     config-opts:
-      - -D USE_PYTHON=OFF
-      - -D USE_PYTHON3=ON
+      - -D USE_PYTHON=ON
       - -D PYTHON_INCLUDE_DIR=/app/include/python3.5m
       - -D PYTHON_LIBRARY=/app/lib/libpython3.5m.so
       - -D PYTHON_HOME=/app/bin
@@ -134,17 +191,24 @@ modules:
       - -D OIIO_BUILD_TOOLS=OFF
       - -D STOP_ON_WARNING=OFF
       - -D USE_FFMPEG=OFF
+      - -D USE_LIBHEIF=OFF
       - -D USE_FIELD3D=OFF
       - -D USE_FREETYPE=OFF
       - -D USE_LIBRAW=OFF
       - -D USE_NUKE=OFF
-      - -D USE_OCIO=OFF
+      - -D USE_OPENCOLORIO=OFF
+      - -D USE_OPENVDB=OFF
+      - -D USE_OPENCV=OFF
+      - -D USE_DCMTK=OFF
       - -D USE_QT=OFF
+      - -D USE_R3DSDK=OFF
+      - -D USE_PTEX=OFF
       - -D JPEGTurbo_ROOT=/app/include/
       - -D CMAKE_CXX_STANDARD=14
     sources:
       - type: git
         url: https://github.com/OpenImageIO/oiio.git
+        tag: v2.4.15.0
         
   - name: Embree
     buildsystem: cmake
