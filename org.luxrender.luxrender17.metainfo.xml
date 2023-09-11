@@ -3,7 +3,7 @@
   <id>org.luxrender.luxrender17</id>
   <metadata_license>Apache-2.0</metadata_license>
   <project_license>GPL-3.0-or-later-AND-Apache-2.0</project_license>
-  <developer_name>LuxRender contributors</developer_name>
+  <developer_name>LuxRender Contributors</developer_name>
   <name>LuxRender</name>
   <summary>LuxRender is a physically based and unbiased rendering engine.</summary>
 
@@ -17,12 +17,12 @@
 
   <screenshots>
     <screenshot type="default">
-      <image type="source">https://upload.wikimedia.org/wikipedia/en/d/de/Luxrender_0.7_Screenshot.png</image>
+      <image type="source">https://raw.githubusercontent.com/rrubberr/Flatpak-LuxRender/main/images/org.luxrender.luxrender17_screenshot.png</image>
     </screenshot>
   </screenshots>
 
-  <url type="homepage">https://web.archive.org/web/20160504014115/http://www.luxrender.net/en_GB/index</url>
-  <url type="bugtracker">https://github.com/LuxRender/Lux/issues</url>
+  <url type="homepage">https://github.com/rrubberr/Flatpak-LuxRender/</url>
+  <url type="bugtracker">https://github.com/rrubberr/Flatpak-LuxRender/issues</url>
   <url type="help">https://web.archive.org/web/20160504014238/http://www.luxrender.net/wiki/Main_Page</url>
 
   <releases>
