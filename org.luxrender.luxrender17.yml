@@ -167,8 +167,6 @@ modules:
     build-options:
       cxxflags: -w -std=c++14 -I /app/include/python3.5m
     builddir: true
-    post-install:
-      - cp -rv ${FLATPAK_BUILDER_BUILDDIR}/include/* /app/include
     sources:
       - type: git
         url: https://github.com/pybind/pybind11/
@@ -258,10 +256,6 @@ modules:
         url: https://github.com/FreeGLUTProject/freeglut.git
         tag: v3.2.2
 
-  #Building older or un-modified versions of LuxRender requires Qt4.
-  
-  #- shared-modules/qt4/qt4-4.8.7-minimal.json
-
   - name: Qt5
     buildsystem: simple
     build-options:
@@ -274,7 +268,7 @@ modules:
        url: https://download.qt.io/archive/qt/5.15/5.15.10/submodules/qtbase-everywhere-opensource-src-5.15.10.tar.xz
        sha256: c0d06cb18d20f10bf7ad53552099e097ec39362d30a5d6f104724f55fa1c8fb9
 
-#Using the modified LuxRays git is currently NOT REQUIRED; https://github.com/LuxRender/LuxRays will build from tag "for_v1.7".
+#Using the modified LuxRays git is currently REQUIRED; https://github.com/LuxRender/LuxRays will NOT build.
 
   - name: LuxRays
     buildsystem: cmake
@@ -300,7 +294,7 @@ modules:
         url: https://github.com/rrubberr/Flatpak-LuxRays 
         tag: for_v1.7
 
-#Using the modified Lux git is currently REQUIRED; https://github.com/LuxRender/Lux will not build.
+#Using the modified Lux git is currently REQUIRED; https://github.com/LuxRender/Lux will NOT build.
 
   - name: LuxRender
     buildsystem: cmake
