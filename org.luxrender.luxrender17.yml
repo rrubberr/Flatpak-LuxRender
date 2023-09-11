@@ -233,7 +233,7 @@ modules:
       - cp -rv ${FLATPAK_BUILDER_BUILDDIR}/lib/* /app/lib/
     sources:
       - type: git
-        url: https://github.com/betstick/Flatpak-LuxRays 
+        url: https://github.com/rrubberr/Flatpak-LuxRays 
         tag: for_v1.7
 
 #Using the modified Lux git is currently REQUIRED; https://github.com/LuxRender/Lux will not build.
