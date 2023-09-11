@@ -63,7 +63,7 @@ modules:
     sources:
       - type: git
         url: https://github.com/ebiggers/libdeflate
-        branch: master
+        tag: v1.18
 
   - name: OpenEXR
     buildsystem: cmake
@@ -80,7 +80,7 @@ modules:
     sources:
       - type: git
         url: https://github.com/AcademySoftwareFoundation/openexr.git
-        branch: main
+        tag: v3.2.0
 
   - name: Boost
     buildsystem: simple
@@ -113,7 +113,7 @@ modules:
     sources:
       - type: git
         url: https://github.com/libjpeg-turbo/libjpeg-turbo
-        branch: main
+        tag: 3.0.0
 
   - name: libfmt
     buildsystem: cmake
@@ -128,7 +128,7 @@ modules:
     sources:
       - type: git
         url: https://github.com/fmtlib/fmt.git
-        branch: master
+        tag: 10.1.1
 
   - name: Imath
     buildsystem: cmake
