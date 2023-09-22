@@ -33,7 +33,7 @@ flatpak-builder --install --install-deps-from=flathub \
 Running LuxRender:
 
 ```sh
-flatpak run org.luxrender/luxrender17
+flatpak run org.luxrender.luxrender17
 ```
 ![LuxRender](images/org.luxrender.luxrender17_screenshot.png)
 
