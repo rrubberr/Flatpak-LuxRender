@@ -9,23 +9,32 @@ This repository provides the sources for building the LuxRender 1.7 Flatpak pack
 
 This script requires the zlib, bzip2, lzma, jpeg, tiff, png, freetype, and fftw development packages to be installed from your distribution's package manager.
 
-For example, on Debian or Ubuntu run:
+On Debian or Ubuntu run:
 
 ```sh
 apt install zlib bzip2 lzma libjpeg-dev libtiff-dev libpng-dev libfreetype-dev libfftw3-dev
 ```
 
+Install the Flatpak utilities from your distribution's package manager.
+
 ```sh
 apt install flatpak flatpak-builder
 ```
+
+Add the Flathub repository to enable retrieval of certain dependencies.
+
 ```sh
 flatpak remote-add --user --if-not-exists \
 	flathub https://flathub.org/repo/flathub.flatpakrepo
 ```
 
+Clone this GitHub repository.
+
 ```sh
 git clone --recursive https://github.com/rrubberr/Flatpak-LuxRender && cd Flatpak-LuxRender
 ```
+
+Build the LuxRender 1.7 package using Flatpak Builder.
 
 ```sh
 flatpak-builder --install --install-deps-from=flathub \
