@@ -72,13 +72,15 @@ After installing the LuxBlend25 addon, point LuxBlend25 to the extract-binaries 
 
 ## Setting a Qt5 Theme
 
-Install the Qt5 Configuration Tool.
+QT may apply an incorrect theme to the LuxRender 1.7 package when it is launched outside of Flatpak.
 
-```
-sudo apt install qt5ct
+To remedy this, install the Qt5 Configuration Tool.
+
+```sh
+apt install qt5ct
 ```
 
-Set the system Qt5 theme to "Adwaita-Dark" as shown in the included screenshot. Adjust the font size to your taste.
+Set the system Qt5 theme to "Adwaita-Dark" as shown in the included screenshot. Adjust the typeface and font size to your taste.
 
 ![Theming](images/org.luxrender.luxrender17_Qt5_Theming.png)
 ![Theming](images/org.luxrender.luxrender17_Qt5_Theming2.png)
@@ -86,4 +88,4 @@ Set the system Qt5 theme to "Adwaita-Dark" as shown in the included screenshot. 
 
 ## Known limitations
 
-LuxBlend25's LuxCore features may not function.
+The LuxRender 1.7 Flatpak is intended for use with Linux systems, and has been confirmed to build on a wide array of distributions. Support for Windows and MacOS is not planned.
