@@ -11,7 +11,8 @@ This script requires the zlib, bzip2, lzma, jpeg, tiff, png, freetype, and fftw 
 
 For example, on Debian or Ubuntu run:
 
-```sudo apt install zlib bzip2 lzma libjpeg-dev libtiff-dev libpng-dev libfreetype-dev libfftw3-dev
+```sh
+apt install zlib bzip2 lzma libjpeg-dev libtiff-dev libpng-dev libfreetype-dev libfftw3-dev
 ```
 
 ```sh
