@@ -2,8 +2,6 @@
 
 This script extracts LuxRender and its supporting shared objects from the Flatpak install, after it has been built.
 
-Be sure to run LuxRender from the included 'run-luxrender.sh' to apply your system Qt5 theme.
-
 
 ## Using the Scripts
 
@@ -18,17 +16,15 @@ sh run-luxrender.sh
 
 ## Setting a Qt5 Theme
 
-Install the Qt5 Configuration Tool.
+QT may apply an incorrect theme to the LuxRender 1.7 package when it is launched outside of Flatpak.
 
-```
-sudo apt install qt5ct
-```
+To remedy this, install the Qt5 Configuration Tool.
 
-```
-sudo apt install adwaita-qt
+```sh
+apt install qt5ct
 ```
 
-Set the system Qt5 theme to "Adwaita-Dark" as shown in the included screenshot. Adjust the font size to your tastes.
+Set the system Qt5 theme to "Adwaita-Dark" as shown in the included screenshot. Adjust the typeface and font size to your taste.
 
-![Theming](../images/org.luxrender.luxrender17_Qt5_Theming.png)
-![Theming](../images/org.luxrender.luxrender17_Qt5_Theming2.png)
+![Theming](images/org.luxrender.luxrender17_Qt5_Theming.png)
+![Theming](images/org.luxrender.luxrender17_Qt5_Theming2.png)

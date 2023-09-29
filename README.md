@@ -54,6 +54,7 @@ flatpak run org.luxrender.luxrender17
 ```
 ![LuxRender](images/org.luxrender.luxrender17_screenshot.png)
 
+
 ## Creating Binaries for Blender
 
 In order to use LuxRender with Blender and LuxBlend25, certain binaries and shared libraries must be extracted from the Flatpak installation.
@@ -69,6 +70,7 @@ This will populate the extract-binaries folder with everything needed to run Lux
 After installing the LuxBlend25 addon, point LuxBlend25 to the extract-binaries directory in order to enable Blender interoperability.
 
 ![Binaries](images/luxblend25-setdir.png)
+
 
 ## Setting a Qt5 Theme
 
