@@ -88,4 +88,4 @@ Set the system Qt5 theme to "Adwaita-Dark" as shown in the included screenshot. 
 
 ## Known limitations
 
-The LuxRender 1.7 Flatpak is intended for use with Linux systems, and has been confirmed to build on a wide array of distributions. Support for Windows and MacOS is not planned.
+The LuxRender 1.7 Flatpak is intended for use with Linux systems, and has been confirmed to build on a wide array of distributions from Debian, to Clear Linux, to Arch. Support for Windows and MacOS is not planned.
