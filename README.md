@@ -4,6 +4,9 @@
 
 This repository provides the sources for building the LuxRender 1.7 Flatpak package.
 
+# Getting Started
+
+Once you have compiled the system, check the Wiki page for in-depth information.
 
 ## Building the Flatpak
 
