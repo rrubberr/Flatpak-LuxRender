@@ -99,6 +99,29 @@ Set the system Qt5 theme to "Adwaita-Dark" as shown in the included screenshot. 
 ![Theming](images/org.luxrender.luxrender17_Qt5_Theming2.png)
 
 
+## New Features
+
+### LuxRays
+
+* New FlatPak build system with GCC 12 support.
+
+### LuxRender
+
+* New FlatPak build system with GCC 12 support.
+* New QT5 based GUI with dark mode support.
+* Added the ability to select more than 32 threads in the GUI.
+* Added a fifth decimal place to certain post-process effects for finer tuning.
+
+### LuxBlend
+
+* Added the ability to set the mesh accelerator (QBVH, KDTree, etc.) per-mesh in the Blender mesh data panel.
+* Added the Hybrid Bidirectional integrator for OpenCL-accelerated bidirectional path tracing.
+* Added the IGI (Instant Global Illumination) accelerator.
+* Added the Starting K parameter to the SPPM integrator.
+* Added the ERPT (Energy Redistribution Path Tracing) sampler and associated settings.
+* Added the Mutation Range setting for the Metropolis Sampler.
+* Added additional accelerators including BVH/Octree and the ability to use no accelerator.
+
 ## Known limitations
 
 The LuxRender 1.7 Flatpak is intended for use with Linux systems, and has been confirmed to build on a wide array of distributions from Debian, to Clear Linux, to Arch. Support for Windows and MacOS is not planned.
