@@ -221,6 +221,8 @@ modules:
         url: https://github.com/embree/embree/
         tag: v2.17.7
 
+#OpenCL dependencies required for GPU rendering.
+
   - name: OpenCL-Headers
     buildsystem: cmake-ninja
     sources:
@@ -255,6 +257,8 @@ modules:
       - type: git
         url: https://github.com/FreeGLUTProject/freeglut.git
         tag: v3.2.2
+
+#Build a minimal Qt5 to support the updated GUI.
 
   - name: Qt5
     buildsystem: simple
@@ -318,6 +322,8 @@ modules:
     sources:
       - type: dir
         path: Lux/
+
+#Install the app. The extract-binaries.sh script can now be used to create a standalone LuxRender.
 
   - name: metadata
     buildsystem: simple
