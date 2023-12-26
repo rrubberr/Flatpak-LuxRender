@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <component type="desktop-application">
   <id>org.luxrender.luxrender17</id>
-  <metadata_license>Apache-2.0</metadata_license>
+  <metadata_license>CC0-1.0</metadata_license>
   <project_license>GPL-3.0-or-later-AND-Apache-2.0</project_license>
   <developer_name>LuxRender Contributors</developer_name>
   <name>LuxRender</name>
@@ -35,15 +35,6 @@
       <url>https://web.archive.org/web/20161203183525/http://www.luxrender.net/wiki/New_in_1-7</url>
     </release>
   </releases>
-
-  <recommends>
-    <memory>8192</memory> <!-- 8GiB RAM -->
-  </recommends>
-
-  <requires>
-    <control>pointing</control>
-    <control>keyboard</control>
-  </requires>
 
   <content_rating type="oars-1.1">
   </content_rating>
