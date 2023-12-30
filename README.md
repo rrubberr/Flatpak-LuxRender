@@ -51,7 +51,7 @@ Finally, build the LuxRender 1.7 package using Flatpak Builder.
 
 ```sh
 flatpak-builder --install --install-deps-from=flathub \
-	--user --force-clean \
+	--force-clean \
 	.build-dir org.luxrender.luxrender17.yml
 ```
 
