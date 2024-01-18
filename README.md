@@ -18,10 +18,10 @@ https://github.com/rrubberr/Flatpak-LuxRender-Scenes
 
 ## Building the Flatpak
 
-This script requires the zlib, bzip2, lzma, jpeg, tiff, png, freetype, and fftw development packages to be installed from your distribution's package manager.
+This script requires the bzip2, lzma, jpeg, tiff, png, freetype, and fftw development packages to be installed from your distribution's package manager.
 
 ```sh
-apt install zlib bzip2 lzma libjpeg-dev libtiff-dev libpng-dev libfreetype-dev libfftw3-dev
+apt install bzip2 lzma libjpeg-dev libtiff-dev libpng-dev libfreetype-dev libfftw3-dev
 ```
 
 
