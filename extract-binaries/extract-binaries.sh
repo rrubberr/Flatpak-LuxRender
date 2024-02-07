@@ -16,6 +16,7 @@ cp ~/.local/share/flatpak/app/org.luxrender.luxrender17/current/active/files/bin
 cp ~/.local/share/flatpak/app/org.luxrender.luxrender17/current/active/files/bin/benchsimple .
 cp ~/.local/share/flatpak/app/org.luxrender.luxrender17/current/active/files/lib/libpython3.so .
 cp ~/.local/share/flatpak/app/org.luxrender.luxrender17/current/active/files/lib/libpython3.5m.so.1.0 .
+cp ~/.local/share/flatpak/app/org.luxrender.luxrender17/current/active/files/lib/libglut.so.3.11.1 ./libglut.so.3
 cp ~/.local/share/flatpak/app/org.luxrender.luxrender17/current/active/files/lib/libboost_thread.so.1.56.0 .
 cp ~/.local/share/flatpak/app/org.luxrender.luxrender17/current/active/files/lib/libboost_program_options.so.1.56.0 .
 cp ~/.local/share/flatpak/app/org.luxrender.luxrender17/current/active/files/lib/libboost_filesystem.so.1.56.0 .
