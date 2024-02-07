@@ -3,17 +3,9 @@ cp ~/.local/share/flatpak/app/org.luxrender.luxrender17/current/active/files/bin
 cp ~/.local/share/flatpak/app/org.luxrender.luxrender17/current/active/files/bin/luxconsole .
 cp ~/.local/share/flatpak/app/org.luxrender.luxrender17/current/active/files/bin/luxmerger .
 cp ~/.local/share/flatpak/app/org.luxrender.luxrender17/current/active/files/bin/luxrender .
-cp ~/.local/share/flatpak/app/org.luxrender.luxrender17/current/active/files/bin/luxvr .
 cp ~/.local/share/flatpak/app/org.luxrender.luxrender17/current/active/files/bin/slg4 .
 cp ~/.local/share/flatpak/app/org.luxrender.luxrender17/current/active/files/bin/pylux.so .
-cp ~/.local/share/flatpak/app/org.luxrender.luxrender17/current/active/files/lib/pyluxcore.so .
 cp ~/.local/share/flatpak/app/org.luxrender.luxrender17/current/active/files/bin/liblux.so .
-cp ~/.local/share/flatpak/app/org.luxrender.luxrender17/current/active/files/bin/luxcoreconsole .
-cp ~/.local/share/flatpak/app/org.luxrender.luxrender17/current/active/files/bin/luxcoredemo .
-cp ~/.local/share/flatpak/app/org.luxrender.luxrender17/current/active/files/bin/luxcoreimplserializationdemo .
-cp ~/.local/share/flatpak/app/org.luxrender.luxrender17/current/active/files/bin/luxcorescenedemo .
-cp ~/.local/share/flatpak/app/org.luxrender.luxrender17/current/active/files/bin/luxcoreui .
-cp ~/.local/share/flatpak/app/org.luxrender.luxrender17/current/active/files/bin/benchsimple .
 cp ~/.local/share/flatpak/app/org.luxrender.luxrender17/current/active/files/lib/libpython3.so .
 cp ~/.local/share/flatpak/app/org.luxrender.luxrender17/current/active/files/lib/libpython3.5m.so.1.0 .
 cp ~/.local/share/flatpak/app/org.luxrender.luxrender17/current/active/files/lib/libglut.so.3.11.1 ./libglut.so.3
