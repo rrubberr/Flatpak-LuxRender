@@ -6,6 +6,7 @@ cp ~/.local/share/flatpak/app/org.luxrender.luxrender17/current/active/files/bin
 cp ~/.local/share/flatpak/app/org.luxrender.luxrender17/current/active/files/bin/luxvr .
 cp ~/.local/share/flatpak/app/org.luxrender.luxrender17/current/active/files/bin/slg4 .
 cp ~/.local/share/flatpak/app/org.luxrender.luxrender17/current/active/files/bin/pylux.so .
+cp ~/.local/share/flatpak/app/org.luxrender.luxrender17/current/active/files/lib/pyluxcore.so .
 cp ~/.local/share/flatpak/app/org.luxrender.luxrender17/current/active/files/bin/liblux.so .
 cp ~/.local/share/flatpak/app/org.luxrender.luxrender17/current/active/files/bin/luxcoreconsole .
 cp ~/.local/share/flatpak/app/org.luxrender.luxrender17/current/active/files/bin/luxcoredemo .
