@@ -258,7 +258,7 @@ modules:
     sources:
       - type: git
         url: https://github.com/rrubberr/Flatpak-LuxRays 
-        tag: for_v1.7_qt5_rpath
+        tag: for_v1.7_qt5
 
 # Using the modified Lux git is REQUIRED; https://github.com/LuxRender/Lux will NOT build.
 
