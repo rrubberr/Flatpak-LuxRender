@@ -47,7 +47,7 @@ git clone --recursive https://github.com/rrubberr/Flatpak-LuxRender && cd Flatpa
 ```
 
 
-Finally, build the LuxRender 1.7 package using Flatpak Builder.
+Finally, build the LuxRender package using Flatpak Builder.
 
 ```sh
 flatpak-builder --install --install-deps-from=flathub --user --force-clean --force-clean .build-dir org.luxrender.luxrender17.yml
@@ -109,17 +109,18 @@ Set the system Qt5 theme to "Adwaita-Dark" as shown in the included screenshot. 
 * New QT5 based GUI with dark mode support.
 * Added the ability to select more than 32 threads in the GUI.
 * Added a fifth decimal place to certain post-process effects for finer tuning.
+* Removed support for LuxCoreRender rendering engines. If LuxCoreRender functionality is desired, such as pure OpenCL path tracing, users are reccomended to consult the [LuxCoreRender project page.](https://github.com/LuxCoreRender)
 
 ### LuxBlend
 
 * Added the ability to set the mesh accelerator (QBVH, KDTree, etc.) per-mesh in the Blender mesh data panel.
 * Added the Hybrid Bidirectional integrator for OpenCL-accelerated bidirectional path tracing.
 * Added the IGI (Instant Global Illumination) accelerator.
-* Added the Starting K parameter to the SPPM integrator.
 * Added the ERPT (Energy Redistribution Path Tracing) sampler and associated settings.
 * Added the Mutation Range setting for the Metropolis Sampler.
 * Added additional accelerators including BVH/Octree and the ability to use no accelerator.
+* Removed support for LuxCoreRender rendering engines. If LuxCoreRender functionality is desired, such as pure OpenCL path tracing, users are reccomended to consult the [LuxCoreRender project page.](https://github.com/LuxCoreRender)
 
 ## Known limitations
 
-The LuxRender 1.7 Flatpak is intended for use with Linux systems, and has been confirmed to build on a wide array of distributions from Debian, to Clear Linux, to Arch. Support for Windows and MacOS is not planned.
+The LuxRender Flatpak is intended for use with Linux systems, and has been confirmed to build on a wide array of distributions from Debian, to Clear Linux, to Arch. Support for Windows and MacOS is not planned.
