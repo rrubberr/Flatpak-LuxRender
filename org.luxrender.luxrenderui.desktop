@@ -6,5 +6,5 @@ Type=Application
 Terminal=false
 Exec=luxrender
 Categories=System;
-Icon=org.luxrender.luxrender17
+Icon=org.luxrender.luxrenderui
 Keywords=opencl;luxrender

@@ -1,4 +1,4 @@
-app-id: org.luxrender.luxrender17
+app-id: org.luxrender.luxrenderui
 runtime: org.kde.Platform
 runtime-version: 5.15-22.08
 sdk: org.kde.Sdk
@@ -292,14 +292,14 @@ modules:
   - name: metadata
     buildsystem: simple
     build-commands:
-       - install -Dm0644 -t /app/share/metainfo/ org.luxrender.luxrender17.metainfo.xml
-       - install -Dm0644 -t /app/share/applications/ org.luxrender.luxrender17.desktop
-       - install -Dm0644 -t /app/share/icons/hicolor/64x64/apps/ org.luxrender.luxrender17.png
-       - install -Dm0644 -t /app/usr/share/icons/hicolor/64x64/apps/ org.luxrender.luxrender17.png
+       - install -Dm0644 -t /app/share/metainfo/ org.luxrender.luxrenderui.metainfo.xml
+       - install -Dm0644 -t /app/share/applications/ org.luxrender.luxrenderui.desktop
+       - install -Dm0644 -t /app/share/icons/hicolor/64x64/apps/ org.luxrender.luxrenderui.png
+       - install -Dm0644 -t /app/usr/share/icons/hicolor/64x64/apps/ org.luxrender.luxrenderui.png
     sources:
       - type: file
-        path: org.luxrender.luxrender17.metainfo.xml
+        path: org.luxrender.luxrenderui.metainfo.xml
       - type: file
-        path: org.luxrender.luxrender17.desktop
+        path: org.luxrender.luxrenderui.desktop
       - type: file
-        path: org.luxrender.luxrender17.png
+        path: org.luxrender.luxrenderui.png

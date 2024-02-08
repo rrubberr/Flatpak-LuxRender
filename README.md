@@ -1,6 +1,6 @@
 # LuxRender Flatpak
 
-![LuxRender](org.luxrender.luxrender17.png)
+![LuxRender](org.luxrender.luxrenderui.png)
 
 This repository provides the sources for building the LuxRender Flatpak package.
 
@@ -46,7 +46,7 @@ git clone --recursive https://github.com/rrubberr/Flatpak-LuxRender && cd Flatpa
 Finally, build the LuxRender package using Flatpak Builder.
 
 ```sh
-flatpak-builder --install --install-deps-from=flathub --user --force-clean --force-clean .build-dir org.luxrender.luxrender17.yml
+flatpak-builder --install --install-deps-from=flathub --user --force-clean --force-clean .build-dir org.luxrender.luxrenderui.yml
 ```
 
 
@@ -55,9 +55,9 @@ flatpak-builder --install --install-deps-from=flathub --user --force-clean --for
 After the package has been compiled, LuxRender can be launched using the follwing command.
 
 ```sh
-flatpak run org.luxrender.luxrender17
+flatpak run org.luxrender.luxrenderui
 ```
-![LuxRender](images/org.luxrender.luxrender17_screenshot.png)
+![LuxRender](images/org.luxrender.luxrenderui_screenshot.png)
 
 
 ## Creating Binaries for Blender
@@ -89,8 +89,8 @@ apt install qt5ct
 
 Set the system Qt5 theme to "Adwaita-Dark" as shown in the included screenshot. Adjust the typeface and font size to your taste.
 
-![Theming](images/org.luxrender.luxrender17_Qt5_Theming.png)
-![Theming](images/org.luxrender.luxrender17_Qt5_Theming2.png)
+![Theming](images/org.luxrender.luxrenderui_Qt5_Theming.png)
+![Theming](images/org.luxrender.luxrenderui_Qt5_Theming2.png)
 
 
 ## New Features

@@ -26,5 +26,5 @@ apt install qt5ct
 
 Set the system Qt5 theme to "Adwaita-Dark" as shown in the included screenshot. Adjust the typeface and font size to your taste.
 
-![Theming](images/org.luxrender.luxrender17_Qt5_Theming.png)
-![Theming](images/org.luxrender.luxrender17_Qt5_Theming2.png)
+![Theming](images/org.luxrender.luxrenderui_Qt5_Theming.png)
+![Theming](images/org.luxrender.luxrenderui_Qt5_Theming2.png)
