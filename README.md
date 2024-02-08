@@ -109,7 +109,7 @@ Set the system Qt5 theme to "Adwaita-Dark" as shown in the included screenshot. 
 * New QT5 based GUI with dark mode support.
 * Added the ability to select more than 32 threads in the GUI.
 * Added a fifth decimal place to certain post-process effects for finer tuning.
-* Removed support for LuxCoreRender rendering engines. If LuxCoreRender functionality is desired, such as pure OpenCL path tracing, users are reccomended to consult the [LuxCoreRender project page.](https://github.com/LuxCoreRender)
+* Removed support for LuxCoreRender rendering engines. If LuxCoreRender features are desired, such as pure OpenCL path tracing, users are reccomended to consult the [LuxCoreRender project page.](https://github.com/LuxCoreRender)
 
 ### LuxBlend
 
@@ -119,7 +119,7 @@ Set the system Qt5 theme to "Adwaita-Dark" as shown in the included screenshot. 
 * Added the ERPT (Energy Redistribution Path Tracing) sampler and associated settings.
 * Added the Mutation Range setting for the Metropolis Sampler.
 * Added additional accelerators including BVH/Octree and the ability to use no accelerator.
-* Removed support for LuxCoreRender rendering engines. If LuxCoreRender functionality is desired, such as pure OpenCL path tracing, users are reccomended to consult the [LuxCoreRender project page.](https://github.com/LuxCoreRender)
+* Removed support for LuxCoreRender rendering engines. If LuxCoreRender features are desired, such as pure OpenCL path tracing, users are reccomended to consult the [LuxCoreRender project page.](https://github.com/LuxCoreRender)
 
 ## Known limitations
 
