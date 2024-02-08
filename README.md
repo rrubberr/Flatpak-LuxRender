@@ -8,13 +8,9 @@ This repository provides the sources for building the LuxRender Flatpak package.
 
 Once you have compiled the system, check the [Wiki page](https://github.com/rrubberr/Flatpak-LuxRender/wiki) for in-depth information.
 
-The updated version of LuxBlend25, the Blender 2.79 integration plugin, is available at:
+Install the updated version of LuxBlend25, the [Blender 2.79 integration plugin.](https://github.com/rrubberr/Flatpak-LuxBlend25)
 
-https://github.com/rrubberr/Flatpak-LuxBlend25
-
-Test scenes are available at:
-
-https://github.com/rrubberr/Flatpak-LuxRender-Scenes
+Download and try some [test scenes.](https://github.com/rrubberr/Flatpak-LuxRender-Scenes)
 
 ## Building the Flatpak
 
