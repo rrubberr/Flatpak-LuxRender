@@ -32,7 +32,7 @@ apt install flatpak flatpak-builder
 ```
 
 
-Add the Flathub repository to enable retrieval of certain dependencies.
+Add the Flathub repository to enable retrieval of Flatpak dependencies.
 
 ```sh
 flatpak remote-add --user --if-not-exists \
@@ -50,10 +50,7 @@ git clone --recursive https://github.com/rrubberr/Flatpak-LuxRender && cd Flatpa
 Finally, build the LuxRender 1.7 package using Flatpak Builder.
 
 ```sh
-flatpak-builder --install --install-deps-from=flathub \
-	--user --force-clean \
-	--force-clean \
-	.build-dir org.luxrender.luxrender17.yml
+flatpak-builder --install --install-deps-from=flathub --user --force-clean --force-clean .build-dir org.luxrender.luxrender17.yml
 ```
 
 
@@ -69,7 +66,7 @@ flatpak run org.luxrender.luxrender17
 
 ## Creating Binaries for Blender
 
-In order to use LuxRender with Blender and LuxBlend25, certain binaries and shared libraries must be extracted from the Flatpak installation.
+In order to use LuxRender with Blender and LuxBlend25, the compiled binaries and shared libraries must be extracted from the Flatpak installation.
 
 From the Flatpak-LuxRender directory, run the following command.
 
@@ -86,7 +83,7 @@ After installing the LuxBlend25 addon, point LuxBlend25 to the extract-binaries 
 
 ## Setting a Qt5 Theme
 
-QT may apply an incorrect theme to the LuxRender 1.7 package when it is launched outside of Flatpak.
+QT may apply an incompatible theme to LuxRender when it is launched outside of Flatpak.
 
 To remedy this, install the Qt5 Configuration Tool.
 
