@@ -10,7 +10,7 @@ Once you have compiled the system, check the [Wiki page](https://github.com/rrub
 
 Install the updated version of [LuxBlend25](https://github.com/rrubberr/Flatpak-LuxBlend25) for Blender 2.79 integration.
 
-Download and try some [test scenes.](https://github.com/rrubberr/Flatpak-LuxRender-Scenes)
+Download and try a [test scene.](https://github.com/rrubberr/Flatpak-LuxRender-Scenes)
 
 ## Building the Flatpak
 
