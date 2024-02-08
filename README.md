@@ -70,9 +70,9 @@ From the Flatpak-LuxRender directory, run the following command.
 sh extract-binaries/extract-binaries.sh
 ```
 
-This will populate the extract-binaries folder with everything needed to run LuxRender outside of Flatpak.
+This will populate the extract-binaries folder with everything needed to run LuxRender outside of Flatpak. The user can now move this folder anywhere he desires.
 
-After installing the LuxBlend25 addon, point LuxBlend25 to the extract-binaries directory in order to enable Blender interoperability.
+After installing [LuxBlend25](https://github.com/rrubberr/Flatpak-LuxBlend25), point the addon to the previously created directory in order to enable Blender interoperability.
 
 ![Binaries](images/luxblend25-setdir.png)
 
