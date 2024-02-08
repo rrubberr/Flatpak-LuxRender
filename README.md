@@ -127,4 +127,4 @@ The LuxRender Flatpak is intended for use with modern Linux systems, and has bee
 
 Support for Windows and MacOS is not planned.
 
-On older Linux systems, Mac OSX, and Windows, users are reccomended to use [LuxRender binaries.](https://wiki.luxcorerender.org/Previous_Version)
+On older Linux systems, Mac OSX, and Windows, users are reccomended to use [LuxRender 1.6 binaries.](https://wiki.luxcorerender.org/Previous_Version)
