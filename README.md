@@ -62,7 +62,7 @@ flatpak run org.luxrender.luxrender17
 
 ## Creating Binaries for Blender
 
-In order to use LuxRender with Blender and LuxBlend25, the compiled binaries and shared libraries must be extracted from the Flatpak installation.
+In order to use LuxRender with Blender and [LuxBlend25](https://github.com/rrubberr/Flatpak-LuxBlend25), the compiled binaries and shared libraries must be extracted from the Flatpak installation.
 
 From the Flatpak-LuxRender directory, run the following command.
 
