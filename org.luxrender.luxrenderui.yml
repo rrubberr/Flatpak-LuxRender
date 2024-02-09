@@ -27,7 +27,7 @@ modules:
 
 # Qt5imageformats is required for TIFF output.
 
-# Python 3.5 requires an older OpenSSL version than is provided with current Linux distros.
+# Python 3.5 requires an older OpenSSL version.
 
   - name: OpenSSL
     buildsystem: simple
@@ -50,8 +50,6 @@ modules:
       - type: archive
         url: https://www.python.org/ftp/python/3.5.3/Python-3.5.3.tar.xz
         md5: 57d1f8bfbabf4f2500273fb0706e6f21
-
-# Binaries extracted from the Flatpak require libdeflate.
 
   - name: libdeflate
     buildsystem: cmake
