@@ -1,0 +1,4 @@
+[submodule "Lux"]
+	path = Lux
+	url = https://github.com/rrubberr/Flatpak-Lux
+	branch = for_v1.7_qt5_static
