@@ -1,0 +1,10 @@
+diff --git a/OpenEXR/IlmImf/CMakeLists.txt b/OpenEXR/IlmImf/CMakeLists.txt
+--- a/OpenEXR/IlmImf/CMakeLists.txt
++++ b/OpenEXR/IlmImf/CMakeLists.txt
+@@ -28,3 +28,3 @@
+-  Iex${ILMBASE_LIBSUFFIX}
+-  IlmThread${ILMBASE_LIBSUFFIX}
+-  ${PTHREAD_LIB}
++  IlmThread${ILMBASE_LIBSUFFIX}
++  Iex${ILMBASE_LIBSUFFIX}
++  ${PTHREAD_LIB}

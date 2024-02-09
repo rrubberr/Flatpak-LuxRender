@@ -25,6 +25,6 @@
         "cleanup": [
                 "/include",
                 "/lib/pkgconfig",
-                "/lib/*.a"
+                "/lib/*.so"
         ]
 }

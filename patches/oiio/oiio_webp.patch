@@ -1,0 +1,33 @@
+commit 6c42497df567a92e8b804cc690d4f01a2af745f8
+Author: Thomas Debesse <dev@illwieckz.net>
+Date:   Fri Oct 21 18:18:02 2022 +0200
+
+    patch: luxmark3/luxmark3-oiio-boost-placeholders-rewrite.patch
+
+diff --git a/src/libOpenImageIO/CMakeLists.txt b/src/libOpenImageIO/CMakeLists.txt
+index 0b70d89e..bc9bdc57 100644
+--- a/src/libOpenImageIO/CMakeLists.txt
++++ b/src/libOpenImageIO/CMakeLists.txt
+@@ -175,13 +175,9 @@
+-
+-    if (WEBP_FOUND)
+-        set (libOpenImageIO_srcs ${libOpenImageIO_srcs}
+-             ../webp.imageio/webpinput.cpp
+-             ../webp.imageio/webpoutput.cpp
+-            )
+-        include_directories (${WEBP_INCLUDE_DIR})
+-        add_definitions ("-DUSE_WEBP=1")
+-    else ()
+-        message (STATUS "WebP plugin will not be built")
+-        set (WEBP_LIBRARY "")
+-    endif ()
+-
++
++    if (WEBP_FOUND)
++        message (STATUS "WebP plugin will not be built")
++        set (WEBP_LIBRARY "")
++    else ()
++        message (STATUS "WebP plugin will not be built")
++        set (WEBP_LIBRARY "")
++    endif ()
++
