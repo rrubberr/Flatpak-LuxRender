@@ -1,7 +1,7 @@
 app-id: org.luxrender.luxrenderui
-runtime: org.kde.Platform
-runtime-version: 5.15-22.08
-sdk: org.kde.Sdk
+runtime: org.freedesktop.Platform
+runtime-version: 22.08
+sdk: org.freedesktop.Sdk
 command: luxrender
 
 finish-args:
@@ -55,10 +55,10 @@ modules:
     buildsystem: cmake
     build-options:
       cxxflags: -w -std=c++11
-      config-opts:
-        - -D LIBDEFLATE_BUILD_TESTS=OFF
-        - -D LIBDEFLATE_BUILD_STATIC_LIB=ON
-        - -D LIBDEFLATE_BUILD_SHARED_LIB=OFF
+    config-opts:
+      - -D LIBDEFLATE_BUILD_TESTS=OFF
+      - -D LIBDEFLATE_BUILD_STATIC_LIB=ON
+      - -D LIBDEFLATE_BUILD_SHARED_LIB=OFF
     sources:
       - type: git
         url: https://github.com/ebiggers/libdeflate
@@ -110,8 +110,8 @@ modules:
     build-options:
       cxxflags: -w -std=c++11 -fPIC
       ldflags: -Wl,-rpath,$ORIGIN
-      config-opts:
-        - -D BUILD_SHARED_LIBS=OFF
+    config-opts:
+      - -D BUILD_SHARED_LIBS=OFF
     subdir:
       IlmBase
     sources: &openexr_sources
@@ -126,8 +126,8 @@ modules:
     build-options:
       cxxflags: -w -std=c++11 -I /app/include/OpenEXR -fPIC
       ldflags: -Wl,-rpath,$ORIGIN
-      config-opts:
-        - -D BUILD_SHARED_LIBS=OFF
+    config-opts:
+      - -D BUILD_SHARED_LIBS=OFF
     subdir:
       OpenEXR
     sources:
