@@ -226,7 +226,7 @@ modules:
       cxxflags: -w -std=c++11
       ldflags: -Wl,-rpath,$ORIGIN
     build-commands:
-      - ./configure -prefix "/app" -release -opensource -nomake examples -nomake tests
+      - ./configure -prefix "/app" -release -opensource -nomake examples -nomake tests -no-icu
       - make install -j "${FLATPAK_BUILDER_N_JOBS}"
     sources:
      - type: archive
