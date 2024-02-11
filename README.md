@@ -4,6 +4,7 @@
 
 This repository provides the sources for building the LuxRender Flatpak package.
 
+
 # Getting Started
 
 Once you have compiled the system, check the [Wiki page](https://github.com/rrubberr/Flatpak-LuxRender/wiki) for in-depth information.
@@ -12,21 +13,22 @@ Install the updated version of [LuxBlend25](https://github.com/rrubberr/Flatpak-
 
 Download and try a [test scene.](https://github.com/rrubberr/Flatpak-LuxRender-Scenes)
 
-## Building the Flatpak
 
-This script requires the bzip2, lzma, jpeg, tiff, png, freetype, fftw, and qt5imageformats packages to be installed from your distribution's package manager.
+## Dependencies
 
-```sh
-apt install bzip2 lzma libjpeg-dev libopenjp2-dev libtiff-dev libpng-dev libfreetype-dev libfftw3-dev qt5-image-formats-plugins
-```
+Building LuxRender requires the Flatpak, Flatpak builder, bzip2, lzma, jpeg, tiff, png, freetype, fftw, and Qt5 core, gui, widgets, and image formats packages.
 
-
-Install the Flatpak utilities from your distribution's package manager.
+On a Debian based distribution:
 
 ```sh
-apt install flatpak flatpak-builder
+sudo apt install flatpak flatpak-builder bzip2 lzma libjpeg-dev libopenjp2-dev libtiff-dev libpng-dev libfreetype-dev libfftw3-dev libqt5core5 libqt5gui5 libqt5widgets5 qt5-image-formats-plugins
 ```
 
+On a Fedora based distribution:
+
+```sh
+sudo dnf install flatpak flatpak-builder bzip2 lzma libjpeg-devel openjpeg-devel libtiff-devel libpng-devel freetype-devel fftw-devel qt5-qtbase-devel qt5-qtimageformats
+```
 
 Add the Flathub repository to enable retrieval of Flatpak dependencies.
 
@@ -36,12 +38,13 @@ flatpak remote-add --user --if-not-exists \
 ```
 
 
+## Building the Flatpak
+
 Clone this GitHub repository.
 
 ```sh
 git clone --recursive https://github.com/rrubberr/Flatpak-LuxRender && cd Flatpak-LuxRender
 ```
-
 
 Finally, build the LuxRender package using Flatpak Builder.
 
@@ -79,18 +82,23 @@ After installing [LuxBlend25](https://github.com/rrubberr/Flatpak-LuxBlend25), p
 
 ## Setting a Qt5 Theme
 
-QT may apply an incompatible theme to LuxRender when it is launched outside of Flatpak.
+Your system will likely apply an incorrect theme to LuxRender. To remedy this, install the Qt5 Configuration Tool and adwaita-qt.
 
-To remedy this, install the Qt5 Configuration Tool.
+On a Debian based distribution:
 
 ```sh
-apt install qt5ct
+sudo apt install qt5ct adwaita-qt
 ```
 
-Set the system Qt5 theme to "Adwaita-Dark" as shown in the included screenshot. Adjust the typeface and font size to your taste.
+On a Fedora based distribution:
+
+```sh
+sudo dnf install qt5ct adwaita-qt5
+```
+
+Set the system Qt5 theme to "Adwaita-Dark" as shown in the included screenshot. Adjust the typeface and size to your taste in the "Fonts" tab.
 
 ![Theming](images/org.luxrender.luxrenderui_Qt5_Theming.png)
-![Theming](images/org.luxrender.luxrenderui_Qt5_Theming2.png)
 
 
 ## New Features
@@ -102,7 +110,7 @@ Set the system Qt5 theme to "Adwaita-Dark" as shown in the included screenshot. 
 ### LuxRender
 
 * New FlatPak build system with GCC 12 support.
-* New QT5 based GUI with dark mode support.
+* New QT5 based GUI with dark mode and theme support.
 * Added the ability to select more than 32 threads in the GUI.
 * Added a fifth decimal place to certain post-process effects for finer tuning.
 * Removed support for LuxCoreRender rendering engines. If LuxCoreRender features are desired, such as pure OpenCL path tracing, users are reccomended to consult the [LuxCoreRender project page.](https://github.com/LuxCoreRender)
@@ -112,7 +120,7 @@ Set the system Qt5 theme to "Adwaita-Dark" as shown in the included screenshot. 
 * Added the ability to set the mesh accelerator (QBVH, KDTree, etc.) per-mesh in the Blender mesh data panel.
 * Added the Hybrid Bidirectional integrator for OpenCL-accelerated bidirectional path tracing.
 * Added the IGI (Instant Global Illumination) accelerator.
-* Added the ERPT (Energy Redistribution Path Tracing) sampler and associated settings.
+* Added the ERPT (Energy Redistribution Path Tracing) sampler and associated settings. This is experimental and often generates poor results.
 * Added the Mutation Range setting for the Metropolis Sampler.
 * Added additional accelerators including BVH/Octree and the ability to use no accelerator.
 * Removed support for LuxCoreRender rendering engines. If LuxCoreRender features are desired, such as pure OpenCL path tracing, users are reccomended to consult the [LuxCoreRender project page.](https://github.com/LuxCoreRender)

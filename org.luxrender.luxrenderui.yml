@@ -24,9 +24,9 @@ cleanup:
 
 modules:
 
-# This script requires the zlib, bzip2, lzma, jpeg, openjpeg, tiff, png, freetype, and fftw development packages to be installed from your distribution's package manager.
+# This script requires the zlib, bzip2, lzma, jpeg, openjpeg, tiff, png, freetype, and fftw development packages.
 
-# Qt5imageformats is required for TIFF output.
+# Qt5 Core, Gui, Widgets, and Imageformats are required for TIFF output.
 
 # Python 3.5 requires an older OpenSSL version than is provided with current Linux distros.
 
