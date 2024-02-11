@@ -46,7 +46,7 @@ Clone this GitHub repository.
 git clone --recursive https://github.com/rrubberr/Flatpak-LuxRender && cd Flatpak-LuxRender
 ```
 
-Finally, build the LuxRender package using Flatpak Builder.
+Build the LuxRender package using Flatpak Builder.
 
 ```sh
 flatpak-builder --install --install-deps-from=flathub --user --force-clean --force-clean .build-dir org.luxrender.luxrenderui.yml
@@ -55,7 +55,7 @@ flatpak-builder --install --install-deps-from=flathub --user --force-clean --for
 
 ## Running the Flatpak
 
-After the package has been compiled, LuxRender can be launched using the follwing command.
+After the package has been compiled, LuxRender can be launched using the following command.
 
 ```sh
 flatpak run org.luxrender.luxrenderui
