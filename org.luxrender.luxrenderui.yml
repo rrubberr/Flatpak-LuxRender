@@ -196,6 +196,18 @@ modules:
         url: https://github.com/embree/embree/
         tag: v2.17.7
 
+  - name: FreeImage
+    buildsystem: simple
+    build-commands:
+      - make -j
+      - make INSTALLDIR=/app/lib install
+    sources:
+      - type: archive
+        url: https://sourceforge.net/projects/freeimage/files/Source%20Distribution/3.18.0/FreeImage3180.zip
+        md5: f8ba138a3be233a3eed9c456e42e2578
+      - type: patch
+        path: patches/freeimage/freeimage-paths.patch
+
 # OpenCL dependencies required for GPU rendering.
 
   - name: OpenCL-Headers
@@ -272,6 +284,8 @@ modules:
       - -D PYTHON_CUSTOM=TRUE
       - -D PYTHON_INCLUDE_PATH=/app/include/python3.5m
       - -D PYTHON_LIBRARIES=/app/lib/libpython3.5m.so
+      - -D LUX_USE_FREEIMAGE=TRUE
+      - -D FREEIMAGE_INCLUDE_DIR=/app/include
       - -D OpenEXR_Imath_INCLUDE_DIR=/app/include/Imath/
       - -D OpenEXR_half_INCLUDE_DIR=/app/include/Imath/
       - -D PYTHON_HOME=/app/bin
