@@ -53,7 +53,7 @@ modules:
     sources:
       - type: archive
         url: https://www.python.org/ftp/python/3.5.3/Python-3.5.3.tar.xz
-        md5: 57d1f8bfbabf4f2500273fb0706e6f21
+        sha256: eefe2ad6575855423ab630f5b51a8ef6e5556f774584c06beab4926f930ddbb0
 
 # Binaries extracted from the Flatpak require libdeflate.
 
@@ -204,7 +204,7 @@ modules:
     sources:
       - type: archive
         url: https://sourceforge.net/projects/freeimage/files/Source%20Distribution/3.18.0/FreeImage3180.zip
-        md5: f8ba138a3be233a3eed9c456e42e2578
+        sha256: f41379682f9ada94ea7b34fe86bf9ee00935a3147be41b6569c9605a53e438fd
       - type: patch
         path: patches/freeimage/freeimage-paths.patch
 
@@ -226,9 +226,9 @@ modules:
       - -D BUILD_TESTS=OFF
       - -D BUILD_DOCS=OFF
     sources:
-      - type: git
-        url: https://github.com/KhronosGroup/OpenCL-CLHPP.git
-        tag: v2.0.11
+      - type: archive
+        url: https://github.com/KhronosGroup/OpenCL-CLHPP/archive/refs/tags/v2.0.11.tar.gz
+        sha256: ffc2ca08cf4ae90ee55f14ea3735ccc388f454f4422b69498b2e9b93a1d45181
 
 # Build a minimal Qt5 to support the updated GUI.
 
