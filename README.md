@@ -46,6 +46,12 @@ Clone this GitHub repository.
 git clone --recursive https://github.com/rrubberr/Flatpak-LuxRender && cd Flatpak-LuxRender
 ```
 
+Extract deps.tar.xz.
+
+```sh
+tar xf deps.tar.xz
+```
+
 Build the LuxRender package using Flatpak Builder.
 
 ```sh
