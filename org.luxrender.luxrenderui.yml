@@ -28,9 +28,10 @@ modules:
 
 # Qt5 Core, Gui, Widgets, and Imageformats are required for TIFF output.
 
-# Python 3.5 requires an older OpenSSL version than is provided with current Linux distros.
+# Python 3.5 requires an older OpenSSL version.
 
   - name: OpenSSL
+    no-debuginfo: true
     buildsystem: simple
     build-commands:
       - ./config shared -fPIC -w -std=c++11
@@ -43,6 +44,7 @@ modules:
         tag: OpenSSL_1_0_2-stable
   
   - name: Python3
+    no-debuginfo: true
     buildsystem: simple
     build-commands:
       - ./configure --prefix=/app --with-openssl=/app/bin --enable-shared --with-ensurepip=no
@@ -58,6 +60,7 @@ modules:
 # Binaries extracted from the Flatpak require libdeflate.
 
   - name: libdeflate
+    no-debuginfo: true
     buildsystem: cmake
     build-options:
       cxxflags: -w -std=c++11
@@ -70,6 +73,7 @@ modules:
         tag: v1.18
 
   - name: Boost
+    no-debuginfo: true
     buildsystem: simple
     build-commands:
       - ./bootstrap.sh --prefix=/app --with-python=/app/bin/python3 --with-python-root=/app
@@ -80,6 +84,7 @@ modules:
         sha1: f94bb008900ed5ba1994a1072140590784b9b5df
 
   - name: TBB
+    no-debuginfo: true
     buildsystem: cmake
     build-options:
       cflags: -O3 -funwind-tables -ftree-vectorize -funroll-loops -fasynchronous-unwind-tables -flto -fno-fat-lto-objects
@@ -96,6 +101,7 @@ modules:
   - shared-modules/glu/glu-9.json
 
   - name: freeglut
+    no-debuginfo: true
     buildsystem: cmake
     build-options:
       cflags: -w -fcommon
@@ -108,6 +114,7 @@ modules:
         tag: v3.2.2
 
   - name: IlmBase
+    no-debuginfo: true
     buildsystem: cmake
     build-options:
       cxxflags: -w -std=c++11
@@ -120,6 +127,7 @@ modules:
         tag: v2.2.0
 
   - name: OpenEXR
+    no-debuginfo: true
     buildsystem: cmake
     build-options:
       cxxflags: -w -std=c++11 -I /app/include/OpenEXR
@@ -130,6 +138,7 @@ modules:
       *openexr_sources
       
   - name: Imath
+    no-debuginfo: true
     buildsystem: cmake
     build-options:
       cxxflags: -w -std=c++11 -I /app/bin -I /app/include/python3.5m -L /app/lib -lpython3.5m -Wno-error=stringop-truncation -Wno-error=class-memaccess -Wno-error=sizeof-pointer-memaccess -Wno-error=unused-function -Wno-error=deprecated-declarations -Wno-error=maybe-uninitialized -Wno-error=stringop-overflow= -Wno-error=misleading-indentation -Wno-error=format-truncation= -Wno-error=aligned-new= -Wno-error=mismatched-new-delete
@@ -151,6 +160,7 @@ modules:
         tag: v3.1.9
 
   - name: OpenImageIO
+    no-debuginfo: true
     buildsystem: cmake
     build-options:
       cxxflags: -w -std=c++11 -fPIC -I /app/bin -I /app/include/python3.5m -L /app/lib -lpython3.5m -Wno-error=stringop-truncation -Wno-error=class-memaccess -Wno-error=sizeof-pointer-memaccess -Wno-error=unused-function -Wno-error=deprecated-declarations -Wno-error=maybe-uninitialized -Wno-error=stringop-overflow= -Wno-error=misleading-indentation -Wno-error=format-truncation= -Wno-error=aligned-new= -Wno-error=mismatched-new-delete
@@ -183,6 +193,7 @@ modules:
         path: patches/oiio/oiio_gpstag_redefinition.patch
         
   - name: Embree
+    no-debuginfo: true
     buildsystem: cmake
     build-options:
       cxxflags: -w
@@ -197,6 +208,7 @@ modules:
         tag: v2.17.7
 
   - name: FreeImage
+    no-debuginfo: true
     buildsystem: simple
     build-commands:
       - make -j
@@ -211,6 +223,7 @@ modules:
 # OpenCL dependencies required for GPU rendering.
 
   - name: OpenCL-Headers
+    no-debuginfo: true
     buildsystem: cmake-ninja
     sources:
       - type: git
@@ -218,6 +231,7 @@ modules:
         tag: v2022.01.04
 
   - name: OpenCL-CLHPP
+    no-debuginfo: true
     buildsystem: cmake-ninja
     config-opts:
       - -D OPENCL_INCLUDE_DIR=/app/include
@@ -233,6 +247,7 @@ modules:
 # Build a minimal Qt5 to support the updated GUI.
 
   - name: Qt5
+    no-debuginfo: true
     buildsystem: simple
     build-options:
       cxxflags: -w -std=c++11
@@ -248,11 +263,12 @@ modules:
 # Using the modified LuxRays git is REQUIRED; https://github.com/LuxRender/LuxRays will NOT build.
 
   - name: LuxRays
+    no-debuginfo: true
     buildsystem: cmake
     build-options:
-      cxxflags: -w -march=native -std=c++11 -mmmx -msse -msse2 -mavx -mfpmath=sse -O3 -floop-parallelize-all -ftree-parallelize-loops=4 -pipe -ftree-vectorize -fno-math-errno -fno-signed-zeros -fno-trapping-math -fassociative-math -fno-rounding-math -fno-signaling-nans -fcx-limited-range -floop-interchange -floop-strip-mine -floop-block -fsee -ftree-loop-linear -ftree-loop-distribution -ftree-loop-im -fivopts -ftracer -fomit-frame-pointer -fno-stack-protector -Wno-narrowing -pthread -DBOOST_DISABLE_ASSERTS -DHAVE_PTHREAD_H -DLUXCORE_DISABLE_EMBREE_BVH_BUILDER -DCL_USE_DEPRECATED_OPENCL_1_2_APIS -DCL_TARGET_OPENCL_VERSION=120 -DCMAKE_BUILD_TYPE=Release -L /app/lib -I /app/include/python3.5m -lpython3.5m -I /usr/include/gtk-3.0 -I /usr/include/gtk-3.0/gtk -I /usr/include/glib-2.0 -I /usr/lib/x86_64-linux-gnu/glib-2.0/include/ -I /usr/include/pango-1.0/ -I /usr/include/harfbuzz -I /usr/include/cairo -I /usr/include/gdk-pixbuf-2.0 -I /usr/include/atk-1.0 -lOpenImageIO_Util
+      cxxflags: -w -march=native -std=c++11 -msse -msse2 -mavx -mfpmath=sse -O3 -pipe -ftree-vectorize -fno-math-errno -fno-signed-zeros -fno-trapping-math -fassociative-math -fno-rounding-math -fno-signaling-nans -fcx-limited-range -floop-interchange -floop-strip-mine -floop-block -fsee -ftree-loop-linear -ftree-loop-distribution -ftree-loop-im -fivopts -ftracer -fomit-frame-pointer -fno-stack-protector -Wno-narrowing -pthread -DBOOST_DISABLE_ASSERTS -DHAVE_PTHREAD_H -DLUXCORE_DISABLE_EMBREE_BVH_BUILDER -DCL_USE_DEPRECATED_OPENCL_1_2_APIS -DCL_TARGET_OPENCL_VERSION=120 -DCMAKE_BUILD_TYPE=Release -L /app/lib -I /app/include/python3.5m -lpython3.5m -I /usr/include/gtk-3.0 -I /usr/include/gtk-3.0/gtk -I /usr/include/glib-2.0 -I /usr/lib/x86_64-linux-gnu/glib-2.0/include/ -I /usr/include/pango-1.0/ -I /usr/include/harfbuzz -I /usr/include/cairo -I /usr/include/gdk-pixbuf-2.0 -I /usr/include/atk-1.0 -lOpenImageIO_Util
       cflags: -L /app/lib -lOpenImageIO_Util -lpython3.5m -I /app/include/python3.5m -L /usr/lib/x86_64-linux-gnu -lpthread -lgobject-2.0 -lgtk-3 -lglib-2.0 -I /usr/include/gtk-3.0 -I /usr/include/gtk-3.0/gtk -I /usr/include/glib-2.0 -I /usr/lib/x86_64-linux-gnu/glib-2.0/include/ -I /usr/include/pango-1.0/ -I /usr/include/harfbuzz -I /usr/include/cairo -I /usr/include/gdk-pixbuf-2.0 -I /usr/include/atk-1.0
-      ldflags: -Wl,-rpath,$ORIGIN/shared
+      ldflags: -Wl,-rpath,$ORIGIN/lib
     config-opts:
       - -D PYTHON_INCLUDE_DIR=/app/include/python3.5m
       - -D PYTHON_LIBRARY=/app/lib/libpython3.5m.so
@@ -273,10 +289,11 @@ modules:
 # Using the modified Lux git is REQUIRED; https://github.com/LuxRender/Lux will NOT build.
 
   - name: LuxRender
+    no-debuginfo: true
     buildsystem: cmake
     build-options:
-      cxxflags: -w -march=native -std=c++11 -mmmx -msse -msse2 -mavx -mfpmath=sse -O3 -floop-parallelize-all -ftree-parallelize-loops=4 -pipe -ftree-vectorize -fno-math-errno -fno-signed-zeros -fno-trapping-math -fassociative-math -fno-rounding-math -fno-signaling-nans -fcx-limited-range -floop-interchange -floop-strip-mine -floop-block -fsee -ftree-loop-linear -ftree-loop-distribution -ftree-loop-im -fivopts -ftracer -fomit-frame-pointer -fno-stack-protector -Wno-narrowing -pthread -DBOOST_DISABLE_ASSERTS -DHAVE_PTHREAD_H -DCL_USE_DEPRECATED_OPENCL_1_2_APIS -DCL_TARGET_OPENCL_VERSION=120 -DCMAKE_BUILD_TYPE=Release -I /app/bin -I /app/lib -I /app/include/python3.5m -lpython3.5m -I /app/lib/cmake/ -I /app/lib/cmake/Qt5 -L /app/lib -lQt5Core -lQt5Gui -lQt5Widgets -L /usr/lib/x86_64-linux-gnu -lOpenImageIO_Util -I /app/include/OpenImageIO -lOpenImageIO
-      ldflags: -Wl,-rpath,$ORIGIN/shared
+      cxxflags: -w -march=native -std=c++11 -msse -msse2 -mavx -mfpmath=sse -O3 -pipe -ftree-vectorize -fno-math-errno -fno-signed-zeros -fno-trapping-math -fassociative-math -fno-rounding-math -fno-signaling-nans -fcx-limited-range -floop-interchange -floop-strip-mine -floop-block -fsee -ftree-loop-linear -ftree-loop-distribution -ftree-loop-im -fivopts -ftracer -fomit-frame-pointer -fno-stack-protector -Wno-narrowing -pthread -DBOOST_DISABLE_ASSERTS -DHAVE_PTHREAD_H -DCL_USE_DEPRECATED_OPENCL_1_2_APIS -DCL_TARGET_OPENCL_VERSION=120 -DCMAKE_BUILD_TYPE=Release -I /app/bin -I /app/lib -I /app/include/python3.5m -lpython3.5m -I /app/lib/cmake/ -I /app/lib/cmake/Qt5 -L /app/lib -lQt5Core -lQt5Gui -lQt5Widgets -L /usr/lib/x86_64-linux-gnu -lOpenImageIO_Util -I /app/include/OpenImageIO -lOpenImageIO
+      ldflags: -Wl,-rpath,$ORIGIN/lib
     builddir: true
     config-opts:
       - -D LuxRays_HOME=/app
