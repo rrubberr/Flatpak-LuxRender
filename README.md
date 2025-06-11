@@ -49,7 +49,7 @@ git clone --recursive https://github.com/rrubberr/Flatpak-LuxRender && cd Flatpa
 Build the LuxRender package using Flatpak Builder.
 
 ```sh
-flatpak-builder --install --install-deps-from=flathub --user --force-clean --force-clean .build-dir org.luxrender.luxrenderui.yml
+flatpak-builder --install --install-deps-from=flathub --user --force-clean .build-dir org.luxrender.luxrenderui.yml
 ```
 
 
