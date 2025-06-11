@@ -358,7 +358,7 @@ modules:
     post-install:
       - cp -rv ${FLATPAK_BUILDER_BUILDDIR}/_flatpak_build/* /app/bin/
     sources:
-      - type: archive
+      - type: dir
         path: Lux/
 
 # Install the app. The extract-binaries.sh script can now be used to create a standalone LuxRender.
