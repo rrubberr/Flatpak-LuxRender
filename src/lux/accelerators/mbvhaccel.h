@@ -120,7 +120,7 @@ class MBVHAccel : public Aggregate {
 public:
 	// MBVHAccel Public Methods.
 	MBVHAccel(const vector<boost::shared_ptr<Primitive> > &p,
-		int csamples, int icost, int tcost, float ebonus, int maxleafp = 8);
+		int csamples, int icost, int tcost, float ebonus, int maxleafp = 1);
 	virtual ~MBVHAccel();
 	virtual BBox WorldBound() const;
 	virtual bool CanIntersect() const { return true; }
