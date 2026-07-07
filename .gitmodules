@@ -66,3 +66,8 @@
 	path = ext/boost
 	url = https://github.com/boostorg/boost.git
 	shallow = true
+[submodule "ext/embree"]
+	path = ext/embree
+	url = https://github.com/RenderKit/embree
+	branch = v4.4.1
+	shallow = true
