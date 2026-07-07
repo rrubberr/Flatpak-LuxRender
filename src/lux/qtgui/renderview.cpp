@@ -171,7 +171,8 @@ void RenderView::reload()
 			QPixmap checkerboard(":/images/checkerboard.png");
 			renderscene->setBackgroundBrush(checkerboard);
 		} else {
-			renderscene->setBackgroundBrush(QColor(127,127,127));
+			QColor canvasBg = this->palette().color(QPalette::Dark); // Extracts the theme's dark tone
+			renderscene->setBackgroundBrush(canvasBg);
 		}
 		
 		if (image.isNull())
