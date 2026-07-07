@@ -305,6 +305,10 @@ void MBVHAccel::FindBestSplit(
 	}
 
 	if (costSamples > 1) {
+
+		// --------------------------------------------------------------
+		// Binned SAH search.
+		// --------------------------------------------------------------
 		
 		// Compute both object bounds (for surface area) and centroid bounds
 		// (for split planes). Realistically, costSamples should ALWAYS be > 1.
@@ -324,40 +328,71 @@ void MBVHAccel::FindBestSplit(
 
 		Vector cext = centroidBounds.pMax - centroidBounds.pMin;
 
+		static const int MAX_SAH_BINS = 64;
+		const int numBins = std::min(costSamples + 1, MAX_SAH_BINS);
+
 		// Test all three axes and take the globally best SAH split.
 		for (u_int axis = 0; axis < 3; ++axis) {
 			if (cext[axis] <= 0.f) continue; // all centroids coincide on this axis.
-			
-			// Sample candidate planes evenly within the centroid range.
-			// splitValue is in "2*centroid" space to match the partition
-			// comparison (pMax[axis] + pMin[axis]) < splitValue.
-			float increment = cext[axis] / static_cast<float>(costSamples + 1);
-			for (int s = 1; s <= costSamples; ++s) {
-				float splitVal = 2.f * (centroidBounds.pMin[axis] +
-				                        s * increment);
 
-				int   nBelow = 0, nAbove = 0;
-				BBox  bbBelow, bbAbove;
-				for (u_int j = begin; j < end; ++j) {
-					if ((list[j]->bbox.pMax[axis] + list[j]->bbox.pMin[axis]) < splitVal) {
-						++nBelow;
-						bbBelow = Union(bbBelow, list[j]->bbox);
-					} else {
-						++nAbove;
-						bbAbove = Union(bbAbove, list[j]->bbox);
-					}
+			const float axisMin     = centroidBounds.pMin[axis];
+			const float binWidth    = cext[axis] / static_cast<float>(numBins);
+			const float invBinWidth = 1.f / binWidth;
+
+			// Phase 1: bin every primitive by centroid position (one O(n) pass).
+			BBox  binBBox[MAX_SAH_BINS];
+			u_int binCount[MAX_SAH_BINS] = {};
+			for (u_int j = begin; j < end; ++j) {
+				float c = 0.5f * (list[j]->bbox.pMin[axis] + list[j]->bbox.pMax[axis]);
+				int   b = static_cast<int>((c - axisMin) * invBinWidth);
+				if (b < 0)        b = 0;
+				if (b >= numBins) b = numBins - 1;
+				binBBox[b] = Union(binBBox[b], list[j]->bbox);
+				++binCount[b];
+			}
+
+			// Phase 2: prefix sweep -- bins [0..k] unioned/counted, left to right.
+			// prefixBBox[k]/prefixCount[k] describe the "below" side for a
+			// split placed right after bin k.
+			BBox  prefixBBox[MAX_SAH_BINS];
+			u_int prefixCount[MAX_SAH_BINS];
+			{
+				BBox  running;
+				u_int runningCount = 0;
+				for (int b = 0; b < numBins; ++b) {
+					running        = Union(running, binBBox[b]);
+					runningCount  += binCount[b];
+					prefixBBox[b]  = running;
+					prefixCount[b] = runningCount;
 				}
-				float belowSA = BBoxSurfaceArea(bbBelow);
-				float aboveSA = BBoxSurfaceArea(bbAbove);
-				float pBelow  = belowSA * invTotalSA;
-				float pAbove  = aboveSA * invTotalSA;
-				float eb      = (nAbove == 0 || nBelow == 0) ? emptyBonus : 0.f;
-				float cost    = traversalCost +
-				                isectCost * (1.f - eb) * (pBelow * nBelow + pAbove * nAbove);
+			}
+
+			// Phase 3: suffix sweep, right to left, evaluating the SAH cost
+			// at every bin boundary as it goes. suffixBBox/suffixCount
+			// describe the "above" side (bins [k+1..numBins-1]) for a split
+			// placed right after bin k.
+			BBox  suffixBBox;
+			u_int suffixCount = 0;
+			for (int k = numBins - 2; k >= 0; --k) {
+				suffixBBox    = Union(suffixBBox, binBBox[k + 1]);
+				suffixCount  += binCount[k + 1];
+
+				const u_int nBelow  = prefixCount[k];
+				const u_int nAbove  = suffixCount;
+				const float belowSA = BBoxSurfaceArea(prefixBBox[k]);
+				const float aboveSA = BBoxSurfaceArea(suffixBBox);
+				const float pBelow  = belowSA * invTotalSA;
+				const float pAbove  = aboveSA * invTotalSA;
+				const float eb      = (nAbove == 0 || nBelow == 0) ? emptyBonus : 0.f;
+				const float cost    = traversalCost +
+				                       isectCost * (1.f - eb) * (pBelow * nBelow + pAbove * nAbove);
 				if (cost < bestCost) {
 					bestCost    = cost;
 					*bestAxis   = axis;
-					*splitValue = splitVal;
+					// Boundary between bin k and k+1, converted to the
+					// "2*centroid" space the caller's partition predicate
+					// (pMax[axis] + pMin[axis]) < splitValue expects.
+					*splitValue = 2.f * (axisMin + static_cast<float>(k + 1) * binWidth);
 				}
 			}
 		}
@@ -644,6 +679,12 @@ u_int MBVHAccel::CollapseToWide(BVHAccelTreeNode *node,
 			const float saI = BBoxSurfaceArea(gathered[i].bbox);
 			for (int j = i + 1; j < n; ++j) {
 				if (!gathered[j].isLeafType) continue;
+				// subNodes[] is a fixed MBVH_WIDTH-sized array (see GatheredChild).
+				// A merge whose combined count would exceed that capacity must
+				// never be selected.
+				if (gathered[i].nSubNodes + gathered[j].nSubNodes >
+				    static_cast<u_int>(MBVH_WIDTH))
+					continue;
 				BBox  ubb  = Union(gathered[i].bbox, gathered[j].bbox);
 				float gain = LeafMergeGain(saI,              gathered[i].primCount,
 				                           BBoxSurfaceArea(gathered[j].bbox),
@@ -667,9 +708,15 @@ u_int MBVHAccel::CollapseToWide(BVHAccelTreeNode *node,
 
 		A.bbox      = Union(A.bbox, B.bbox);
 		A.primCount += B.primCount;
+		// The search above already guarantees A.nSubNodes + B.nSubNodes <=
+		// MBVH_WIDTH, so this loop can never overflow subNodes[].
 		for (u_int k = 0; k < B.nSubNodes; ++k) {
-			assert(A.nSubNodes < static_cast<u_int>(MBVH_WIDTH) &&
-			       "leaf-merge subNode overflow: more than MBVH_WIDTH nodes merged");
+			if (A.nSubNodes >= static_cast<u_int>(MBVH_WIDTH)) {
+				// Drop overflow sub-nodes.
+				assert(false && "leaf-merge subNode overflow: guard in "
+				       "merge search should have prevented this");
+				break;
+			}
 			A.subNodes[A.nSubNodes++] = B.subNodes[k];
 		}
 		// A.isLeafType remains true.
@@ -834,8 +881,13 @@ ComputeHitMask(const MBVHNode * __restrict__ node,
 	return mask & node->validChildMask;
 }
 
-// Traversal
-bool MBVHAccel::Intersect(const Ray &ray, Intersection *isect) const
+// ---------------------------------------------------------------------------
+// Shared traversal for Intersect() and IntersectP().
+// ---------------------------------------------------------------------------
+template<bool AnyHit>
+static inline bool MBVHTraverse(const MBVHNode *wideNodes, u_int nWideNodes,
+                                 const vector<Primitive *> &orderedPrims,
+                                 const Ray &ray, Intersection *isect)
 {
 	if (nWideNodes == 0) return false;
 
@@ -864,7 +916,7 @@ bool MBVHAccel::Intersect(const Ray &ray, Intersection *isect) const
 		// ComputeHitMask runs the vectorized slab test and returns a
 		// bitmask of hit children. Iterating only the set bits with
 		// __builtin_ctz (single TZCNT instruction) keeps dispatch iterations
-		// at the number of actual hits, instead of always 8.
+		// at the number of actual hits, instead of always MBVH_WIDTH.
 		int hitMask = ComputeHitMask(&node, sx, sy, sz,
 		                             ox, oy, oz, idx, idy, idz,
 		                             ray.mint, ray.maxt);
@@ -875,9 +927,15 @@ bool MBVHAccel::Intersect(const Ray &ray, Intersection *isect) const
 			if (ci < 0) {
 				const int cnt  = node.primCount[i];
 				const int base = ~ci;  // primOffset = ~childIndex (sign-bit encoding)
-				for (int k = 0; k < cnt; ++k)
-					if (orderedPrims[base + k]->Intersect(ray, isect))
-						hit = true;
+				for (int k = 0; k < cnt; ++k) {
+					if (AnyHit) {
+						if (orderedPrims[base + k]->IntersectP(ray))
+							return true;
+					} else {
+						if (orderedPrims[base + k]->Intersect(ray, isect))
+							hit = true;
+					}
+				}
 			} else {
 				assert(top < 64);
 				stack[top++] = static_cast<u_int>(ci);
@@ -887,46 +945,15 @@ bool MBVHAccel::Intersect(const Ray &ray, Intersection *isect) const
 	return hit;
 }
 
+// Traversal
+bool MBVHAccel::Intersect(const Ray &ray, Intersection *isect) const
+{
+	return MBVHTraverse<false>(wideNodes, nWideNodes, orderedPrims, ray, isect);
+}
+
 bool MBVHAccel::IntersectP(const Ray &ray) const
 {
-	if (nWideNodes == 0) return false;
-
-	u_int stack[64];
-	int   top    = 0;
-	stack[top++] = 0u;
-
-	const float ox  = ray.o.x, oy = ray.o.y, oz = ray.o.z;
-	const float idx = (ray.d.x != 0.f) ? 1.f / ray.d.x : std::numeric_limits<float>::infinity();
-	const float idy = (ray.d.y != 0.f) ? 1.f / ray.d.y : std::numeric_limits<float>::infinity();
-	const float idz = (ray.d.z != 0.f) ? 1.f / ray.d.z : std::numeric_limits<float>::infinity();
-
-	const int sx = (idx < 0.f) ? 1 : 0;
-	const int sy = (idy < 0.f) ? 1 : 0;
-	const int sz = (idz < 0.f) ? 1 : 0;
-
-	while (top > 0) {
-		const MBVHNode &node = wideNodes[stack[--top]];
-
-		int hitMask = ComputeHitMask(&node, sx, sy, sz,
-		                             ox, oy, oz, idx, idy, idz,
-		                             ray.mint, ray.maxt);
-		while (hitMask) {
-			const int i  = __builtin_ctz(hitMask);
-			hitMask     &= hitMask - 1;
-			const int ci = node.childIndex[i];
-			if (ci < 0) {
-				const int cnt  = node.primCount[i];
-				const int base = ~ci;  // primOffset = ~childIndex (sign-bit encoding)
-				for (int k = 0; k < cnt; ++k)
-					if (orderedPrims[base + k]->IntersectP(ray))
-						return true;
-			} else {
-				assert(top < 64);
-				stack[top++] = static_cast<u_int>(ci);
-			}
-		}
-	}
-	return false;
+	return MBVHTraverse<true>(wideNodes, nWideNodes, orderedPrims, ray, nullptr);
 }
 
 // GetPrimitives / CreateAccelerator

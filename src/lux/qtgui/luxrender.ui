@@ -1650,6 +1650,11 @@
           <property name="readOnly">
            <bool>true</bool>
           </property>
+          <property name="font">
+           <font>
+            <family>monospace</family>
+           </font>
+           </property>
          </widget>
         </item>
         <item row="1" column="0">

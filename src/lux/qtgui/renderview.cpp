@@ -45,7 +45,8 @@ using namespace std;
 RenderView::RenderView(QWidget *parent) : QGraphicsView(parent)
 {
 	renderscene = new QGraphicsScene();
-	renderscene->setBackgroundBrush(QColor(127,127,127));
+	QColor canvasBg = this->palette().color(QPalette::Dark); // Extracts the theme's dark tone
+	renderscene->setBackgroundBrush(canvasBg);
 	luxlogo = renderscene->addPixmap(QPixmap(":/images/luxlogo_bg.png"));
 	luxfb = renderscene->addPixmap(QPixmap(":/images/luxlogo_bg.png"));
 	luxfb->hide ();
@@ -170,7 +171,8 @@ void RenderView::reload()
 			QPixmap checkerboard(":/images/checkerboard.png");
 			renderscene->setBackgroundBrush(checkerboard);
 		} else {
-			renderscene->setBackgroundBrush(QColor(127,127,127));
+			QColor canvasBg = this->palette().color(QPalette::Dark); // Extracts the theme's dark tone
+			renderscene->setBackgroundBrush(canvasBg);
 		}
 		
 		if (image.isNull())
@@ -382,8 +384,7 @@ void RenderView::wheelEvent(QWheelEvent* event)
 	if (!zoomEnabled)
 		return;
 
-	const float zoomsteps[] = { 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 12.5, 17, 25, 33, 45, 50, 67, 75, 100, 
-		125, 150, 175, 200, 250, 300, 400, 500, 600, 700, 800, 1000, 1200, 1600 };
+	const float zoomsteps[] = { 50, 100, 200 };
 	
 	size_t numsteps = sizeof(zoomsteps) / sizeof(*zoomsteps);
 
