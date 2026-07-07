@@ -147,9 +147,12 @@ namespace lux {
 			ImageSpec config;
 			config.attribute("oiio:UnassociatedAlpha", 1);
 
-			std::string format_list;
-				OIIO::getattribute("format_list", format_list);
-				LOG(LUX_INFO, LUX_NOERROR) << "OIIO registered formats: " << format_list;
+			static bool formats_logged = []() {
+            std::string format_list;
+            	OIIO::getattribute("format_list", format_list);
+            	LOG(LUX_INFO, LUX_NOERROR) << "OIIO registered formats: " << format_list;
+            return true;
+        	}();
 
 			std::unique_ptr<ImageInput> in = ImageInput::open(name, &config);
 			if (in.get()) {
