@@ -239,6 +239,9 @@ MainWindow::MainWindow(QWidget *parent, bool copylog2console)
 	connect(ui->action_stopRender, SIGNAL(triggered()), this, SLOT(stopRender()));
 	connect(ui->button_stop, SIGNAL(clicked()), this, SLOT(stopRender()));
 	connect(ui->action_endRender, SIGNAL(triggered()), this, SLOT(endRender()));
+	connect(ui->spinBox_zoom, &QSpinBox::valueChanged, this, [this](int newValue) {
+        renderView->setZoomFactor(static_cast<float>(newValue));
+    });
 
 	// View menu slots
 	connect(ui->action_copyLog, SIGNAL(triggered()), this, SLOT(copyLog()));
@@ -1950,7 +1953,9 @@ void MainWindow::showRenderresolution()
 // show the zoom-factor in viewport
 void MainWindow::showZoomfactor()
 {
-	ui->zoominfoLabel->setText((QString(" %1").arg(renderView->getZoomFactor()))+ "% ");
+    ui->spinBox_zoom->blockSignals(true);
+    ui->spinBox_zoom->setValue(static_cast<int>(renderView->getZoomFactor()));
+    ui->spinBox_zoom->blockSignals(false);
 }
 // show the actual viewportsize
 void MainWindow::viewportChanged() {

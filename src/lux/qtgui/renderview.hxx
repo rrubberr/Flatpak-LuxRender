@@ -59,7 +59,11 @@ public:
 
 	void reload ();
 	void setLogoMode ();
-	int getZoomFactor ();
+
+	// Zoom Management
+    int getZoomFactor ();
+    void setZoomFactor (float factor);
+	
 	int getWidth ();
 	int getHeight ();
 	void copyToClipboard ();

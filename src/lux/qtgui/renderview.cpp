@@ -379,29 +379,40 @@ int RenderView::getHeight()
 	return height();
 }
 
-void RenderView::wheelEvent(QWheelEvent* event)
+void RenderView::setZoomFactor(float factor)
 {
-	if (!zoomEnabled)
-		return;
+    // Prevent redundant processing if the zoom didn't actually change
+    if (zoomfactor == factor)
+        return;
 
-	const float zoomsteps[] = { 50, 100, 200 };
-	
-	size_t numsteps = sizeof(zoomsteps) / sizeof(*zoomsteps);
+    zoomfactor = factor;
 
-	size_t index = min<size_t>(std::upper_bound(zoomsteps, zoomsteps + numsteps, zoomfactor) - zoomsteps, numsteps-1);
-//	if (event->delta() < 0) {
-	if (event->angleDelta().y() < 0) {
-		// if zoomfactor is equal to zoomsteps[index-1] we need index-2
-		while (index > 0 && zoomsteps[--index] == zoomfactor);		
-	}
-	zoomfactor = zoomsteps[index];
-
-	resetTransform();
-	scale(zoomfactor / 100.f, zoomfactor / 100.f);
+    // Apply the visual transformations to the QGraphicsView
+    resetTransform();
+    scale(zoomfactor / 100.f, zoomfactor / 100.f);
     
     choosePixmapAntialiasing();
 
-	emit viewChanged ();
+    // Tell the rest of the app (like MainWindow) that the view changed
+    emit viewChanged();
+}
+
+void RenderView::wheelEvent(QWheelEvent* event)
+{
+    if (!zoomEnabled)
+        return;
+
+    const float zoomsteps[] = { 50, 100, 150, 200 };
+    
+    size_t numsteps = sizeof(zoomsteps) / sizeof(*zoomsteps);
+    size_t index = min<size_t>(std::upper_bound(zoomsteps, zoomsteps + numsteps, zoomfactor) - zoomsteps, numsteps-1);
+
+    if (event->angleDelta().y() < 0) {
+        while (index > 0 && zoomsteps[--index] == zoomfactor);      
+    }
+
+    // Simply call our new reusable function here:
+    setZoomFactor(zoomsteps[index]);
 }
 
 void RenderView::drawPenOnUserSamplingMap(const int xPos, const int yPos)
