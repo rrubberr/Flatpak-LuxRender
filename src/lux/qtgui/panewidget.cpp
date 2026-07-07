@@ -45,19 +45,26 @@ PaneWidget::PaneWidget(QWidget *parent, const QString& label, const QString& ico
 	m_Index = -1;
 
 	ui->setupUi(this);
-	
 
+	ui->frame->setStyleSheet(
+    "QFrame {"
+    "  background-color: palette(mid);"
+    "  border-top-left-radius: 4px;"
+    "  border-top-right-radius: 4px;"
+    "  border-bottom-left-radius: 4px;"
+    "  border-bottom-right-radius: 4px;"
+    "}"
+	);
 
-
-	ui->frame->setStyleSheet(QString::fromUtf8(" QFrame {\n""background-color: qlineargradient(spread:pad, x1:1, y1:0, x2:0, y2:0, stop:0 rgb(120, 120, 120), stop:0.8 rgb(230, 230, 230))\n""}\n"""));
-
-	if (!icon.isEmpty())
-		ui->labelPaneIcon->setPixmap(QPixmap(icon));
-		ui->labelPaneIcon->setStyleSheet(QString::fromUtf8(" QFrame {\n""background-color: rgba(232, 232, 232, 0)\n""}"));
-	
-	if (!label.isEmpty())
-		ui->labelPaneName->setText(label);
-		ui->labelPaneName->setStyleSheet(QString::fromUtf8(" QFrame {\n""background-color: rgba(232, 232, 232, 0)\n""}"));
+	if (!icon.isEmpty()) {
+        ui->labelPaneIcon->setPixmap(QPixmap(icon));
+        ui->labelPaneIcon->setStyleSheet("QLabel { background-color: transparent; }");
+    }
+    
+    if (!label.isEmpty()) {
+        ui->labelPaneName->setText(label);
+        ui->labelPaneName->setStyleSheet("QLabel { background-color: transparent; }");
+    }
 
 #if defined(__APPLE__)
 	ui->frame->setLineWidth(2);
@@ -66,7 +73,8 @@ PaneWidget::PaneWidget(QWidget *parent, const QString& label, const QString& ico
 
 	expandlabel = new ClickableLabel(">", this);
 	expandlabel->setPixmap(QPixmap(":/icons/collapsedicon.png"));
-	expandlabel->setStyleSheet(QString::fromUtf8(" QFrame {\n""background-color: rgba(232, 232, 232, 0)\n""}"));
+	expandlabel->setStyleSheet("QFrame { background-color: transparent; }");
+
 	ui->gridLayout->addWidget(expandlabel, 0, 3, 1, 1);
  
 	connect(expandlabel, SIGNAL(clicked()), this, SLOT(expandClicked()));
@@ -107,7 +115,7 @@ void PaneWidget::showOnOffButton(bool showbutton)
 	if (onofflabel == NULL) {
 		onofflabel = new ClickableLabel("*", this);
 		onofflabel->setPixmap(QPixmap(":/icons/poweronicon.png"));
-		onofflabel->setStyleSheet(QString::fromUtf8(" QFrame {\n""background-color: rgba(232, 232, 232, 0)\n""}"));
+		onofflabel->setStyleSheet("QFrame { background-color: transparent; }");	
 
 		ui->gridLayout->removeWidget(expandlabel);
 		ui->gridLayout->addWidget(onofflabel, 0, 3, 1, 1);
@@ -153,7 +161,8 @@ void PaneWidget::showSoloButton(bool showbutton)
 	if (sololabel == NULL) {
 		sololabel = new ClickableLabel("S", this);
 		sololabel->setPixmap(QPixmap(":/icons/plusicon.png"));
-		sololabel->setStyleSheet(QString::fromUtf8(" QFrame {\n""background-color: rgba(232, 232, 232, 0)\n""}"));
+		sololabel->setStyleSheet("QFrame { background-color: transparent; }");	
+		
 		sololabel->setToolTip( "Click to make this lightgroup solo, click again to remove solo mode." );
 
 		ui->gridLayout->removeWidget(expandlabel);
