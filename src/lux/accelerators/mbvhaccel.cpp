@@ -681,7 +681,7 @@ u_int MBVHAccel::CollapseToWide(BVHAccelTreeNode *node,
 				if (!gathered[j].isLeafType) continue;
 				// subNodes[] is a fixed MBVH_WIDTH-sized array (see GatheredChild).
 				// A merge whose combined count would exceed that capacity must
-				// never be selected.
+				// never be selected, regardless of its SAH gain.
 				if (gathered[i].nSubNodes + gathered[j].nSubNodes >
 				    static_cast<u_int>(MBVH_WIDTH))
 					continue;
@@ -712,7 +712,7 @@ u_int MBVHAccel::CollapseToWide(BVHAccelTreeNode *node,
 		// MBVH_WIDTH, so this loop can never overflow subNodes[].
 		for (u_int k = 0; k < B.nSubNodes; ++k) {
 			if (A.nSubNodes >= static_cast<u_int>(MBVH_WIDTH)) {
-				// Drop overflow sub-nodes.
+				// Should be unreachable given the guard in the search above.
 				assert(false && "leaf-merge subNode overflow: guard in "
 				       "merge search should have prevented this");
 				break;
@@ -831,6 +831,9 @@ BBox MBVHAccel::WorldBound() const
 // the ray segment [mint, maxt]. The 6 slab loops are each vectorized by
 // GCC into 256-bit VMAXPS/VMINPS instructions. The final mask loop is all-float
 // so GCC can vectorize it too; node->validChildMask ANDs away any empty slots.
+//
+// outTmin receives every slot's tminC. The caller uses this to visit hit
+// children front-to-back: see MBVHTraverse.
 // ---------------------------------------------------------------------------
 
 static __attribute__((noinline, hot)) int
@@ -838,7 +841,8 @@ ComputeHitMask(const MBVHNode * __restrict__ node,
                int sx, int sy, int sz,
                float ox, float oy, float oz,
                float idx, float idy, float idz,
-               float mint, float maxt)
+               float mint, float maxt,
+               float * __restrict__ outTmin)
 {
 	const float *nearX = sx ? node->bboxMax[0] : node->bboxMin[0];
 	const float *farX  = sx ? node->bboxMin[0] : node->bboxMax[0];
@@ -876,13 +880,33 @@ ComputeHitMask(const MBVHNode * __restrict__ node,
 		if (tminC[i] <= tmaxC[i] && tmaxC[i] >= mint && tminC[i] <= maxt)
 			mask |= (1 << i);
 	}
+
+	// Straight copy-out, independent of the mask loop above; does not touch
+	// or reorder any of the 6 slab-test loops.
+	for (int i = 0; i < MBVH_WIDTH; ++i)
+		outTmin[i] = tminC[i];
+
 	// AND with precomputed valid-slot mask to exclude MBVH_EMPTY_CHILD slots
 	// without loading/scanning childIndex[8] inside this function.
 	return mask & node->validChildMask;
 }
 
 // ---------------------------------------------------------------------------
-// Shared traversal for Intersect() and IntersectP().
+// Shared traversal core for Intersect() and IntersectP().
+// ---------------------------------------------------------------------------
+// The two queries only ever differed in what happens on a leaf-slot hit:
+// Intersect() must visit every candidate primitive (to find the closest one)
+// and update *isect as it goes; IntersectP() returns true the instant any
+// primitive reports a hit. Everything else -- stack setup, per-ray
+// direction/sign precompute, the ComputeHitMask call, and the inner-node
+// push -- was previously duplicated verbatim between the two functions.
+//
+// AnyHit is a template parameter (not a runtime bool) specifically so that
+// each instantiation compiles down to exactly the code the old hand-written
+// copies had: for AnyHit == true the "hit" bookkeeping and its final return
+// disappear entirely and the early "return true" survives, so unifying the
+// two costs nothing at the machine-code level versus the previous
+// copy-pasted versions.
 // ---------------------------------------------------------------------------
 template<bool AnyHit>
 static inline bool MBVHTraverse(const MBVHNode *wideNodes, u_int nWideNodes,
@@ -914,15 +938,34 @@ static inline bool MBVHTraverse(const MBVHNode *wideNodes, u_int nWideNodes,
 		const MBVHNode &node = wideNodes[stack[--top]];
 
 		// ComputeHitMask runs the vectorized slab test and returns a
-		// bitmask of hit children. Iterating only the set bits with
-		// __builtin_ctz (single TZCNT instruction) keeps dispatch iterations
-		// at the number of actual hits, instead of always MBVH_WIDTH.
+		// bitmask of hit children, plus each slot's tmin (see below).
+		float tmin[MBVH_WIDTH] __attribute__((aligned(MBVH_ALIGN)));
 		int hitMask = ComputeHitMask(&node, sx, sy, sz,
 		                             ox, oy, oz, idx, idy, idz,
-		                             ray.mint, ray.maxt);
-		while (hitMask) {
-			const int i  = __builtin_ctz(hitMask);
-			hitMask     &= hitMask - 1;   // clear lowest set bit
+		                             ray.mint, ray.maxt, tmin);
+
+		// Front-to-back ordering.
+		int order[MBVH_WIDTH];
+		int nHits = 0;
+		{
+			int m = hitMask;
+			while (m) {
+				const int i = __builtin_ctz(m);
+				m &= m - 1;   // clear lowest set bit
+				int p = nHits;
+				while (p > 0 && tmin[order[p - 1]] > tmin[i]) {
+					order[p] = order[p - 1];
+					--p;
+				}
+				order[p] = i;
+				++nHits;
+			}
+		}
+
+		// Pushing in ascending-tmin order means the nearest child from
+		// this node lands on top of the stack.
+		for (int h = 0; h < nHits; ++h) {
+			const int i  = order[h];
 			const int ci = node.childIndex[i];
 			if (ci < 0) {
 				const int cnt  = node.primCount[i];
@@ -938,6 +981,8 @@ static inline bool MBVHTraverse(const MBVHNode *wideNodes, u_int nWideNodes,
 				}
 			} else {
 				assert(top < 64);
+				// Warm the cache for the node we just decided to visit.
+				__builtin_prefetch(&wideNodes[ci], 0, 3);
 				stack[top++] = static_cast<u_int>(ci);
 			}
 		}
