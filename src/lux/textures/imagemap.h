@@ -259,9 +259,8 @@ inline boost::shared_ptr<MIPMap> ImageTexture::GetTexture(const TexInfo &texInfo
 				texInfo.discardmm << " mipmap levels";
 		}
 
-		LOG(LUX_INFO, LUX_NOERROR) << "Memory used for imagemap '" <<
-			texInfo.filename << "': " << (ret->GetMemoryUsed() / 1024) <<
-			"KBytes";
+		LOG(LUX_INFO, LUX_NOERROR) << "Imagemap " << texInfo.filename 
+    		<< " uses " << (ret->GetMemoryUsed() / 1024) << " KBytes";
 
 		textures[texInfo] = ret;
 		return textures[texInfo];
