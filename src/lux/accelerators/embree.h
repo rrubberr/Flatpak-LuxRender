@@ -39,7 +39,8 @@ namespace lux
 	{
 		public:
 			embree_accel(
-				const vector<boost::shared_ptr<Primitive>> &p
+				const vector<boost::shared_ptr<Primitive>> &p,
+				bool highQuality = true, bool robust = false
 			);
 
 			~embree_accel();

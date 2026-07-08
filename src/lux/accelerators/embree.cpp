@@ -19,7 +19,6 @@
  *   This project is based on PBRT ; see http://www.pbrt.org               *
  *   Lux Renderer website : http://www.luxrender.org                       *
  ***************************************************************************/
-
 #include "error.h"
 #include "embree.h"
 #include "dynload.h"
@@ -34,7 +33,8 @@ void lux::errorFunction(void* userPtr, enum RTCError error, const char* str)
 }
 
 embree_accel::embree_accel(
-	const vector<boost::shared_ptr<Primitive>> &p
+	const vector<boost::shared_ptr<Primitive>> &p,
+	bool highQuality, bool robust
 )
 {
 	vector<boost::shared_ptr<Primitive>> vPrims = {};
@@ -89,6 +89,15 @@ embree_accel::embree_accel(
 	rtcCommitGeometry(m_geo);
 	rtcAttachGeometry(m_scene, m_geo);
 	rtcReleaseGeometry(m_geo);
+
+	// User selectable Embree build quality.
+	rtcSetSceneBuildQuality(m_scene,
+		highQuality ? RTC_BUILD_QUALITY_HIGH : RTC_BUILD_QUALITY_MEDIUM);
+
+	// User selectable Embree build robustness.
+	if(robust)
+		rtcSetSceneFlags(m_scene, RTC_SCENE_FLAG_ROBUST);
+
 	rtcCommitScene(m_scene);
 
 	LOG(LUX_INFO, LUX_NOERROR) << "Using Embree for ray intersection.";
@@ -188,7 +197,6 @@ bool embree_accel::Intersect(const Ray &ray, Intersection *isect) const
 	if(hit.hit.geomID == RTC_INVALID_GEOMETRY_ID)
 		return false;
 
-	// Propagate the hit distance back to the caller's ray.
 	ray.maxt = hit.ray.tfar;
 
 	const MeshBaryTriangle *triangle(static_cast<const MeshBaryTriangle *>(primitives[
@@ -235,7 +243,11 @@ Aggregate *embree_accel::CreateAccelerator(
 	const vector<boost::shared_ptr<Primitive>> &prims, const ParamSet &ps
 )
 {
-	return new embree_accel(prims);
+	// On by default; improves traversal speed.
+	bool highQuality = ps.FindOneBool("highquality", true);
+	// Off by default; degrades traversal speed. Mostly for edge cases.
+	bool robust = ps.FindOneBool("robust", false);
+	return new embree_accel(prims, highQuality, robust);
 }
 
 static lux::DynamicLoader::RegisterAccelerator<lux::embree_accel> r("embree");
