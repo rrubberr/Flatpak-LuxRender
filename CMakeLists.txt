@@ -22,12 +22,12 @@
 MESSAGE(STATUS "CMAKE VERSION DETECTED " ${CMAKE_VERSION})
 	cmake_minimum_required(VERSION 3.10)
 
-#############################
-# Set the compiler on macOS #
-#############################
+####################
+# Set the compiler #
+####################
 
 if(APPLE)
-    # 1. Use the system Clang
+    # Use Xcode's Clang
     find_program(CLANG_CC NAMES clang)
     find_program(CLANG_CXX NAMES clang++)
     
@@ -37,7 +37,23 @@ if(APPLE)
 
     execute_process(COMMAND sysctl -n hw.ncpu OUTPUT_VARIABLE NPROC_VALUE OUTPUT_STRIP_TRAILING_WHITESPACE)
 else()
-    set(NPROC_VALUE "$(nproc)")
+	# Use symlinked default Clang.
+    find_program(CLANG_CC NAMES clang)
+    find_program(CLANG_CXX NAMES clang++)
+    find_program(LLD_LINKER NAMES lld)
+
+    if(CLANG_CC AND CLANG_CXX AND LLD_LINKER)
+        set(CMAKE_C_COMPILER ${CLANG_CC})
+        set(CMAKE_CXX_COMPILER ${CLANG_CXX})
+        set(CMAKE_LINKER_TYPE LLD)
+        message(STATUS "Using LLVM Clang: ${CMAKE_C_COMPILER}")
+        set(USING_CLANG TRUE)
+    else()
+        message(STATUS "Using GCC")
+        set(USING_CLANG FALSE)
+    endif()
+
+    execute_process(COMMAND nproc OUTPUT_VARIABLE NPROC_VALUE OUTPUT_STRIP_TRAILING_WHITESPACE)
 endif()
 
 ##########################

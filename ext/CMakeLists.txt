@@ -76,12 +76,12 @@ set(
     -DCMAKE_PREFIX_PATH=${DEPS_BUILD_DIR}
 )
 
-#############################
-# Set the compiler on macOS #
-#############################
+####################
+# Set the compiler #
+####################
 
 if(APPLE)
-    # 1. Use the system Clang
+    # Use Xcode's Clang
     find_program(CLANG_CC NAMES clang)
     find_program(CLANG_CXX NAMES clang++)
     
@@ -91,7 +91,23 @@ if(APPLE)
 
     execute_process(COMMAND sysctl -n hw.ncpu OUTPUT_VARIABLE NPROC_VALUE OUTPUT_STRIP_TRAILING_WHITESPACE)
 else()
-    set(NPROC_VALUE "$(nproc)")
+	# Use symlinked default Clang.
+    find_program(CLANG_CC NAMES clang)
+    find_program(CLANG_CXX NAMES clang++)
+    find_program(LLD_LINKER NAMES lld)
+
+    if(CLANG_CC AND CLANG_CXX AND LLD_LINKER)
+        set(CMAKE_C_COMPILER ${CLANG_CC})
+        set(CMAKE_CXX_COMPILER ${CLANG_CXX})
+        set(CMAKE_LINKER_TYPE LLD)
+        message(STATUS "Using LLVM Clang: ${CMAKE_C_COMPILER}")
+        set(USING_CLANG TRUE)
+    else()
+        message(STATUS "Using GCC")
+        set(USING_CLANG FALSE)
+    endif()
+
+    execute_process(COMMAND nproc OUTPUT_VARIABLE NPROC_VALUE OUTPUT_STRIP_TRAILING_WHITESPACE)
 endif()
 
 #####################
@@ -520,7 +536,6 @@ ExternalProject_Add(
 		-DEMBREE_IGNORE_CMAKE_CXX_FLAGS=FALSE
 		-DEMBREE_RAY_MASK=TRUE
 		-DEMBREE_RAY_PACKETS=TRUE
-
 )
 
 ###############
@@ -545,17 +560,10 @@ ExternalProject_Add(
 		-DCMAKE_INSTALL_MESSAGE=LAZY		
 		-DBOOST_RUNTIME_LINK=static
 		-DBOOST_ENABLE_PYTHON=ON
-		-DPython3_ROOT_DIR=${DEPS_BUILD_DIR}
-        -DPython3_EXECUTABLE=${DEPS_BUILD_DIR}/bin/python3
-        -DPython3_INCLUDE_DIR=${DEPS_BUILD_DIR}/include/python3.5m
-        -DPython3_LIBRARY=${DEPS_BUILD_DIR}/lib/libpython3.5m.a
 		-DBUILD_SHARED_LIBS=OFF
-		-DBUILD_STATIC_LIBS=ON
-		-DBOOST_CMAKE_RELOCATABLE=ON
 		-DCMAKE_INSTALL_RPATH_USE_LINK_PATH=TRUE
 		-DCMAKE_BUILD_WITH_INSTALL_RPATH=TRUE
 		-DPython_ROOT_DIR=${BLD_DIR}
 		-DPython_FIND_STRATEGY=LOCATION
 		-DCMAKE_FIND_FRAMEWORK=LAST
-        -DPython3_FIND_REGISTRY=NEVER
 )
