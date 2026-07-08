@@ -229,6 +229,7 @@ ExternalProject_Add(
         LuxRays
         boost
         OpenImageIO
+        embree
     SOURCE_DIR ${CMAKE_SOURCE_DIR}/src/lux
     PREFIX ${LUX_PFX_DIR}/LuxRender
     BUILD_ALWAYS 1
