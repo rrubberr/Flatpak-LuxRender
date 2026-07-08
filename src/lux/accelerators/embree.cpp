@@ -101,6 +101,15 @@ embree_accel::embree_accel(
 	rtcCommitScene(m_scene);
 
 	LOG(LUX_INFO, LUX_NOERROR) << "Using Embree for ray intersection.";
+	
+	// Log the settings in the lxs.
+	const bool robustConfirmed =
+		(rtcGetSceneFlags(m_scene) & RTC_SCENE_FLAG_ROBUST) != 0;
+	LOG(LUX_INFO, LUX_NOERROR) << "Using "
+		<< (highQuality ? "HIGH" : "MEDIUM")
+		<< " scene builder quality. Robust scene build "
+		<< (robustConfirmed ? "ENABLED" : "DISABLED")
+		<< ".";
 }
 
 embree_accel::~embree_accel()
