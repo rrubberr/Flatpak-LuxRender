@@ -1140,7 +1140,7 @@ Film::Film(u_int xres, u_int yres, Filter *filt, u_int filtRes, const float crop
 		   const string &filename1, bool premult, bool useZbuffer,
 		   bool w_resume_FLM, bool restart_resume_FLM, bool write_FLM_direct,
 		   int haltspp, int halttime, float haltthreshold,
-		   bool debugmode, int outlierk, int tilec, const string &samplingmapfilename) :
+		   bool debugmode, int outlierk, int variancek, int tilec, const string &samplingmapfilename) :
 	Queryable("film"),
 	xResolution(xres), yResolution(yres),
 	EV(0.f), averageLuminance(0.f),
@@ -1154,7 +1154,7 @@ Film::Film(u_int xres, u_int yres, Filter *filt, u_int filtRes, const float crop
 	ZBuffer(NULL), use_Zbuf(useZbuffer),
 	debug_mode(debugmode), premultiplyAlpha(premult),
 	writeResumeFlm(w_resume_FLM), restartResumeFlm(restart_resume_FLM), writeFlmDirect(write_FLM_direct),
-	outlierRejection_k(outlierk), haltSamplesPerPixel(haltspp),
+	outlierRejection_k(outlierk), varianceRejection_k(variancek), haltSamplesPerPixel(haltspp),
 	haltTime(halttime), haltThreshold(haltthreshold), haltThresholdComplete(0.f),
 	histogram(NULL), enoughSamplesPerPixel(false)
 {
@@ -1169,6 +1169,10 @@ Film::Film(u_int xres, u_int yres, Filter *filt, u_int filtRes, const float crop
 	samplePerPass = xRealWidth * yRealHeight;
 
 	boost::xtime_get(&creationTime, boost::TIME_UTC_);
+
+	// Safe to create a VarianceBuffer; requires image width and height
+	if (varianceRejection_k > 0)
+		EnableVarianceBuffer();
 
 	//Queryable parameters
 	AddIntAttribute(*this, "xResolution", "Horizontal resolution (pixels)", &Film::GetXResolution);
@@ -1293,10 +1297,17 @@ Film::~Film()
 	delete contribPool;
 }
 
-void Film::EnableNoiseAwareMap() {
+// Ensure a VarianceBuffer is available
+void Film::EnableVarianceBuffer() {
+	if (varianceBuffer)
+		return; // exit if already allocated by the noise aware map
+
 	varianceBuffer = new VarianceBuffer(xPixelCount, yPixelCount);
 	varianceBuffer->Clear();
+}
 
+void Film::EnableNoiseAwareMap() {
+	EnableVarianceBuffer();
 	noiseAwareMap.reset(new float[xPixelCount * yPixelCount]);
 	std::fill(noiseAwareMap.get(), noiseAwareMap.get() + xPixelCount * yPixelCount, 1.f);
 }
@@ -1690,6 +1701,54 @@ void Film::AddTileSamples(const Contribution* const contribs, u_int num_contribs
 		if (premultiplyAlpha)
 			xyz *= alpha;
 
+		// VarianceBuffer maintains a per-pixel weighted mean of variance
+		// (VariancePixel::mean, Sn, weightSum), updated incrementally
+		// as samples arrive. The noise-aware mode uses this
+		// to determine which regions need more samples.
+
+		// This clamp runs after (or without) the existing density-based
+		// RejectTileOutliers. That density approach rejects samples; 
+		// this mechanism attenuates samples' brightness based on
+		// (already available) variance from a mean. 
+
+		// Variance clamp.
+		XYZColor clampedXyz = xyz;
+		if (varianceBuffer && varianceRejection_k > 0) {
+			// Identify the single pixel nearest this sample's image
+			// position. Variance is read from this pixel only.
+			const int clampX = Clamp(Floor2Int(contrib.imageX),
+				static_cast<int>(xPixelStart), static_cast<int>(xPixelStart + xPixelCount - 1));
+			const int clampY = Clamp(Floor2Int(contrib.imageY),
+				static_cast<int>(yPixelStart), static_cast<int>(yPixelStart + yPixelCount - 1));
+			// VariancePixel storage is indexed relative to the crop window
+			// origin, not absolute coordinates, so subtract the pixel
+			// start offsets before indexing into varianceBuffer.
+			const u_int centerX = static_cast<u_int>(clampX) - xPixelStart;
+			const u_int centerY = static_cast<u_int>(clampY) - yPixelStart;
+
+			const VariancePixel &vp = varianceBuffer->pixels(centerX, centerY);
+			// weightSum > 0 means at least one prior sample has been recorded
+			// at this pixel; with no history yet, there's nothing to compare
+			// against, so do not clamp.
+			if (vp.weightSum > 0.f) {
+				// Standard deviation of luminance at this pixel, derived from
+				// the tracked variance (Sn / weightSum). fabsf
+				// guards against tiny values from floating-point
+				// error (maybe unneccesary?).
+				const float stddev = sqrtf(fabsf(vp.Sn / vp.weightSum));
+				// Anything above (mean + k * stddev) is considered undesirable.
+				// varianceRejection_k allows tuning; larger values
+				// clamp more aggressively. k=10 is reasonable for
+				// high-contrast scenes.
+				const float maxY = vp.mean + varianceRejection_k * stddev;
+				const float ly = clampedXyz.Y();
+				if (ly > maxY && ly > 1e-6f)
+					// Scale down the sample rather than rejecting
+					// (to preserve hue and avoid dark pixels).
+					clampedXyz *= maxY / ly;
+			}
+		}
+
 		BufferGroup &currentGroup = bufferGroups[contrib.bufferGroup];
 		Buffer *buffer = currentGroup.getBuffer(contrib.buffer);
 
@@ -1725,15 +1784,18 @@ void Film::AddTileSamples(const Contribution* const contribs, u_int num_contribs
 				// Update pixel values with filtered sample contribution
 				const u_int xPixel = x - xPixelStart;
 				const float w = filterWt * weight;
-				buffer->Add(xPixel, yPixel, xyz, alpha, w);
+
+				// Use the new clamped value.
+				buffer->Add(xPixel, yPixel, clampedXyz, alpha, w);
 
 				// Update ZBuffer values with filtered zdepth contribution
 				if(use_Zbuf && contrib.zdepth != 0.f)
 					ZBuffer->Add(xPixel, yPixel, contrib.zdepth, 1.0f);
 
-				// Update variance information
+				// Update variance with the clamped value so each firefly
+				// does not inflate the threshold!
 				if (varianceBuffer)
-					varianceBuffer->Add(xPixel, yPixel, xyz, w);
+					varianceBuffer->Add(xPixel, yPixel, clampedXyz, w);
 			}
 		}
 	}

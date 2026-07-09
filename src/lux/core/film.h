@@ -605,7 +605,7 @@ public:
 	Film(u_int xres, u_int yres, Filter *filt, u_int filtRes, const float crop[4],
 		const string &filename1, bool premult, bool useZbuffer,
 		bool w_resume_FLM, bool restart_resume_FLM, bool write_FLM_direct,
-		int haltspp, int halttime, float haltthreshold, bool debugmode, int outlierk,
+		int haltspp, int halttime, float haltthreshold, bool debugmode, int outlierk, int variancek,
 		int tilecount, const string &samplingmapfilename);
 
 	virtual ~Film();
@@ -701,6 +701,8 @@ public:
 	virtual string GetStringParameterValue(luxComponentParameters param, u_int index) = 0;
 
 	virtual void EnableNoiseAwareMap();
+	virtual void EnableVarianceBuffer();
+
 	virtual const bool GetNoiseAwareMap(u_int &version, boost::shared_array<float> &map,
 		boost::shared_ptr<luxrays::Distribution2D> &distrib);
 	// NOTE: returns a copy of the map, it is up to the caller to free the allocated memory !
@@ -833,6 +835,9 @@ protected: // Put it here for better data alignment
 	std::vector<std::vector<OutlierAccel> > outliers;
 	// contains the outliers that lies on the overlap between tiles
 	std::vector<std::vector<OutlierAccel> > tileborder_outliers; 
+
+	// variance-based outlier rejection
+	int varianceRejection_k;
 
 public:
 	// Samplers will check this flag to know if we have enough samples per

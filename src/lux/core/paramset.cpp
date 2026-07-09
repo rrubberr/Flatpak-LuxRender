@@ -705,6 +705,8 @@ ParamSet::ParamSet(u_int n, const char * pluginName, const char * const tokens[]
 			AddInt(s, (int*)(params[i]));
 		if (s == "outlierrejection_k")
 			AddInt(s, (int*)(params[i]));
+		if (s == "variancerejection_k")
+			AddInt(s, (int*)(params[i]));
 		if (s == "pixelsamples")
 			AddInt(s, (int*)(params[i]));
 		if (s == "power" && pn == "perspective")

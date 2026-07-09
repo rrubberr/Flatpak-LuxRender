@@ -60,11 +60,11 @@ FlexImageFilm::FlexImageFilm(u_int xres, u_int yres, Filter *filt, u_int filtRes
 	float p_ReinhardBurn, float p_LinearSensitivity, float p_LinearExposure, float p_LinearFStop, float p_LinearGamma,
 	float p_ContrastYwa, int p_FalseMethod, int p_FalseColorScale, float p_FalseMaxSat, float p_FalseMinSat, const string &p_response, float p_Gamma,
 	const float cs_red[2], const float cs_green[2], const float cs_blue[2], const float whitepoint[2],
-	bool debugmode, int outlierk, int tilec, const double convstep, const string &samplingmapfilename, const bool disableNoiseMapUpd, 
+	bool debugmode, int outlierk, int variancek, int tilec, const double convstep, const string &samplingmapfilename, const bool disableNoiseMapUpd, 
 	bool bloomEnabled, float bloomRadius, float bloomWeight, bool vignettingEnabled, float vignettingScale, bool abberationEnabled, float abberationAmount, 
 	bool glareEnabled, float glareAmount, float glareRadius, int glareBlades, float glareThreshold, const string &pupilmap, const string &lashesmap) :
 	Film(xres, yres, filt, filtRes, crop, filename1, premult, cw_EXR_ZBuf || cw_PNG_ZBuf || cw_TGA_ZBuf, w_resume_FLM, 
-		restart_resume_FLM, write_FLM_direct, haltspp, halttime, haltthreshold, debugmode, outlierk, tilec, samplingmapfilename), 
+		restart_resume_FLM, write_FLM_direct, haltspp, halttime, haltthreshold, debugmode, outlierk, variancek, tilec, samplingmapfilename), 
 	framebuffer(NULL), float_framebuffer(NULL), alpha_buffer(NULL), z_buffer(NULL),
 	writeInterval(wI), flmWriteInterval(fwI), displayInterval(dI), convUpdateThread(NULL), convUpdateStep(convstep), disableNoiseMapUpdate(disableNoiseMapUpd)
 {
@@ -1980,8 +1980,9 @@ Film* FlexImageFilm::CreateFilm(const ParamSet &params, Filter *filter)
 	int flmWriteInterval = params.FindOneInt("flmwriteinterval", writeInterval);
 	int displayInterval = params.FindOneInt("displayinterval", 12);
 
-	// Rejection mechanism
+	// Rejection mechanisms
 	int outlierrejection_k = params.FindOneInt("outlierrejection_k", 0); // k for k-nearest in outlier rejection, 0 = off
+	int variancerejection_k = params.FindOneInt("variancerejection_k", 0); // k for k-variance in variance rejection, 0 = off
 
 	// Debugging mode (display erratic sample values and disable rejection mechanism)
 	bool debug_mode = params.FindOneBool("debug", false);
@@ -2104,7 +2105,7 @@ Film* FlexImageFilm::CreateFilm(const ParamSet &params, Filter *filter)
 		w_resume_FLM, restart_resume_FLM, w_FLM_direct, haltspp, halttime, haltthreshold,
 		s_TonemapKernel, s_ReinhardPreScale, s_ReinhardPostScale, s_ReinhardBurn, s_LinearSensitivity,
 		s_LinearExposure, s_LinearFStop, s_LinearGamma, s_ContrastYwa, s_FalseMethod, s_FalseScalecolor, s_FalseMaxSat, s_FalseMinSat, response, s_Gamma,
-		red, green, blue, white, debug_mode, outlierrejection_k, tilecount, convUpdateStep, samplingmapfilename, disableNoiseMapUpdate,
+		red, green, blue, white, debug_mode, outlierrejection_k, variancerejection_k, tilecount, convUpdateStep, samplingmapfilename, disableNoiseMapUpdate,
 		bloomEnabled, bloomRadius, bloomWeight, vignettingEnabled, vignettingScale, abberationEnabled, abberationAmount, 
 		glareEnabled, glareAmount, glareRadius, glareBlades, glareThreshold, s_GlarePupilFilename, s_GlareLashesFilename);
 }

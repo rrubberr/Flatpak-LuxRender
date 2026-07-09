@@ -53,7 +53,7 @@ public:
 		float p_ReinhardBurn, float p_LinearSensitivity, float p_LinearExposure, float p_LinearFStop, float p_LinearGamma,
 		float p_ContrastDisplayAdaptionY, int p_FalseMethod, int p_FalseColorScale, float p_FalseMaxSat, float p_FalseMinSat, const string &response, float p_Gamma,
 		const float cs_red[2], const float cs_green[2], const float cs_blue[2], const float whitepoint[2],
-		bool debugmode, int outlierk, int tilecount, const double convstep, const string &samplingmapfilename, const bool disableNoiseMapUpd,
+		bool debugmode, int outlierk, int variancek, int tilecount, const double convstep, const string &samplingmapfilename, const bool disableNoiseMapUpd,
 		bool bloomEnabled, float bloomRadius, float bloomWeight, bool vignettingEnabled, float vignettingScale, bool abberationEnabled, float abberationAmount, 
 		bool glareEnabled, float glareAmount, float glareRadius, int glareBlades, float glareThreshold, const string &pupilmap, const string &lashesmap);
 
