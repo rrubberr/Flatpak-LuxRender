@@ -142,7 +142,7 @@ ADD_DEFINITIONS(-DLUX_USE_CONFIG_H)
 
 # Dade - default compiler options
 # Removed "-O3" from definitions in order to have CMake Release/Debug options to work
-ADD_DEFINITIONS(-ftree-vectorize -funroll-loops -Wall -fPIC -DHAVE_PTHREAD_H)
+ADD_DEFINITIONS(-march=native -ftree-vectorize -funroll-loops -Wall -fPIC -DHAVE_PTHREAD_H)
 
 # Look for the highest supported AVX version.
 FIND_PACKAGE(AVX)
@@ -157,10 +157,8 @@ IF(AVX_FOUND)
 	# -mavx2 on an AVX2 machine, or -mavx on an AVX machine.
     ADD_DEFINITIONS(${AVX_FLAGS})
     
-    # Pass the width for MBVH.
-    ADD_DEFINITIONS(-DMBVH_TARGET_STR=${AVX_STR})
 ELSE()
-    MESSAGE(STATUS "No AVX support. Reverting to SSE2.")
+    MESSAGE(STATUS "No AVX support. Reverting to SSE.")
     ADD_DEFINITIONS(-msse2 -mfpmath=sse -march=nocona)
 ENDIF()
 

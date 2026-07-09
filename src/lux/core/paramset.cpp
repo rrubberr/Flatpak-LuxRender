@@ -620,8 +620,6 @@ ParamSet::ParamSet(u_int n, const char * pluginName, const char * const tokens[]
 			AddInt(s, (int*)(params[i]));
 		if (s == "coltype")
 			AddInt(s, (int*)(params[i]));
-		if (s == "costsamples")
-			AddInt(s, (int*)(params[i]));
 		if (s == "diffusereflectdepth")
 			AddInt(s, (int*)(params[i]));
 		if (s == "diffusereflectsamples")
