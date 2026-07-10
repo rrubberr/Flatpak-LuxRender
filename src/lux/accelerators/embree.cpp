@@ -32,6 +32,11 @@ void lux::errorFunction(void* userPtr, enum RTCError error, const char* str)
 	printf("error %d: %s\n", error, str);
 }
 
+const MeshBaryTriangle *embree_accel::AsMeshBaryTriangle(const Primitive *p)
+{
+	return dynamic_cast<const MeshBaryTriangle *>(p);
+}
+
 embree_accel::embree_accel(
 	const vector<boost::shared_ptr<Primitive>> &p,
 	bool highQuality, bool robust
@@ -47,12 +52,30 @@ embree_accel::embree_accel(
 			p[i]->Refine(vPrims, refineHints, p[i]);
 	}
 
-	size_t tri_count = vPrims.size();
-	u_int nPrims = vPrims.size();
-	primitives = vPrims;
+	// Keep only MeshBaryTriangles.
+	primitives.clear();
+	primitives.reserve(vPrims.size());
+	u_int skippedCount = 0;
+	for (u_int i = 0; i < vPrims.size(); ++i) {
+		if (AsMeshBaryTriangle(vPrims[i].get())) {
+			primitives.push_back(vPrims[i]);
+		} else {
+			LOG(LUX_WARNING, LUX_LIMIT) << "embree_accel: skipping non-triangle "
+				<< "primitive (typeid: "
+				<< typeid(*vPrims[i]).name() << ")";
+			++skippedCount;
+		}
+	}
+	if (skippedCount > 0) {
+		LOG(LUX_WARNING, LUX_LIMIT) << "embree_accel: " << skippedCount
+			<< " primitive(s) skipped.";
+	}
+
+	size_t tri_count = primitives.size();
+	u_int nPrims = primitives.size();
 
 	for(u_int i = 0; i < nPrims; ++i)
-		worldBound = Union(worldBound, vPrims[i]->WorldBound());
+		worldBound = Union(worldBound, primitives[i]->WorldBound());
 
 	m_dev = rtcNewDevice(nullptr);
 	rtcSetDeviceErrorFunction(m_dev, errorFunction, NULL);
@@ -70,9 +93,9 @@ embree_accel::embree_accel(
 
 	size_t p_index = 0;
 	size_t i_index = 0;
-	for(size_t i = 0; i < vPrims.size(); i++)
+	for(size_t i = 0; i < primitives.size(); i++)
 	{
-		const MeshBaryTriangle* t = static_cast<const MeshBaryTriangle*>(vPrims[i].get());
+		const MeshBaryTriangle* t = AsMeshBaryTriangle(primitives[i].get());
 		for(size_t j = 0; j < 3; j++)
 		{
 			m_verts[p_index+0] = t->GetP(j).x;
@@ -90,19 +113,15 @@ embree_accel::embree_accel(
 	rtcAttachGeometry(m_scene, m_geo);
 	rtcReleaseGeometry(m_geo);
 
-	// User selectable Embree build quality.
 	rtcSetSceneBuildQuality(m_scene,
 		highQuality ? RTC_BUILD_QUALITY_HIGH : RTC_BUILD_QUALITY_MEDIUM);
-
-	// User selectable Embree build robustness.
 	if(robust)
 		rtcSetSceneFlags(m_scene, RTC_SCENE_FLAG_ROBUST);
 
 	rtcCommitScene(m_scene);
 
 	LOG(LUX_INFO, LUX_NOERROR) << "Using Embree for ray intersection.";
-	
-	// Log the settings in the lxs.
+
 	const bool robustConfirmed =
 		(rtcGetSceneFlags(m_scene) & RTC_SCENE_FLAG_ROBUST) != 0;
 	LOG(LUX_INFO, LUX_NOERROR) << "Using "

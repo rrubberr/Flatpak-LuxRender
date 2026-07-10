@@ -69,6 +69,9 @@ namespace lux
 			// given triangle.
 			DifferentialGeometry ComputeDifferentialGeometry(
 				const MeshBaryTriangle *triangle, float b1, float b2) const;
+			
+			// Embree only supports plain triangle mesh geometry.
+			static const MeshBaryTriangle *AsMeshBaryTriangle(const Primitive *p);
 
 			vector<boost::shared_ptr<Primitive>> primitives = {};
 			float* m_verts = nullptr;
