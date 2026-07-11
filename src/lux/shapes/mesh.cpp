@@ -450,12 +450,7 @@ void Mesh::Refine(vector<boost::shared_ptr<Primitive> > &refined,
 	// Select best acceleration structure
 	MeshAccelType concreteAccelType = accelType;
 	if (accelType == ACCEL_AUTO) {
-		if (refinedPrims.size() <= 250000)
-			concreteAccelType = ACCEL_NONE;
-		else if (refinedPrims.size() <= 500000)
-			concreteAccelType = ACCEL_KDTREE;
-		else
-			concreteAccelType = ACCEL_QBVH;
+		concreteAccelType = ACCEL_QBVH;
 	}
 
 	// Report selections used
@@ -513,6 +508,9 @@ void Mesh::Refine(vector<boost::shared_ptr<Primitive> > &refined,
 		ParamSet paramset;
 		boost::shared_ptr<Aggregate> accel;
 		switch (concreteAccelType) {
+			case ACCEL_EMBREE:
+				accel = MakeAccelerator("embree", refinedPrims, paramset);
+				break;
 			case ACCEL_KDTREE:
 				accel = MakeAccelerator("kdtree", refinedPrims, paramset);
 				break;
@@ -943,7 +941,9 @@ static Shape *CreateShape(const Transform &o2w, bool reverseOrientation, const P
 
 	// Lotus - read general data
 	Mesh::MeshAccelType accelType;
-	if (accelTypeStr == "kdtree")
+	if (accelTypeStr == "embree")
+		accelType = Mesh::ACCEL_EMBREE;
+	else if (accelTypeStr == "kdtree")
 		accelType = Mesh::ACCEL_KDTREE;
 	else if (accelTypeStr == "qbvh")
 		accelType = Mesh::ACCEL_QBVH;
