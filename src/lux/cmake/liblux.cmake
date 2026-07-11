@@ -317,7 +317,6 @@ SET(lux_shapes_src
 	shapes/meshbarytriangle.cpp
 	shapes/meshmicrodisplacementtriangle.cpp
 	shapes/meshquadrilateral.cpp
-	shapes/meshwaldtriangle.cpp
 	shapes/mikktspace/mikktspace.c
 	shapes/mikktspace/weldmesh.c
 	shapes/nurbs.cpp

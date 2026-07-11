@@ -33,57 +33,39 @@ MeshBaryTriangle::MeshBaryTriangle(const lux::Mesh *m, u_int n) :
 	if (m->reverseOrientation ^ m->transformSwapsHandedness)
 		swap(v_[1], v_[2]);
 
+	const Point &v0 = m->p[v[0]];
+	const Point &v1 = m->p[v[1]];
+	const Point &v2 = m->p[v[2]];
+	Vector e1 = v1 - v0;
+	Vector e2 = v2 - v0;
+
+	Normal normalizedNormal(Normalize(Cross(e1, e2)));
+
+	if (isnan(normalizedNormal.x) || 
+		isnan(normalizedNormal.y) ||
+		isnan(normalizedNormal.z))
 	{
-		const Point &v0 = m->p[v[0]];
-		const Point &v1 = m->p[v[1]];
-		const Point &v2 = m->p[v[2]];
-		Vector e1 = v1 - v0;
-		Vector e2 = v2 - v0;
+		is_Degenerate = true;
+		return;
+	}
 
-		Normal normalizedNormal(Normalize(Cross(e1, e2)));
-
-		if (isnan(normalizedNormal.x) ||
-			isnan(normalizedNormal.y) ||
-			isnan(normalizedNormal.z))
-		{
-			is_Degenerate = true;
-			return;
-		}
-
-		// Reorder vertices if geometric normal doesn't match shading normal.
-		// This may swap v[1] and v[2] again, so we re-read vertices below.
-		if (m->n) {
-			const float cos0 = Dot(normalizedNormal, m->n[v[0]]);
-			if (cos0 < 0.f) {
-				if (Dot(normalizedNormal, m->n[v[1]]) < 0.f &&
-					Dot(normalizedNormal, m->n[v[2]]) < 0.f)
-					swap(v_[1], v_[2]);
-				else {
-					m->inconsistentShadingTris++;
-				}
-			} else if (cos0 > 0.f) {
-				if (!(Dot(normalizedNormal, m->n[v[1]]) > 0.f &&
-					Dot(normalizedNormal, m->n[v[2]]) > 0.f)) {
-					m->inconsistentShadingTris++;
-				}
+	// Reorder vertices if geometric normal doesn't match shading normal
+	if (m->n) {
+		const float cos0 = Dot(normalizedNormal, m->n[v[0]]);
+		if (cos0 < 0.f) {
+			if (Dot(normalizedNormal, m->n[v[1]]) < 0.f &&
+				Dot(normalizedNormal, m->n[v[2]]) < 0.f)
+				swap(v_[1], v_[2]);
+			else {
+				m->inconsistentShadingTris++;
+			}
+		} else if (cos0 > 0.f) {
+			if (!(Dot(normalizedNormal, m->n[v[1]]) > 0.f &&
+				Dot(normalizedNormal, m->n[v[2]]) > 0.f)) {
+				m->inconsistentShadingTris++;
 			}
 		}
 	}
-
-	// Cache intersection-critical data after ALL vertex order swaps are final.
-	// This eliminates three scattered pointer-chase loads (mesh->p[v[i]])
-	// from the hot intersection path, replacing them with sequential struct
-	// member reads that share cache lines with the vtable and other fields.
-	const Point &fv0 = m->p[v[0]];
-	const Point &fv1 = m->p[v[1]];
-	const Point &fv2 = m->p[v[2]];
-	cachedP0 = fv0;
-	cachedE1 = fv1 - fv0;
-	cachedE2 = fv2 - fv0;
-	// Cache the normalised normal once.  Intersect() would otherwise compute
-	// Cross(e1,e2) + Normalize on every hit; storing it costs 12 bytes per
-	// triangle but saves a cross product and a sqrt on the critical hit path.
-	cachedNorm = Normal(Normalize(Cross(cachedE1, cachedE2)));
 }
 
 BBox MeshBaryTriangle::ObjectBound() const
@@ -108,61 +90,66 @@ BBox MeshBaryTriangle::WorldBound() const
 
 bool MeshBaryTriangle::Intersect(const Ray &ray, Intersection* isect) const
 {
-	// Use pre-cached p0, e1, e2 — eliminates three scattered mesh->p[v[i]]
-	// pointer-chase loads and the two edge-vector subtractions per call.
-	const Vector s1 = Cross(ray.d, cachedE2);
-	const float divisor = Dot(s1, cachedE1);
+	Vector e1, e2, s1;
+	// Compute $\VEC{s}_1$
+	// Get triangle vertices in _p1_, _p2_, and _p3_
+	const Point &p1 = mesh->p[v[0]];
+	const Point &p2 = mesh->p[v[1]];
+	const Point &p3 = mesh->p[v[2]];
+	e1 = p2 - p1;
+	e2 = p3 - p1;
+	s1 = Cross(ray.d, e2);
+	const float divisor = Dot(s1, e1);
 	if (divisor == 0.f)
 		return false;
 	const float invDivisor = 1.f / divisor;
-
-	const Vector d = ray.o - cachedP0;
+	// Compute first barycentric coordinate
+	const Vector d = ray.o - p1;
 	const float b1 = Dot(d, s1) * invDivisor;
 	if (b1 < 0.f)
 		return false;
-
-	const Vector s2 = Cross(d, cachedE1);
+	// Compute second barycentric coordinate
+	const Vector s2 = Cross(d, e1);
 	const float b2 = Dot(ray.d, s2) * invDivisor;
 	if (b2 < 0.f)
 		return false;
-
 	const float b0 = 1.f - b1 - b2;
 	if (b0 < 0.f)
 		return false;
-
-	const float t = Dot(cachedE2, s2) * invDivisor;
+	// Compute _t_ to intersection point
+	const float t = Dot(e2, s2) * invDivisor;
 	if (t < ray.mint || t > ray.maxt)
 		return false;
 
-	// ── Hit confirmed: fill DifferentialGeometry ─────────────────────────
-	// dp1 = p1-p3 = p0-(p0+e2) = -e2
-	// dp2 = p2-p3 = (p0+e1)-(p0+e2) = e1-e2
-	// These algebraic identities eliminate two further Point computations.
+	// Fill in _DifferentialGeometry_ from triangle hit
+	// Compute triangle partial derivatives
 	Vector dpdu, dpdv;
 	float uvs[3][2];
 	GetUVs(uvs);
+	// Compute deltas for triangle partial derivatives
 	const float du1 = uvs[0][0] - uvs[2][0];
 	const float du2 = uvs[1][0] - uvs[2][0];
 	const float dv1 = uvs[0][1] - uvs[2][1];
 	const float dv2 = uvs[1][1] - uvs[2][1];
-	const Vector &dp1 = -cachedE2;                  // p1 - p3
-	const Vector  dp2 = cachedE1 - cachedE2;        // p2 - p3
+	const Vector dp1 = p1 - p3, dp2 = p2 - p3;
 	const float determinant = du1 * dv2 - dv1 * du2;
 	if (determinant == 0.f) {
-		// Use the pre-normalised cached normal — avoids redundant Cross+sqrt.
-		CoordinateSystem(Vector(cachedNorm), &dpdu, &dpdv);
+		// Handle 0 determinant for triangle partial derivative matrix
+		CoordinateSystem(Normalize(Cross(e1, e2)), &dpdu, &dpdv);
 	} else {
 		const float invdet = 1.f / determinant;
 		dpdu = ( dv2 * dp1 - dv1 * dp2) * invdet;
 		dpdv = (-du2 * dp1 + du1 * dp2) * invdet;
 	}
 
+	// Interpolate $(u,v)$ triangle parametric coordinates
 	const float tu = b0 * uvs[0][0] + b1 * uvs[1][0] + b2 * uvs[2][0];
 	const float tv = b0 * uvs[0][1] + b1 * uvs[1][1] + b2 * uvs[2][1];
 
-	// Use cachedNorm — eliminates Cross(e1,e2) + Normalize on every hit.
-	const Point pp(cachedP0 + b1 * cachedE1 + b2 * cachedE2);
-	isect->dg = DifferentialGeometry(pp, cachedNorm, dpdu, dpdv,
+	const Normal nn = Normal(Normalize(Cross(e1, e2)));
+	const Point pp(p1 + b1 * e1 + b2 * e2);
+
+	isect->dg = DifferentialGeometry(pp, nn, dpdu, dpdv,
 		Normal(0, 0, 0), Normal(0, 0, 0), tu, tv, this);
 
 	isect->Set(mesh->ObjectToWorld, this, mesh->GetMaterial(),
@@ -177,26 +164,32 @@ bool MeshBaryTriangle::Intersect(const Ray &ray, Intersection* isect) const
 
 bool MeshBaryTriangle::IntersectP(const Ray &ray) const
 {
-	// Shadow-ray path: same cached values, no DG fill.
-	const Vector s1 = Cross(ray.d, cachedE2);
-	const float divisor = Dot(s1, cachedE1);
+	// Compute $\VEC{s}_1$
+	// Get triangle vertices in _p1_, _p2_, and _p3_
+	const Point &p1 = mesh->p[v[0]];
+	const Point &p2 = mesh->p[v[1]];
+	const Point &p3 = mesh->p[v[2]];
+	Vector e1 = p2 - p1;
+	Vector e2 = p3 - p1;
+	Vector s1 = Cross(ray.d, e2);
+	const float divisor = Dot(s1, e1);
 	if (divisor == 0.f)
 		return false;
 	const float invDivisor = 1.f / divisor;
-
-	const Vector d = ray.o - cachedP0;
+	// Compute first barycentric coordinate
+	const Vector d = ray.o - p1;
 	const float b1 = Dot(d, s1) * invDivisor;
 	if (b1 < 0.f)
 		return false;
-
-	const Vector s2 = Cross(d, cachedE1);
+	// Compute second barycentric coordinate
+	const Vector s2 = Cross(d, e1);
 	const float b2 = Dot(ray.d, s2) * invDivisor;
 	if (b2 < 0.f)
 		return false;
 	if (b1 + b2 > 1.f)
 		return false;
-
-	const float t = Dot(cachedE2, s2) * invDivisor;
+	// Compute _t_ to intersection point
+	float t = Dot(e2, s2) * invDivisor;
 	if (t < ray.mint || t > ray.maxt)
 		return false;
 

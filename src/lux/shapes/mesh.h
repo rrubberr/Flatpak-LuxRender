@@ -30,7 +30,7 @@ namespace lux
 
 class Mesh : public Shape {
 public:
-	enum MeshTriangleType { TRI_WALD, TRI_BARY, TRI_MICRODISPLACEMENT, TRI_AUTO };
+	enum MeshTriangleType { TRI_BARY, TRI_MICRODISPLACEMENT, TRI_AUTO };
 	enum MeshQuadType { QUAD_QUADRILATERAL };
 	enum MeshAccelType { ACCEL_KDTREE, ACCEL_QBVH, ACCEL_NONE, ACCEL_BRUTEFORCE, ACCEL_AUTO };
 	enum MeshSubdivType { SUBDIV_LOOP, SUBDIV_MICRODISPLACEMENT };
@@ -69,7 +69,6 @@ public:
 	virtual void GetShadingInformation(const DifferentialGeometry &dgShading,
 		RGBColor *color, float *alpha) const;
 
-	friend class MeshWaldTriangle;
 	friend class MeshBaryTriangle;
 	friend class MeshMicroDisplacementTriangle;
 	friend class MeshQuadrilateral;
@@ -195,40 +194,6 @@ public:
 	Vector cachedE1;    // edge 1 = p1 - p0
 	Vector cachedE2;    // edge 2 = p2 - p0
 	Normal cachedNorm;  // Normalize(Cross(e1, e2)), pre-computed once
-};
-
-class MeshWaldTriangle : public MeshBaryTriangle {
-public:
-	// WaldTriangle Public Methods
-	MeshWaldTriangle(const Mesh *m, u_int n);
-	virtual ~MeshWaldTriangle() { }
-
-	virtual bool Intersect(const Ray &ray, Intersection *isect) const;
-	virtual bool IntersectP(const Ray &ray) const;
-
-	virtual float Sample(float u1, float u2, float u3,
-		DifferentialGeometry *dg) const;
-	
-	virtual bool isDegenerate() const;
-
-private:
-	// WaldTriangle Data
-
-	// Dade - Wald's precomputed values
-	enum IntersectionType {
-		DOMINANT_X,
-		DOMINANT_Y,
-		DOMINANT_Z,
-		DEGENERATE
-	};
-	IntersectionType intersectionType;
-	float nu, nv, nd;
-	float bnu, bnv, bnd;
-	float cnu, cnv, cnd;
-
-	// Dade - precomputed values for filling the DifferentialGeometry
-	Vector dpdu, dpdv;
-	Normal normalizedNormal;
 };
 
 class MeshMicroDisplacementTriangle : public Primitive {

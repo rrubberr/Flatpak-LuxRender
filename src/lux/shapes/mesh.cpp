@@ -373,39 +373,12 @@ void Mesh::Refine(vector<boost::shared_ptr<Primitive> > &refined,
 	// Dade - refine triangles
 	MeshTriangleType concreteTriType = triType;
 	if (triType == TRI_AUTO) {
-		// If there is 1 unique vertex (with normals and uv coordinates) for each triangle:
-		//  bary = 52 bytes/triangle
-		//  wald = 128 bytes/triangle
-		// Note: this ignores some accel data
-		//  the following are accounted for: vertices, vertex indices, Mesh*Triangle data
-		//  and one shared_ptr in the accel
-		//TODO Lotus - find good values
-		if (ntris >= 1)
-			concreteTriType = TRI_BARY;
-		//below is the original value maintained for reference
-		//if (ntris <= 200000)
-		//	concreteTriType = TRI_WALD;
-		else
-			concreteTriType = TRI_WALD;
+		concreteTriType = TRI_BARY;
 	}
 
 	inconsistentShadingTris = 0;
 
 	switch (concreteTriType) {
-		case TRI_WALD:
-			for (u_int i = 0; i < ntris; ++i) {
-				MeshWaldTriangle *currTri;
-				if (refinedPrims.size() > 0)
-					currTri = new MeshWaldTriangle(this, i);
-				else
-					currTri = new MeshElemSharedPtr<MeshWaldTriangle>(this, i, thisPtr);
-				if (!currTri->isDegenerate()) {
-					boost::shared_ptr<Primitive> o(currTri);
-					refinedPrims.push_back(o);
-				} else
-					delete currTri;
-			}
-			break;
 		case TRI_BARY:
 			for (u_int i = 0; i < ntris; ++i) {
 				MeshBaryTriangle *currTri;
@@ -508,9 +481,6 @@ void Mesh::Refine(vector<boost::shared_ptr<Primitive> > &refined,
 	switch (concreteTriType) {
 		case TRI_BARY:
 			ss << "bary";
-			break;
-		case TRI_WALD:
-			ss << "wald";
 			break;
 		case TRI_MICRODISPLACEMENT:
 			ss << "microdisp";
@@ -1011,9 +981,7 @@ static Shape *CreateShape(const Transform &o2w, bool reverseOrientation, const P
 
 	// Dade - read triangle data
 	Mesh::MeshTriangleType triType;
-	if (triTypeStr == "wald")
-		triType = Mesh::TRI_WALD;
-	else if (triTypeStr == "bary")
+	if (triTypeStr == "bary")
 		triType = Mesh::TRI_BARY;
 	else if (triTypeStr == "auto")
 		triType = Mesh::TRI_AUTO;
@@ -1171,6 +1139,5 @@ Shape* Mesh::BaryMesh::CreateShape(const Transform &o2w, bool reverseOrientation
 }
 
 static DynamicLoader::RegisterShape<Mesh::BaryMesh> rbary("barytrianglemesh");
-static DynamicLoader::RegisterShape<Mesh> rwald1("waldtrianglemesh");
-static DynamicLoader::RegisterShape<Mesh> rwald2("trianglemesh");
+static DynamicLoader::RegisterShape<Mesh> rbary2("trianglemesh");
 static DynamicLoader::RegisterShape<Mesh> rloop("loopsubdiv");
