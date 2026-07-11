@@ -62,8 +62,7 @@ extern "C" {
 typedef int tbool;
 typedef struct SMikkTSpaceContext SMikkTSpaceContext;
 
-typedef struct
-{
+typedef struct {
 	// Returns the number of faces (triangles/quads) on the mesh to be processed.
 	int (*m_getNumFaces)(const SMikkTSpaceContext * pContext);
 
@@ -144,3 +143,4 @@ tbool genTangSpace(const SMikkTSpaceContext * pContext, const float fAngularThre
 #endif
 
 #endif
+
