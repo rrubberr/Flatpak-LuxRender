@@ -30,10 +30,27 @@
 namespace lux
 {
 	class MeshBaryTriangle;
+	class MotionPrimitive;
+	class AreaLightPrimitive;
+	class AreaLight;
 
-	// Embree device-level error callback, forwards Embree's internal errors
+	// Embree error callback: forwards Embree's internal errors
 	// to stdout. Defined in embree.cpp.
 	void errorFunction(void* userPtr, enum RTCError error, const char* str);
+
+	// Per-triangle metadata resolved at construction time, by
+	// unwrapping AreaLightPrimitive/MotionPrimitive to
+	// MeshBaryTriangle.
+	struct EmbreeTriangleInfo
+	{
+		const MeshBaryTriangle *triangle = nullptr;
+		// Non-null if this triangle was reached through an AreaLightPrimitive.
+		const AreaLight *areaLight = nullptr;
+		// Non-null if this triangle was reached through a MotionPrimitive.
+		// All triangles sharing a MotionPrimitive are grouped into
+		// the same RTCGeometry.
+		const MotionPrimitive *motion = nullptr;
+	};
 
 	class embree_accel : public Aggregate
 	{
@@ -65,20 +82,31 @@ namespace lux
 			);
 
 		protected:
-			// Builds the DifferentialGeometry for a barycentric hit on the
-			// given triangle.
+			// Builds the DifferentialGeometry for a hit on the
+			// given triangle. If motionXform is non-null, the
+			// vertices are transformed by it first.
 			DifferentialGeometry ComputeDifferentialGeometry(
-				const MeshBaryTriangle *triangle, float b1, float b2) const;
-			
-			// Embree only supports plain triangle mesh geometry.
-			static const MeshBaryTriangle *AsMeshBaryTriangle(const Primitive *p);
+				const MeshBaryTriangle *triangle, float b1, float b2,
+				const Transform *motionXform = nullptr) const;
+
+			// Recursively resolve prim down to MeshBaryTriangle leaves,
+			// appending one EmbreeTriangleInfo per leaf.
+
+			// Anything left over after that is logged and dropped.
+			void CollectTriangleInfos(const boost::shared_ptr<Primitive> &prim,
+				const AreaLight *areaLight, const MotionPrimitive *motion,
+				vector<EmbreeTriangleInfo> &out, u_int &skippedCount);
 
 			vector<boost::shared_ptr<Primitive>> primitives = {};
-			float* m_verts = nullptr;
-			uint32_t* m_indices = nullptr;
+
+			// Indexed as [geomID][primID]. geomIDs are assigned by
+			// rtcAttachGeometry in the order geometries are built.
+			// Create one static geometry, plus one additional
+			// per MotionPrimitive among the input.
+			vector<vector<EmbreeTriangleInfo>> m_triInfo;
+
 			RTCScene m_scene  = 0;
 			RTCDevice m_dev   = 0;
-			RTCGeometry m_geo = 0;
 			BBox worldBound;
 	};
 };

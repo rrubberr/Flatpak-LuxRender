@@ -527,6 +527,9 @@ public:
 	}
 
 	const vector<boost::shared_ptr<Primitive> > &GetInstanceSources() const { return instanceSources; }
+	// The primitive being instanced with motion. Needed by Embree when
+	// we want to unwrap this down to intersectable geometry.
+	const boost::shared_ptr<Primitive> &GetInstance() const { return instance; }
 	Material *GetMaterial() const { return material.get(); }
 	const MotionSystem &GetMotionSystem() const { return motionPath; } 
 

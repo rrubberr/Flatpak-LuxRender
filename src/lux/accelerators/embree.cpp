@@ -19,6 +19,8 @@
  *   This project is based on PBRT ; see http://www.pbrt.org               *
  *   Lux Renderer website : http://www.luxrender.org                       *
  ***************************************************************************/
+#include <map>
+
 #include "error.h"
 #include "embree.h"
 #include "dynload.h"
@@ -32,9 +34,79 @@ void lux::errorFunction(void* userPtr, enum RTCError error, const char* str)
 	printf("error %d: %s\n", error, str);
 }
 
-const MeshBaryTriangle *embree_accel::AsMeshBaryTriangle(const Primitive *p)
+void embree_accel::CollectTriangleInfos(const boost::shared_ptr<Primitive> &prim,
+	const AreaLight *areaLight, const MotionPrimitive *motion,
+	vector<EmbreeTriangleInfo> &out, u_int &skippedCount)
 {
-	return dynamic_cast<const MeshBaryTriangle *>(p);
+	const Primitive *raw = prim.get();
+
+	if (const MeshBaryTriangle *tri = dynamic_cast<const MeshBaryTriangle *>(raw)) {
+		// Retain this leaf's shared_ptr. If it was produced by the
+		// Refine() call below, nothing else may be holding a reference,
+		// and we need the pointer to stay valid.
+		primitives.push_back(prim);
+
+		EmbreeTriangleInfo info;
+		info.triangle = tri;
+		info.areaLight = areaLight;
+		info.motion = motion;
+		out.push_back(info);
+		return;
+	}
+
+	if (const AreaLightPrimitive *alp = dynamic_cast<const AreaLightPrimitive *>(raw)) {
+		// A primitive shouldn't be wrapped by more than one
+		// AreaLightPrimitive; if it is, keep the outermost.
+		const AreaLight *al = areaLight ? areaLight : alp->GetAreaLight().get();
+		CollectTriangleInfos(alp->GetPrimitive(), al, motion, out, skippedCount);
+		return;
+	}
+
+	if (const MotionPrimitive *mp = dynamic_cast<const MotionPrimitive *>(raw)) {
+		if (motion) {
+			// Nested MotionPrimitives aren't supported.
+			LOG(LUX_WARNING, LUX_LIMIT) << "embree_accel: skipping "
+				<< "nested MotionPrimitive (typeid: "
+				<< typeid(*raw).name() << ")";
+			++skippedCount;
+			return;
+		}
+		CollectTriangleInfos(mp->GetInstance(), areaLight, mp, out, skippedCount);
+		return;
+	}
+
+	if (const Aggregate *agg = dynamic_cast<const Aggregate *>(raw)) {
+		// Aggregates report CanIntersect() == true unconditionally;
+		// expand into its constituent primitives.
+		vector<boost::shared_ptr<Primitive>> children;
+		agg->GetPrimitives(children);
+		for (size_t i = 0; i < children.size(); ++i)
+			CollectTriangleInfos(children[i], areaLight, motion, out, skippedCount);
+		return;
+	}
+
+	if (!prim->CanIntersect()) {
+		// Not yet in an intersectable form! Refine it and recurse
+		// into whatever comes out...
+		vector<boost::shared_ptr<Primitive>> refined;
+		const PrimitiveRefinementHints refineHints(false);
+		prim->Refine(refined, refineHints, prim);
+		if (refined.empty()) {
+			LOG(LUX_WARNING, LUX_LIMIT) << "embree_accel: skipping "
+				<< "primitive that produced no refined geometry "
+				<< "(typeid: " << typeid(*raw).name() << ")";
+			++skippedCount;
+			return;
+		}
+		for (size_t i = 0; i < refined.size(); ++i)
+			CollectTriangleInfos(refined[i], areaLight, motion, out, skippedCount);
+		return;
+	}
+
+	// A genuinely unsupported leaf shape (e.g. a sphere or disk).
+	LOG(LUX_WARNING, LUX_LIMIT) << "embree_accel: skipping non-triangle "
+		<< "primitive (typeid: " << typeid(*raw).name() << ")";
+	++skippedCount;
 }
 
 embree_accel::embree_accel(
@@ -42,28 +114,49 @@ embree_accel::embree_accel(
 	bool highQuality, bool robust
 )
 {
-	vector<boost::shared_ptr<Primitive>> vPrims = {};
-	const PrimitiveRefinementHints refineHints(false);
-	for(u_int i = 0; i < p.size(); ++i)
-	{
-		if(p[i]->CanIntersect())
-			vPrims.push_back(p[i]);
-		else
-			p[i]->Refine(vPrims, refineHints, p[i]);
-	}
-
-	// Keep only MeshBaryTriangles.
+	// Resolve each primitive to MeshBaryTriangles. Bucket 0 holds
+	// every triangle with no motion. Each MotionPrimitive gets its own.
 	primitives.clear();
-	primitives.reserve(vPrims.size());
+	primitives.reserve(p.size());
+
+	vector<vector<EmbreeTriangleInfo>> buckets(1);
+	std::map<const MotionPrimitive *, size_t> motionBucketOf;
+
 	u_int skippedCount = 0;
-	for (u_int i = 0; i < vPrims.size(); ++i) {
-		if (AsMeshBaryTriangle(vPrims[i].get())) {
-			primitives.push_back(vPrims[i]);
-		} else {
-			LOG(LUX_WARNING, LUX_LIMIT) << "embree_accel: skipping non-triangle "
-				<< "primitive (typeid: "
-				<< typeid(*vPrims[i]).name() << ")";
-			++skippedCount;
+	for (u_int i = 0; i < p.size(); ++i) {
+		vector<EmbreeTriangleInfo> collected;
+		CollectTriangleInfos(p[i], nullptr, nullptr, collected, skippedCount);
+
+		if (collected.empty())
+			continue;
+
+		// Use the ORIGINAL primitive's WorldBound() rather than
+		// leaf triangles. This captures MotionPrimitive's bounds
+		// correctly, instead of its triangles at rest.
+		worldBound = Union(worldBound, p[i]->WorldBound());
+
+		for (size_t k = 0; k < collected.size(); ++k) {
+			const EmbreeTriangleInfo &info = collected[k];
+
+			// A MotionPrimitive whose MotionSystem is IsStatic() 
+			// has a constant transform which rtcSetGeometryTimeRange()
+			// rejects. Bake its fixed transform directly into the
+			// vertex data.
+			const bool isRealMotion = info.motion && !info.motion->GetMotionSystem().IsStatic();
+
+			size_t bucket = 0;
+			if (isRealMotion) {
+				auto it = motionBucketOf.find(info.motion);
+				if (it == motionBucketOf.end()) {
+					bucket = buckets.size();
+					buckets.push_back(vector<EmbreeTriangleInfo>());
+					motionBucketOf[info.motion] = bucket;
+				} else {
+					bucket = it->second;
+				}
+			}
+
+			buckets[bucket].push_back(info);
 		}
 	}
 	if (skippedCount > 0) {
@@ -71,47 +164,101 @@ embree_accel::embree_accel(
 			<< " primitive(s) skipped.";
 	}
 
-	size_t tri_count = primitives.size();
-	u_int nPrims = primitives.size();
-
-	for(u_int i = 0; i < nPrims; ++i)
-		worldBound = Union(worldBound, primitives[i]->WorldBound());
-
 	m_dev = rtcNewDevice(nullptr);
 	rtcSetDeviceErrorFunction(m_dev, errorFunction, NULL);
 
 	m_scene = rtcNewScene(m_dev);
-	m_geo = rtcNewGeometry(m_dev, RTC_GEOMETRY_TYPE_TRIANGLE);
-	m_verts = (float*)rtcSetNewGeometryBuffer(
-		m_geo, RTC_BUFFER_TYPE_VERTEX, 0,
-		RTC_FORMAT_FLOAT3, sizeof(float)*3, tri_count*3
-	);
-	m_indices = (uint32_t*)rtcSetNewGeometryBuffer(
-		m_geo, RTC_BUFFER_TYPE_INDEX, 0,
-		RTC_FORMAT_UINT3, sizeof(uint32_t)*3, tri_count
-	);
+	m_triInfo.clear();
 
-	size_t p_index = 0;
-	size_t i_index = 0;
-	for(size_t i = 0; i < primitives.size(); i++)
-	{
-		const MeshBaryTriangle* t = AsMeshBaryTriangle(primitives[i].get());
-		for(size_t j = 0; j < 3; j++)
-		{
-			m_verts[p_index+0] = t->GetP(j).x;
-			m_verts[p_index+1] = t->GetP(j).y;
-			m_verts[p_index+2] = t->GetP(j).z;
-			p_index += 3;
+	u_int motionGeomCount = 0;
+	for (size_t b = 0; b < buckets.size(); ++b) {
+		const vector<EmbreeTriangleInfo> &triInfos = buckets[b];
+		if (triInfos.empty())
+			continue;
+
+		const bool isMotionBucket = (b != 0);
+		const size_t triCount = triInfos.size();
+
+		RTCGeometry geom = rtcNewGeometry(m_dev, RTC_GEOMETRY_TYPE_TRIANGLE);
+
+		uint32_t *indices = (uint32_t*)rtcSetNewGeometryBuffer(
+			geom, RTC_BUFFER_TYPE_INDEX, 0,
+			RTC_FORMAT_UINT3, sizeof(uint32_t)*3, triCount
+		);
+		for (size_t t = 0; t < triCount; ++t) {
+			indices[t*3+0] = (uint32_t)(t*3+0);
+			indices[t*3+1] = (uint32_t)(t*3+1);
+			indices[t*3+2] = (uint32_t)(t*3+2);
 		}
-		m_indices[i_index+0] = i_index + 0;
-		m_indices[i_index+1] = i_index + 1;
-		m_indices[i_index+2] = i_index + 2;
-		i_index += 3;
-	}
 
-	rtcCommitGeometry(m_geo);
-	rtcAttachGeometry(m_scene, m_geo);
-	rtcReleaseGeometry(m_geo);
+		if (!isMotionBucket) {
+			float *verts = (float*)rtcSetNewGeometryBuffer(
+				geom, RTC_BUFFER_TYPE_VERTEX, 0,
+				RTC_FORMAT_FLOAT3, sizeof(float)*3, triCount*3
+			);
+			for (size_t t = 0; t < triCount; ++t) {
+				const EmbreeTriangleInfo &ti = triInfos[t];
+				const MeshBaryTriangle *tri = ti.triangle;
+
+				// Triangles reached through a MotionPrimitive whose
+				// MotionSystem is static still need afixed transform.
+				Transform fixedXform;
+				const bool hasFixedXform = (ti.motion != nullptr);
+				if (hasFixedXform) {
+					const MotionSystem &ms = ti.motion->GetMotionSystem();
+					fixedXform = Transform(ms.Sample(ms.StartTime()));
+				}
+
+				for (size_t j = 0; j < 3; ++j) {
+					Point pt = tri->GetP(j);
+					if (hasFixedXform)
+						pt = fixedXform * pt;
+					verts[(t*3+j)*3+0] = pt.x;
+					verts[(t*3+j)*3+1] = pt.y;
+					verts[(t*3+j)*3+2] = pt.z;
+				}
+			}
+		} else {
+			// Motion blur: sample the motion path at StartTime()/EndTime().
+			// Let Embree interpolate vertex positions between them.
+			const MotionPrimitive *motion = triInfos[0].motion;
+			const MotionSystem &ms = motion->GetMotionSystem();
+			const float t0 = ms.StartTime();
+			const float t1 = ms.EndTime();
+
+			rtcSetGeometryTimeStepCount(geom, 2);
+			rtcSetGeometryTimeRange(geom, t0, t1);
+
+			const Transform xform0(ms.Sample(t0));
+			const Transform xform1(ms.Sample(t1));
+
+			for (int step = 0; step < 2; ++step) {
+				const Transform &xform = (step == 0) ? xform0 : xform1;
+				float *verts = (float*)rtcSetNewGeometryBuffer(
+					geom, RTC_BUFFER_TYPE_VERTEX, step,
+					RTC_FORMAT_FLOAT3, sizeof(float)*3, triCount*3
+				);
+				for (size_t t = 0; t < triCount; ++t) {
+					const MeshBaryTriangle *tri = triInfos[t].triangle;
+					for (size_t j = 0; j < 3; ++j) {
+						const Point pt = xform * tri->GetP(j);
+						verts[(t*3+j)*3+0] = pt.x;
+						verts[(t*3+j)*3+1] = pt.y;
+						verts[(t*3+j)*3+2] = pt.z;
+					}
+				}
+			}
+			++motionGeomCount;
+		}
+
+		rtcCommitGeometry(geom);
+		unsigned int geomID = rtcAttachGeometry(m_scene, geom);
+		rtcReleaseGeometry(geom);
+
+		if (geomID >= m_triInfo.size())
+			m_triInfo.resize(geomID + 1);
+		m_triInfo[geomID] = triInfos;
+	}
 
 	rtcSetSceneBuildQuality(m_scene,
 		highQuality ? RTC_BUILD_QUALITY_HIGH : RTC_BUILD_QUALITY_MEDIUM);
@@ -128,7 +275,7 @@ embree_accel::embree_accel(
 		<< (highQuality ? "HIGH" : "MEDIUM")
 		<< " scene builder quality. Robust scene build "
 		<< (robustConfirmed ? "ENABLED" : "DISABLED")
-		<< ".";
+		<< ". " << motionGeomCount << " motion-blurred geometry group(s).";
 }
 
 embree_accel::~embree_accel()
@@ -164,13 +311,19 @@ bool embree_accel::CanIntersect() const
 }
 
 DifferentialGeometry embree_accel::ComputeDifferentialGeometry(
-	const MeshBaryTriangle *triangle, float b1, float b2) const
+	const MeshBaryTriangle *triangle, float b1, float b2,
+	const Transform *motionXform) const
 {
 	const float b0 = 1.0f - b1 - b2;
 
-	const Point p0 = triangle->GetP(0);
-	const Point p1 = triangle->GetP(1);
-	const Point p2 = triangle->GetP(2);
+	Point p0 = triangle->GetP(0);
+	Point p1 = triangle->GetP(1);
+	Point p2 = triangle->GetP(2);
+	if (motionXform) {
+		p0 = (*motionXform) * p0;
+		p1 = (*motionXform) * p1;
+		p2 = (*motionXform) * p2;
+	}
 
 	const Point o = p0;
 
@@ -189,8 +342,7 @@ DifferentialGeometry embree_accel::ComputeDifferentialGeometry(
 	const float du2 = uvs[1][0] - uvs[2][0];
 	const float dv1 = uvs[0][1] - uvs[2][1];
 	const float dv2 = uvs[1][1] - uvs[2][1];
-	const Vector dp1(triangle->GetP(0) - triangle->GetP(2)),
-		dp2(triangle->GetP(1) - triangle->GetP(2));
+	const Vector dp1(p0 - p2), dp2(p1 - p2);
 
 	const float determinant = du1 * dv2 - dv1 * du2;
 	if (determinant == 0.f) {
@@ -227,16 +379,36 @@ bool embree_accel::Intersect(const Ray &ray, Intersection *isect) const
 
 	ray.maxt = hit.ray.tfar;
 
-	const MeshBaryTriangle *triangle(static_cast<const MeshBaryTriangle *>(primitives[
-		hit.hit.primID
-	].get()));
+	const EmbreeTriangleInfo &info = m_triInfo[hit.hit.geomID][hit.hit.primID];
+	const MeshBaryTriangle *triangle = info.triangle;
 
-	isect->dg = ComputeDifferentialGeometry(triangle, hit.hit.u, hit.hit.v);
+	Transform motionXform;
+	const Transform *motionXformPtr = nullptr;
+	if (info.motion) {
+		// Sample the MotionPrimitive transform for this ray time.
+		motionXform = Transform(info.motion->GetMotionSystem().Sample(ray.time));
+		motionXformPtr = &motionXform;
+	}
 
-	isect->Set(triangle->mesh->ObjectToWorld, triangle,
+	isect->dg = ComputeDifferentialGeometry(triangle, hit.hit.u, hit.hit.v, motionXformPtr);
+
+	const Transform objectToWorld = motionXformPtr
+		? (*motionXformPtr) * triangle->mesh->ObjectToWorld
+		: triangle->mesh->ObjectToWorld;
+
+	// If this triangle came from a MotionPrimitive, report that decorator
+	// as the hit primitive; otherwise report the triangle directly.
+	// Either way, pass through AreaLights.
+	isect->Set(objectToWorld,
+		info.motion ? static_cast<const Primitive *>(info.motion)
+		            : static_cast<const Primitive *>(triangle),
 		triangle->mesh->GetMaterial(),
 		triangle->mesh->GetExterior(),
-		triangle->mesh->GetInterior());
+		triangle->mesh->GetInterior(),
+		info.areaLight);
+
+	if (info.motion)
+		isect->dg.handle = info.motion;
 
 	return true;
 }
