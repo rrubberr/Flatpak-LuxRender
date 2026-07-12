@@ -292,12 +292,10 @@ MeshQuadrilateral::MeshQuadrilateral(const lux::Mesh *m, u_int n)
 		if (nonConvergeCount <= kMaxNonConvergeMessages) {
 			LOG(LUX_WARNING, LUX_CONSISTENCY) << "Quadrilateral vertex "
 				"reordering did not converge (best overshoot " << bestBadness <<
-				"); using closest winding. This quad may not be planar/convex "
-				"despite passing the earlier check.";
+				"); using closest winding.";
 			if (nonConvergeCount == kMaxNonConvergeMessages) {
-				LOG(LUX_WARNING, LUX_CONSISTENCY) << "Further 'reordering "
-					"did not converge' messages will be suppressed for the "
-					"remainder of this render.";
+				LOG(LUX_WARNING, LUX_CONSISTENCY) << "Further vertex ordering "
+					"messages will be suppressed.";
 			}
 		}
 	} else if (rotationsApplied > 0) {
@@ -312,12 +310,10 @@ MeshQuadrilateral::MeshQuadrilateral(const lux::Mesh *m, u_int n)
 		const u_int count = ++loggedCount;
 		if (count <= kMaxLoggedMessages) {
 			LOG(LUX_DEBUG, LUX_NOERROR) << "Quadrilateral vertex winding "
-				"rotated " << rotationsApplied << " step(s) to satisfy the "
-				"ray-quad intersection test's precondition.";
+				"rotated " << rotationsApplied << " step(s).";
 			if (count == kMaxLoggedMessages) {
-				LOG(LUX_DEBUG, LUX_NOERROR) << "Further 'Quadrilateral "
-					"vertex winding rotated' messages will be suppressed "
-					"for the remainder of this render.";
+				LOG(LUX_DEBUG, LUX_NOERROR) << "Further "
+					"vertex winding messages will be suppressed.";
 			}
 		}
 	}
