@@ -1717,9 +1717,9 @@ void Film::AddTileSamples(const Contribution* const contribs, u_int num_contribs
 			// Identify the single pixel nearest this sample's image
 			// position. Variance is read from this pixel only.
 			const int clampX = Clamp(Floor2Int(contrib.imageX),
-				static_cast<int>(xPixelStart), static_cast<int>(xPixelStart + xPixelCount - 1));
+				xTilePixelStart, xTilePixelEnd - 1);
 			const int clampY = Clamp(Floor2Int(contrib.imageY),
-				static_cast<int>(yPixelStart), static_cast<int>(yPixelStart + yPixelCount - 1));
+				yTilePixelStart, yTilePixelEnd - 1);
 			// VariancePixel storage is indexed relative to the crop window
 			// origin, not absolute coordinates, so subtract the pixel
 			// start offsets before indexing into varianceBuffer.
