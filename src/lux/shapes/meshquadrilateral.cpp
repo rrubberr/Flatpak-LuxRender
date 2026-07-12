@@ -20,6 +20,10 @@
  *   Lux Renderer website : http://www.luxrender.net                       *
  ***************************************************************************/
 
+#include <algorithm>
+#include <atomic>
+#include <limits>
+
 #include "mesh.h"
 #include "geometry/matrix3x3.h"
 
@@ -188,24 +192,37 @@ void MeshQuadrilateral::ComputeV11BarycentricCoords(const Vector &e01,
 
 //------------------------------------------------------------------------------
 MeshQuadrilateral::MeshQuadrilateral(const lux::Mesh *m, u_int n)
-	: mesh(m), idx(&(mesh->quadVertexIndex[4 * n]))
+	: mesh(m), idx(NULL)
 {
+	// This points into the SHARED mesh->quadVertexIndex array.
+	const int *srcIdx = &(mesh->quadVertexIndex[4 * n]);
+
 	// LordCrc - check for problematic quads
-	const Point &p0 = Inverse(mesh->ObjectToWorld) * mesh->p[idx[0]];
-	const Point &p1 = Inverse(mesh->ObjectToWorld) * mesh->p[idx[1]];
-	const Point &p2 = Inverse(mesh->ObjectToWorld) * mesh->p[idx[2]];
-	const Point &p3 = Inverse(mesh->ObjectToWorld) * mesh->p[idx[3]];
+	const Point &p0 = Inverse(mesh->ObjectToWorld) * mesh->p[srcIdx[0]];
+	const Point &p1 = Inverse(mesh->ObjectToWorld) * mesh->p[srcIdx[1]];
+	const Point &p2 = Inverse(mesh->ObjectToWorld) * mesh->p[srcIdx[2]];
+	const Point &p3 = Inverse(mesh->ObjectToWorld) * mesh->p[srcIdx[3]];
 
 	// assume convex and planar check is performed before
 	if (IsDegenerate(p0, p1, p2, p3)) {
 		LOG(LUX_DEBUG, LUX_CONSISTENCY)<< "Degenerate quadrilateral detected";
-		idx = NULL;
+		return;
 	}
 
-	if (!idx)
-		return;
+	// Copy into private storage.
+	for (u_int i = 0; i < 4; ++i)
+		ownIdx[i] = srcIdx[i];
+	idx = ownIdx;
 
 	// Dade - reorder the vertices if required
+	bool foundValidWinding = false;
+	u_int rotationsApplied = 0;
+
+	// Tracks the "least-bad" rotation, in case none satisfies the
+	// precondition with tolerance.
+	float bestBadness = std::numeric_limits<float>::max();
+	int bestOwnIdx[4] = { ownIdx[0], ownIdx[1], ownIdx[2], ownIdx[3] };
+
 	for(u_int i = 0; i < 4; i++) {
 		// Get quadrilateral vertices in _p00_, _p10_, _p11_ and _p01_
 		const Point &p00 = mesh->p[idx[0]];
@@ -224,21 +241,85 @@ MeshQuadrilateral::MeshQuadrilateral(const lux::Mesh *m, u_int n)
 
 		ComputeV11BarycentricCoords(e01, e02, e03, &a11, &b11);
 
-		if ((a11 > 1.0f) || (b11 > 1.0f)) {
-			// Dade - we need to reorder the vertices
+		// Small epsilon tolerance to account for floating point error.
+		// This is NECESSARY in practice! Ask how I know!
+		static const float V11_EPSILON = 1e-4f;
+		const float badness = std::max(a11, b11) - 1.0f;
 
-			// Dade - this code has as side effect to reorder the indices
-			// in mesh->quadVertexIndex. It is not a very clean behavior but
-			// it is simple and fast
-
-			int* nonConstIdx = const_cast<int*>(idx);
-			const int tmp = nonConstIdx[0];
-			nonConstIdx[0] = nonConstIdx[1];
-			nonConstIdx[1] = nonConstIdx[2];
-			nonConstIdx[2] = nonConstIdx[3];
-			nonConstIdx[3] = tmp;
-		} else
+		if (badness <= V11_EPSILON) {
+			foundValidWinding = true;
 			break;
+		}
+
+		if (badness < bestBadness) {
+			bestBadness = badness;
+			bestOwnIdx[0] = ownIdx[0];
+			bestOwnIdx[1] = ownIdx[1];
+			bestOwnIdx[2] = ownIdx[2];
+			bestOwnIdx[3] = ownIdx[3];
+		}
+
+		// Dade - we need to reorder the vertices.
+		
+		// This only rotates the ownIdx copy. It used to reorder
+		// mesh->quadVertexIndex directly, breaking normals and UVs.
+		const int tmp = ownIdx[0];
+		ownIdx[0] = ownIdx[1];
+		ownIdx[1] = ownIdx[2];
+		ownIdx[2] = ownIdx[3];
+		ownIdx[3] = tmp;
+		++rotationsApplied;
+	}
+
+	if (!foundValidWinding) {
+		// Danger! Every one of the 4 possible starting corners left V11's
+		// barycentric coordinates > 1! Fall back to whichever rotation 
+		// came closest, so we don't break anything.
+		ownIdx[0] = bestOwnIdx[0];
+		ownIdx[1] = bestOwnIdx[1];
+		ownIdx[2] = bestOwnIdx[2];
+		ownIdx[3] = bestOwnIdx[3];
+
+		// For a planar, convex quad one of the 4 rotations should always work,
+		// so this indicates a degenerate quad slipped past.
+		
+		// Proceed with the closest approximation.
+		// Count capped so as not to flood the log.
+		static std::atomic<u_int> loggedNonConvergeCount(0);
+		static const u_int kMaxNonConvergeMessages = 20;
+
+		const u_int nonConvergeCount = ++loggedNonConvergeCount;
+		if (nonConvergeCount <= kMaxNonConvergeMessages) {
+			LOG(LUX_WARNING, LUX_CONSISTENCY) << "Quadrilateral vertex "
+				"reordering did not converge (best overshoot " << bestBadness <<
+				"); using closest winding. This quad may not be planar/convex "
+				"despite passing the earlier check.";
+			if (nonConvergeCount == kMaxNonConvergeMessages) {
+				LOG(LUX_WARNING, LUX_CONSISTENCY) << "Further 'reordering "
+					"did not converge' messages will be suppressed for the "
+					"remainder of this render.";
+			}
+		}
+	} else if (rotationsApplied > 0) {
+		// rotationsApplied counts the rotations performed before
+		// landing on a valid winding.
+
+		// On a scene with millions of quads, this can crash the UI.
+		// Count capped so as not to!
+		static std::atomic<u_int> loggedCount(0);
+		static const u_int kMaxLoggedMessages = 20;
+
+		const u_int count = ++loggedCount;
+		if (count <= kMaxLoggedMessages) {
+			LOG(LUX_DEBUG, LUX_NOERROR) << "Quadrilateral vertex winding "
+				"rotated " << rotationsApplied << " step(s) to satisfy the "
+				"ray-quad intersection test's precondition.";
+			if (count == kMaxLoggedMessages) {
+				LOG(LUX_DEBUG, LUX_NOERROR) << "Further 'Quadrilateral "
+					"vertex winding rotated' messages will be suppressed "
+					"for the remainder of this render.";
+			}
+		}
 	}
 }
 
@@ -410,11 +491,27 @@ bool MeshQuadrilateral::Intersect(const Ray &ray, Intersection *isect) const {
 	Normal nn(Normal(Normalize(N)));
 
 	if (isect) {
+		// u, v is the geometric bilinear-patch parameter from
+		// the solve above. NOT the texture coordinate!
+		
+		// Blend the vertex UVs with it to get the actual texture coordinate.
+		const float b00 = (1.f - u) * (1.f - v);
+		const float b10 = u * (1.f - v);
+		const float b11w = u * v;
+		const float b01 = (1.f - u) * v;
+		const float texU = b00*uv[0][0] + b10*uv[1][0] + b11w*uv[2][0] + b01*uv[3][0];
+		const float texV = b00*uv[0][1] + b10*uv[1][1] + b11w*uv[2][1] + b01*uv[3][1];
+
 		isect->dg = DifferentialGeometry(ray(t),
 			nn,
 			dpdu, dpdv,
 			Normal(0, 0, 0), Normal(0, 0, 0),
-			u, v, this);
+			texU, texV, this);
+		// Keep the geometric parameter; GetShadingGeometry() and
+		// GetShadingInformation() need it to interpolate
+		// vertex normals/colors/alpha across the quad.
+		isect->dg.iData.quadrilateral.coords[0] = u;
+		isect->dg.iData.quadrilateral.coords[1] = v;
 		isect->dg.AdjustNormal(mesh->reverseOrientation, mesh->transformSwapsHandedness);
 		isect->Set(mesh->ObjectToWorld, this, mesh->GetMaterial(),
 			mesh->GetExterior(), mesh->GetInterior());
@@ -464,11 +561,13 @@ void MeshQuadrilateral::GetShadingGeometry(const Transform &obj2world,
 	}
 
 	// Use _n_ and _s_ to compute shading tangents for triangle, _ss_ and _ts_
+	const float gu = dg.iData.quadrilateral.coords[0];
+	const float gv = dg.iData.quadrilateral.coords[1];
 	Normal ns(Normalize(mesh->ObjectToWorld * (
-		((1.0f - dg.u) * (1.0f - dg.v)) * mesh->n[idx[0]] +
-		(dg.u * (1.0f - dg.v)) * mesh->n[idx[1]] +
-		(dg.u * dg.v) * mesh->n[idx[2]] +
-		((1.0f - dg.u) * dg.v) * mesh->n[idx[3]])));
+		((1.0f - gu) * (1.0f - gv)) * mesh->n[idx[0]] +
+		(gu * (1.0f - gv)) * mesh->n[idx[1]] +
+		(gu * gv) * mesh->n[idx[2]] +
+		((1.0f - gu) * gv) * mesh->n[idx[3]])));
 	float lenDpDu = dg.dpdu.Length();
 	float lenDpDv = dg.dpdv.Length();
 	Vector ts = Normalize(Cross(dg.dpdu, ns));
@@ -532,20 +631,30 @@ void MeshQuadrilateral::GetShadingGeometry(const Transform &obj2world,
 
 	*dgShading = DifferentialGeometry(dg.p, ns, ss, ts, dndu, dndv,
 		dg.u, dg.v, this);
+	// Carry the geometric parameter forward; GetShadingInformation()
+	// needs it for the same reason GetShadingGeometry() did above.
+	dgShading->iData.quadrilateral.coords[0] = gu;
+	dgShading->iData.quadrilateral.coords[1] = gv;
 }
 
 void MeshQuadrilateral::GetShadingInformation(const DifferentialGeometry &dgShading,
 		RGBColor *color, float *alpha) const {
+	// Geometric bilinear parameter; blending vertex colors/alpha
+	// by the texture coordinate would be wrong for the same reason
+	// it would be for normals.
+	const float gu = dgShading.iData.quadrilateral.coords[0];
+	const float gv = dgShading.iData.quadrilateral.coords[1];
+
 	if (mesh->cols) {
 		const RGBColor *c0 = (const RGBColor *)(&mesh->cols[idx[0] * 3]);
 		const RGBColor *c1 = (const RGBColor *)(&mesh->cols[idx[1] * 3]);
 		const RGBColor *c2 = (const RGBColor *)(&mesh->cols[idx[2] * 3]);
 		const RGBColor *c3 = (const RGBColor *)(&mesh->cols[idx[3] * 3]);
 
-		*color = ((1.0f - dgShading.u) * (1.0f - dgShading.v)) * (*c0) +
-				(dgShading.u * (1.0f - dgShading.v)) * (*c1) +
-				(dgShading.u * dgShading.v) * (*c2) +
-				((1.0f - dgShading.u) * dgShading.v) * (*c3);
+		*color = ((1.0f - gu) * (1.0f - gv)) * (*c0) +
+				(gu * (1.0f - gv)) * (*c1) +
+				(gu * gv) * (*c2) +
+				((1.0f - gu) * gv) * (*c3);
 	} else
 		*color = RGBColor(1.f);
 
@@ -555,10 +664,10 @@ void MeshQuadrilateral::GetShadingInformation(const DifferentialGeometry &dgShad
 		const float alpha2 = mesh->alphas[idx[2]];
 		const float alpha3 = mesh->alphas[idx[3]];
 
-		*alpha = ((1.0f - dgShading.u) * (1.0f - dgShading.v)) * alpha0 +
-				(dgShading.u * (1.0f - dgShading.v)) * alpha1 +
-				(dgShading.u * dgShading.v) * alpha2 +
-				((1.0f - dgShading.u) * dgShading.v) * alpha3;
+		*alpha = ((1.0f - gu) * (1.0f - gv)) * alpha0 +
+				(gu * (1.0f - gv)) * alpha1 +
+				(gu * gv) * alpha2 +
+				((1.0f - gu) * gv) * alpha3;
 	} else
 		*alpha = 1.f;
 }

@@ -308,6 +308,9 @@ public:
 
 		dg->handle = this;
 
+		// Initialize u1, u2
+		dg->iData.quadrilateral.coords[0] = u1;
+		dg->iData.quadrilateral.coords[1] = u2;
 
 		float uv[4][2];
 		GetUVs(uv);
@@ -327,10 +330,9 @@ public:
 	static bool IsDegenerate(const Point &p0, const Point &p1, const Point &p2, const Point &p3);
 	static bool IsConvex(const Point &p0, const Point &p1, const Point &p2, const Point &p3);
 
-private:
-	static u_int MajorAxis(const Vector &v);
-
-	static void ComputeV11BarycentricCoords(const Vector &e01, const Vector &e02, const Vector &e03, float *a11, float *b11);
+	// Hand these straight to Embree.
+	const Point &GetP(u_int i) const { return mesh->p[idx[i]]; }
+	const Mesh *GetMesh() const { return mesh; }
 
 	void GetUVs(float uv[4][2]) const {
 		if (mesh->uvs) {
@@ -354,10 +356,16 @@ private:
 		}
 	}
 
+private:
+	static u_int MajorAxis(const Vector &v);
+
+	static void ComputeV11BarycentricCoords(const Vector &e01, const Vector &e02, const Vector &e03, float *a11, float *b11);
+
 	// Quadrilateral Private Data
 	const Mesh *mesh;
+	// Points at ownIdx.
 	const int *idx;
+	int ownIdx[4];
 };
 
 }//namespace lux
-

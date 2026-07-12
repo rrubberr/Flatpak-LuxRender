@@ -77,6 +77,11 @@ public:
 			float coords[3];
 			u_int triIndex;
 		} mesh;
+		struct {
+			// The geometric bilinear parameter from the
+			// ray-quad intersection.
+			float coords[2];
+		} quadrilateral;
 	} IntersectionData;
 
 	DifferentialGeometry() { u = v = 0.; handle = ihandle = NULL; scattered = false; }
