@@ -40,7 +40,7 @@ Mesh::Mesh(const Transform &o2w, bool ro, const string &name,
 	MeshQuadType quadtype, u_int nquadsCount, const int *quads,
 	MeshSubdivType subdivtype, u_int nsubdivlevels,
 	boost::shared_ptr<Texture<float> > &dmMap, float dmScale, float dmOffset,
-	bool dmNormalSmooth, bool dmSharpBoundary, bool normalsplit, bool genTangents)
+	bool dmNormalSmooth, bool dmSharpBoundary, bool normalsplit, bool genTangents, bool genQuads)
 	: Shape(o2w, ro, name)
 {
 	accelType = acceltype;
@@ -113,6 +113,7 @@ Mesh::Mesh(const Transform &o2w, bool ro, const string &name,
 	// Dade - copy quad data
 	quadType = quadtype;
 	nquads = nquadsCount;
+	generateQuadrilaterals = genQuads;
 	vector<int> quadsOk;
 	vector<int> quadsToSplit;
 	if (nquads == 0)
@@ -128,7 +129,7 @@ Mesh::Mesh(const Transform &o2w, bool ro, const string &name,
 
 			// Split the quad if using subdivision, tangent space generation (only possible on tri's) or if its not planar or convex
 			bool quadOk = MeshQuadrilateral::IsPlanar(p0, p1, p2, p3) && MeshQuadrilateral::IsConvex(p0, p1, p2, p3);
-			if (!mustSubdivide && !generateTangents && quadOk) {
+			if (!mustSubdivide && !generateTangents && quadOk && generateQuadrilaterals) {
 				quadsOk.push_back(quads[idx]);
 				quadsOk.push_back(quads[idx + 1]);
 				quadsOk.push_back(quads[idx + 2]);
@@ -1061,6 +1062,8 @@ static Shape *CreateShape(const Transform &o2w, bool reverseOrientation, const P
 
 	bool genTangents = params.FindOneBool("generatetangents", false);
 
+	bool genQuads = params.FindOneBool("generatequadrilaterals", false);
+
 	const float colorGamma = params.FindOneFloat("gamma", 1.f);
 
 	return new Mesh(o2w, reverseOrientation, name,
@@ -1071,7 +1074,7 @@ static Shape *CreateShape(const Transform &o2w, bool reverseOrientation, const P
 		subdivType, nSubdivLevels, displacementMap,
 		displacementMapScale, displacementMapOffset,
 		displacementMapNormalSmooth, displacementMapSharpBoundary,
-		normalSplit, genTangents);
+		normalSplit, genTangents, genQuads);
 }
 
 static Shape *CreateShape( const Transform &o2w, bool reverseOrientation, const ParamSet &params,

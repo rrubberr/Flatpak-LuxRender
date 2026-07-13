@@ -463,6 +463,8 @@ Shape* PlyMesh::CreateShape(const Transform &o2w,
 
 	bool genTangents = params.FindOneBool("generatetangents", false);
 
+	bool genQuads= params.FindOneBool("generatequadrilaterals", false);
+
 	const float colorGamma = params.FindOneFloat("gamma", 1.f);
 
 	boost::shared_ptr<Texture<float> > dummytex;
@@ -473,7 +475,7 @@ Shape* PlyMesh::CreateShape(const Transform &o2w,
 		Mesh::QUAD_QUADRILATERAL, plyNbQuads, quadVerts, subdivType,
 		nsubdivlevels, displacementMap, displacementMapScale,
 		displacementMapOffset, displacementMapNormalSmooth,
-		displacementMapSharpBoundary, normalSplit, genTangents);
+		displacementMapSharpBoundary, normalSplit, genTangents, genQuads);
 	delete[] p;
 	delete[] n;
 	delete[] uv;

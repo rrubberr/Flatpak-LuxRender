@@ -46,7 +46,7 @@ public:
 		float displacementMapScale, float displacementMapOffset,
 		bool displacementMapNormalSmooth,
 		bool displacementMapSharpBoundary, bool normalsplit,
-		bool genTangents);
+		bool genTangents, bool genQuads);
 	virtual ~Mesh();
 
 	virtual BBox ObjectBound() const;
@@ -122,6 +122,10 @@ protected:
 
 	// Generate tangent space for mesh
 	bool generateTangents;
+
+	// Represent mesh using quadrilaterals
+		// Generate tangent space for mesh
+	bool generateQuadrilaterals;
 
 	// for error reporting
 	mutable u_int inconsistentShadingTris;
