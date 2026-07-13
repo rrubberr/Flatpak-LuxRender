@@ -60,7 +60,7 @@ bool MeshQuadrilateral::IsPlanar(const Point &p0, const Point &p1, const Point &
 
 	float D = Dot(N, P);
 
-	const float eps = 1e-3;
+	const float eps = 1e-6f;
 	float dist;
 
 	// if planar, the distance from point to plane should be zero
@@ -203,9 +203,21 @@ MeshQuadrilateral::MeshQuadrilateral(const lux::Mesh *m, u_int n)
 	const Point &p2 = Inverse(mesh->ObjectToWorld) * mesh->p[srcIdx[2]];
 	const Point &p3 = Inverse(mesh->ObjectToWorld) * mesh->p[srcIdx[3]];
 
-	// assume convex and planar check is performed before
+	// Degenerate quad check.
 	if (IsDegenerate(p0, p1, p2, p3)) {
 		LOG(LUX_DEBUG, LUX_CONSISTENCY)<< "Degenerate quadrilateral detected";
+		return;
+	}
+	
+	// Planar quad check.
+	if (!IsPlanar(p0, p1, p2, p3)) {
+		LOG(LUX_DEBUG, LUX_CONSISTENCY)<< "Non-planar quadrilateral detected";
+		return;
+	}
+
+	// Convex quad check.
+	if (!IsConvex(p0, p1, p2, p3)) {
+		LOG(LUX_DEBUG, LUX_CONSISTENCY)<< "Concave quadrilateral detected";
 		return;
 	}
 
