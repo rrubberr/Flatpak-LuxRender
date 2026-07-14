@@ -838,6 +838,7 @@ protected: // Put it here for better data alignment
 
 	// variance-based outlier rejection
 	int varianceRejection_k;
+	int varianceRejectionWarmup;
 
 public:
 	// Samplers will check this flag to know if we have enough samples per

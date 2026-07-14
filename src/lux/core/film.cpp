@@ -1711,7 +1711,7 @@ void Film::AddTileSamples(const Contribution* const contribs, u_int num_contribs
 		// this mechanism attenuates samples' brightness based on
 		// (already available) variance from a mean. 
 
-		// Variance clamp.
+// Variance clamp.
 		XYZColor clampedXyz = xyz;
 		if (varianceBuffer && varianceRejection_k > 0) {
 			// Identify the single pixel nearest this sample's image
@@ -1727,10 +1727,8 @@ void Film::AddTileSamples(const Contribution* const contribs, u_int num_contribs
 			const u_int centerY = static_cast<u_int>(clampY) - yPixelStart;
 
 			const VariancePixel &vp = varianceBuffer->pixels(centerX, centerY);
-			// weightSum > 0 means at least one prior sample has been recorded
-			// at this pixel; with no history yet, there's nothing to compare
-			// against, so do not clamp.
-			if (vp.weightSum > 0.f) {
+			// weightSum is an accumulated sample-weight count for this pixel.
+			if (vp.weightSum > static_cast<float>(varianceRejectionWarmup)) {
 				// Standard deviation of luminance at this pixel, derived from
 				// the tracked variance (Sn / weightSum). fabsf
 				// guards against tiny values from floating-point

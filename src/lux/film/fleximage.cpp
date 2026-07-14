@@ -1983,6 +1983,7 @@ Film* FlexImageFilm::CreateFilm(const ParamSet &params, Filter *filter)
 	// Rejection mechanisms
 	int outlierrejection_k = params.FindOneInt("outlierrejection_k", 0); // k for k-nearest in outlier rejection, 0 = off
 	int variancerejection_k = params.FindOneInt("variancerejection_k", 0); // k for k-variance in variance rejection, 0 = off
+	int varianceRejectionWarmup = params.FindOneInt("variancerejectionwarmup", 0); // warmup period; 0 = clamp immediately
 
 	// Debugging mode (display erratic sample values and disable rejection mechanism)
 	bool debug_mode = params.FindOneBool("debug", false);
