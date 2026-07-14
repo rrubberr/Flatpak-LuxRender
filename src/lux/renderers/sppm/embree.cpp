@@ -91,17 +91,7 @@ bool EmbreeHitPointAccel::PointQueryCallback(struct RTCPointQueryFunctionArgumen
 }
 
 void EmbreeHitPointAccel::Refresh(scheduling::Scheduler *scheduler) {
-	// Hit point positions change so the whole structure
-	// is rebuilt from scratch each time.
-	if (geometry) {
-		rtcReleaseGeometry(geometry);
-		geometry = NULL;
-	}
-	if (scene) {
-		rtcReleaseScene(scene);
-		scene = NULL;
-	}
-
+	// Re-index and filter the hit points into nodeData.
 	nNodes = 0;
 	maxRadius = 0.f;
 	for (u_int i = 0; i < maxNNodes; ++i) {
@@ -115,31 +105,33 @@ void EmbreeHitPointAccel::Refresh(scheduling::Scheduler *scheduler) {
 	LOG(LUX_DEBUG, LUX_NOERROR) << "Building Embree point query structure with " << nNodes << " nodes";
 	LOG(LUX_DEBUG, LUX_NOERROR) << "Embree hit points max. radius: " << maxRadius;
 
-	scene = rtcNewScene(device);
-	// This scene is discarded and rebuilt every pass, so a fast build is
-	// likely more valuable than a fast query.
-	rtcSetSceneBuildQuality(scene, RTC_BUILD_QUALITY_LOW);
+	// Persist the allocation.
+	if (!scene) {
+		scene = rtcNewScene(device);
+		 // A fast build is likely more valuable than a fast query. 
+		rtcSetSceneBuildQuality(scene, RTC_BUILD_QUALITY_LOW);
+	}
 
-	geometry = rtcNewGeometry(device, RTC_GEOMETRY_TYPE_USER);
+	if (!geometry) {
+		geometry = rtcNewGeometry(device, RTC_GEOMETRY_TYPE_USER);
+		
+		rtcSetGeometryUserData(geometry, (void *)this);
+		rtcSetGeometryBoundsFunction(geometry,
+			&EmbreeHitPointAccel::BoundsFunction, this);
+		rtcSetGeometryPointQueryFunction(geometry,
+			&EmbreeHitPointAccel::PointQueryCallback);
+
+		// Attach to scene once; it stays attached for the lifetime of the accelerator.
+		rtcAttachGeometry(scene, geometry);
+	}
+
+	// Rebuild the BVH without reallocating.
 	rtcSetGeometryUserPrimitiveCount(geometry, nNodes);
-
-    rtcSetGeometryUserData(geometry, (void *)this);
-
-	rtcSetGeometryBoundsFunction(geometry,
-		&EmbreeHitPointAccel::BoundsFunction, this);
-    
-    rtcSetGeometryPointQueryFunction(geometry,
-        &EmbreeHitPointAccel::PointQueryCallback);
-
 	rtcCommitGeometry(geometry);
-
-	rtcAttachGeometry(scene, geometry);
 	rtcCommitScene(scene);
 }
 
 void EmbreeHitPointAccel::AddFlux(Sample &sample, const PhotonData &photon) {
-	// Refresh() hasn't run yet, or there are no surface hit points
-	// this pass: nothing to deposit flux onto.
 	if (nNodes == 0)
 		return;
 
@@ -150,7 +142,8 @@ void EmbreeHitPointAccel::AddFlux(Sample &sample, const PhotonData &photon) {
 	query.x = photon.p.x;
 	query.y = photon.p.y;
 	query.z = photon.p.z;
-	query.radius = maxRadius;
+    
+	query.radius = 0.f; 
 	query.time = 0.f;
 
 	QueryContext qctx = { this, &sample, &photon };
