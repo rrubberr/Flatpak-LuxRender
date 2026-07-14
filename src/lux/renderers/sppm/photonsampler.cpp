@@ -89,6 +89,15 @@ void PhotonSampler::TracePhoton(
 	// The weight of the photon of the pass should be one, see ContribSample.
 	alpha /= renderer->sppmi->photonPerPass / renderer->scene->camera()->film->GetSamplePerPass();
 
+	// Crude emission clamping. Clamps the brightness of photons emitted
+	// from all light sources. Useful e.g. for HDRI maps with a bright spot.
+	// This only clamps indirect tracing.
+	if (renderer->sppmi->photonEmissionClampY > 0.f) {
+		const float p = alpha.Filter(sw);
+		if (p > renderer->sppmi->photonEmissionClampY)
+			alpha *= renderer->sppmi->photonEmissionClampY / p;
+	}
+
 	const bool directLightSampling = renderer->sppmi->directLightSampling;
 
 	// store the state of the path:
@@ -124,6 +133,16 @@ void PhotonSampler::TracePhoton(
 					photon.alpha = alpha;
 					photon.lightGroup = light->group;
 					photon.single = sw.single;
+					
+					// Crude indirect clamping. Clamps the power of
+					// splatted photon contributions. Useful e.g. when
+					// a low-probability sample is causing bright spots.
+					// Scales down contributions to preserve hue.
+					if (renderer->sppmi->photonPowerClampY > 0.f) {
+						const float p = photon.alpha.Filter(sw);
+						if (p > renderer->sppmi->photonPowerClampY)
+							photon.alpha *= renderer->sppmi->photonPowerClampY / p;
+					}
 
 					renderer->hitPoints->AddFlux(*sample, photon);
 				}

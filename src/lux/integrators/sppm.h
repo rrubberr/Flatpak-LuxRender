@@ -59,6 +59,9 @@ public:
 	u_int photonStartK;
 	u_int schedulerBlockSize;
 
+	float photonPowerClampY;     // 0 = disabled; deposit-time clamp
+	float photonEmissionClampY;  // 0 = disabled; emission-time clamp
+
 	u_int sampleOffset, bufferPhotonId, bufferEyeId;
 	bool includeEnvironment;
 	bool useproba;

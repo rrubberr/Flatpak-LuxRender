@@ -490,6 +490,10 @@ ParamSet::ParamSet(u_int n, const char * pluginName, const char * const tokens[]
 			AddFloat(s, (float*)(params[i]));
 		if (s == "phimax")
 			AddFloat(s, (float*)(params[i]));
+		if (s == "photonpowerclamp")
+			AddFloat(s, (float*)(params[i]));
+		if (s == "photonemissionclamp")
+			AddFloat(s, (float*)(params[i]));
 		if (s == "postscale")
 			AddFloat(s, (float*)(params[i]));
 		if (s == "power" && pn == "area")
