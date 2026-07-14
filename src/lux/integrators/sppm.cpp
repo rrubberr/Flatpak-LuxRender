@@ -75,6 +75,7 @@ SurfaceIntegrator *SPPMIntegrator::CreateSurfaceIntegrator(const ParamSet &param
 	else if (acc == "kdtree") sppmi->lookupAccelType = KD_TREE;
 	else if (acc == "hybridhashgrid") sppmi->lookupAccelType = HYBRID_HASH_GRID;
 	else if (acc == "parallelhashgrid") sppmi->lookupAccelType = PARALLEL_HASH_GRID;
+	else if (acc == "embree") sppmi->lookupAccelType = EMBREE;
 	else {
 		LOG(LUX_WARNING,LUX_BADTOKEN) << "Lookup accelerator  '" << acc <<"' unknown. Using \"hybridhashgrid\".";
 		sppmi->lookupAccelType = HYBRID_HASH_GRID;
@@ -94,6 +95,9 @@ SurfaceIntegrator *SPPMIntegrator::CreateSurfaceIntegrator(const ParamSet &param
 	sppmi->photonPerPass = params.FindOneInt("photonperpass", 1000000);
 	sppmi->hitpointPerPass = params.FindOneInt("hitpointperpass", 0);
 	sppmi->schedulerBlockSize = params.FindOneInt("schedulerblocksize", 1000);
+
+	sppmi->photonPowerClampY = params.FindOneFloat("photonpowerclamp", 0.f);
+	sppmi->photonEmissionClampY = params.FindOneFloat("photonemissionclamp", 0.f);
 
 	sppmi->includeEnvironment = params.FindOneBool("includeenvironment", true);
 	sppmi->directLightSampling = params.FindOneBool("directlightsampling", true);

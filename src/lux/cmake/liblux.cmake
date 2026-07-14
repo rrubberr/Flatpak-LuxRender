@@ -287,6 +287,7 @@ SOURCE_GROUP("Source Files\\Samplers" FILES ${lux_samplers_src})
 SET(lux_renderers_src
 	renderers/samplerrenderer.cpp
 	renderers/sppmrenderer.cpp
+	renderers/sppm/embree.cpp
 	renderers/sppm/photonsampler.cpp
 	renderers/sppm/lookupaccel.cpp
 	renderers/sppm/hashgrid.cpp

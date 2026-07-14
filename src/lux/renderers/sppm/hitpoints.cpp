@@ -170,6 +170,9 @@ void HitPoints::Init() {
 		case PARALLEL_HASH_GRID:
 			lookUpAccel = new ParallelHashGrid(this, renderer->sppmi->parallelHashGridSpare);
 			break;
+		case EMBREE:
+			lookUpAccel = new EmbreeHitPointAccel(this);
+			break;
 		default:
 			assert (false);
 	}

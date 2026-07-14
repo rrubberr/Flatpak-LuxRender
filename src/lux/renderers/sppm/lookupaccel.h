@@ -28,6 +28,8 @@
 #include "osfunc.h"
 #include "scheduler.h"
 
+#include <embree4/rtcore.h>
+
 namespace lux
 {
 
@@ -41,7 +43,7 @@ class HashCell;
 class PhotonData;
 
 enum LookUpAccelType {
-	HASH_GRID, KD_TREE, HYBRID_HASH_GRID, PARALLEL_HASH_GRID
+	HASH_GRID, KD_TREE, HYBRID_HASH_GRID, PARALLEL_HASH_GRID, EMBREE
 };
 
 class HitPointsLookUpAccel {
@@ -328,6 +330,46 @@ private:
 	float invCellSize;
 	int maxHashIndexX, maxHashIndexY, maxHashIndexZ;
 	HashCell **grid;
+};
+
+//------------------------------------------------------------------------------
+// Embree accelerator
+//------------------------------------------------------------------------------
+ 
+class EmbreeHitPointAccel : public HitPointsLookUpAccel {
+public:
+    EmbreeHitPointAccel(HitPoints *hps);
+    virtual ~EmbreeHitPointAccel();
+ 
+    // Rebuilds the Embree BVH structure for the new progressive pass.
+    virtual void Refresh(scheduling::Scheduler *scheduler);
+ 
+    // Traversal stack using rtcPointQuery.
+    virtual void AddFlux(Sample &sample, const PhotonData &photon);
+ 
+private:
+    RTCDevice device;
+    RTCScene scene;
+    RTCGeometry geometry;	
+    unsigned int nNodes;
+ 
+	float maxRadius; // Local member to track the linear radius
+ 
+	// Embree only hands back a primID/geomID pair, never the geometry
+	// data, so keep a primID -> HitPoint* table.
+	unsigned int maxNNodes;
+	HitPoint **nodeData;
+ 
+    // Struct to bundle context data inside the point query callback.
+    struct QueryContext {
+        EmbreeHitPointAccel* accel;
+        Sample* sample;
+        const PhotonData* photon;
+    };
+ 
+    // Embree mandatory callback signatures.
+    static void BoundsFunction(const struct RTCBoundsFunctionArguments* args);
+    static bool PointQueryCallback(struct RTCPointQueryFunctionArguments* args);
 };
 
 }//namespace lux
