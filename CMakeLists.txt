@@ -37,12 +37,45 @@ if(APPLE)
 
     execute_process(COMMAND sysctl -n hw.ncpu OUTPUT_VARIABLE NPROC_VALUE OUTPUT_STRIP_TRAILING_WHITESPACE)
 else()
-	# Use symlinked default Clang.
-    find_program(CLANG_CC NAMES clang)
-    find_program(CLANG_CXX NAMES clang++)
-    find_program(LLD_LINKER NAMES lld)
+    # Use the Intel compiler if available.
+    if(DEFINED ENV{ONEAPI_ROOT})
+        set(INTEL_CC "$ENV{ONEAPI_ROOT}/compiler/latest/bin/icx")
+        set(INTEL_CXX "$ENV{ONEAPI_ROOT}/compiler/latest/bin/icpx")
+        set(LLD_LINKER "$ENV{ONEAPI_ROOT}/compiler/latest/bin/lld")
+    else()
+        find_program(INTEL_CC NAMES icx)
+        find_program(INTEL_CXX NAMES icpx)
+        find_program(LLD_LINKER NAMES lld) # Only look globally if Intel env isn't set
+    endif()
+    
+    # Look for system Clang if Intel wasn't found.
+    if(NOT INTEL_CC)
+        find_program(CLANG_CC NAMES clang)
+        find_program(CLANG_CXX NAMES clang++)
+        if(NOT LLD_LINKER)
+            find_program(LLD_LINKER NAMES lld)
+        endif()
+    endif()
 
-    if(CLANG_CC AND CLANG_CXX AND LLD_LINKER)
+    if(INTEL_CC AND INTEL_CXX)
+        set(CMAKE_C_COMPILER ${INTEL_CC})
+        set(CMAKE_CXX_COMPILER ${INTEL_CXX})
+        
+        # Force LTO code generation to emit Position Independent Code for executables
+        set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -fPIE")
+        set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fPIE")
+        
+        # 2. Bake linker fixes directly into the LLD call rule.
+        set(CMAKE_C_USING_LINKER_LLD "-fuse-ld=lld -pie -Wl,--ignore-data-address-equality")
+        set(CMAKE_CXX_USING_LINKER_LLD "-fuse-ld=lld -pie -Wl,--ignore-data-address-equality")
+        set(CMAKE_LINKER_TYPE LLD)
+        
+        message(STATUS "Using Intel OneAPI C: ${CMAKE_C_COMPILER}")
+        message(STATUS "Using Intel OneAPI CXX: ${CMAKE_CXX_COMPILER}")
+        message(STATUS "Using Intel OneAPI LLD: ${LLD_LINKER}")
+        set(USING_CLANG TRUE)
+        set(USING_INTEL TRUE)
+    elseif(CLANG_CC AND CLANG_CXX AND LLD_LINKER)
         set(CMAKE_C_COMPILER ${CLANG_CC})
         set(CMAKE_CXX_COMPILER ${CLANG_CXX})
         set(CMAKE_LINKER_TYPE LLD)
@@ -106,16 +139,11 @@ set(LUX_PFX_DIR ${LUX_BUILD_DIR}/pfx)
 # Set the default build type #
 ##############################
 
-# Don't over-configure!
-SET(CMAKE_CONFIGURATION_TYPES "Debug;Release" CACHE STRING "limit configs" FORCE)
-
-# CMake needs to know which configuration to generate by default.
 IF (NOT CMAKE_BUILD_TYPE)
 	SET(CMAKE_BUILD_TYPE Release)
 ENDIF(NOT CMAKE_BUILD_TYPE)
 
 MESSAGE(STATUS "Building mode: " ${CMAKE_BUILD_TYPE})
-SET(CMAKE_BUILD_TYPE ${CMAKE_BUILD_TYPE} CACHE STRING "assure config" FORCE) # makes sure type is shown in cmake gui
 
 ##############################
 # Set the default build args #
@@ -227,6 +255,23 @@ if(APPLE)
             -executable=${CMAKE_SOURCE_DIR}/release/LuxRender.app/Contents/MacOS/luxcomp
             -verbose=2
     )
+elseif(USING_INTEL)
+    set(LUX_INSTALL_CMD
+        ${CMAKE_COMMAND} -E make_directory "${CMAKE_SOURCE_DIR}/release" &&
+        ${CMAKE_COMMAND} -E copy "${LUX_PFX_DIR}/LuxRender/src/LuxRender-build/luxcomp" "${CMAKE_SOURCE_DIR}/release/" &&
+        ${CMAKE_COMMAND} -E copy "${LUX_PFX_DIR}/LuxRender/src/LuxRender-build/luxconsole" "${CMAKE_SOURCE_DIR}/release/" &&
+        ${CMAKE_COMMAND} -E copy "${LUX_PFX_DIR}/LuxRender/src/LuxRender-build/luxmerger" "${CMAKE_SOURCE_DIR}/release/" &&
+        ${CMAKE_COMMAND} -E copy "${LUX_PFX_DIR}/LuxRender/src/LuxRender-build/luxrender" "${CMAKE_SOURCE_DIR}/release/" &&
+        ${CMAKE_COMMAND} -E copy "${LUX_PFX_DIR}/LuxRender/src/LuxRender-build/pylux.so" "${CMAKE_SOURCE_DIR}/release/" &&
+        ${CMAKE_COMMAND} -E copy "${LUX_PFX_DIR}/LuxRender/src/LuxRender-build/liblux.so" "${CMAKE_SOURCE_DIR}/release/" &&
+        ${CMAKE_COMMAND} -E copy "$ENV{ONEAPI_ROOT}/compiler/latest/lib/libiomp5.so" "${CMAKE_SOURCE_DIR}/release/" &&
+        ${CMAKE_COMMAND} -E copy "$ENV{ONEAPI_ROOT}/compiler/latest/lib/libimf.so" "${CMAKE_SOURCE_DIR}/release/" &&
+        ${CMAKE_COMMAND} -E copy "$ENV{ONEAPI_ROOT}/compiler/latest/lib/libsvml.so" "${CMAKE_SOURCE_DIR}/release/" &&
+        ${CMAKE_COMMAND} -E copy "$ENV{ONEAPI_ROOT}/compiler/latest/lib/libirng.so" "${CMAKE_SOURCE_DIR}/release/" &&
+        ${CMAKE_COMMAND} -E copy "$ENV{ONEAPI_ROOT}/compiler/latest/lib/libintlc.so.5" "${CMAKE_SOURCE_DIR}/release/" &&
+        ${CMAKE_COMMAND} -E copy "$ENV{ONEAPI_ROOT}/compiler/latest/lib/libiomp5.so" "${CMAKE_SOURCE_DIR}/release/"
+    )
+
 else()
     set(LUX_INSTALL_CMD
         ${CMAKE_COMMAND} -E make_directory "${CMAKE_SOURCE_DIR}/release" &&
@@ -254,7 +299,6 @@ ExternalProject_Add(
         ${COMMON_LUX_PROJECT_ARGS}
         -DCMAKE_PREFIX_PATH=${LUX_BUILD_DIR}
         -DCMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE}
-        "-DCMAKE_EXE_LINKER_FLAGS=-static"
         "-DCMAKE_FIND_LIBRARY_SUFFIXES=.a"
         "-DTIFF_LIBRARY=${LUX_LIB_DIR}/libtiff.a"
         "-DJPEG_LIBRARY=${LUX_LIB_DIR}/libjpeg.a"
@@ -266,7 +310,7 @@ ExternalProject_Add(
         -DPython3_FIND_STRATEGY=LOCATION
         -DPython3_FIND_REGISTRY=NEVER
         -DPython3_FIND_FRAMEWORK=NEVER
-        "-DCMAKE_EXE_LINKER_FLAGS=-L${LUX_LIB_DIR} -lpystring"
+        "-DCMAKE_EXE_LINKER_FLAGS=-L${LUX_LIB_DIR} -static -lpystring"
         "-DCMAKE_SHARED_LINKER_FLAGS=-L${LUX_LIB_DIR} -lpystring"
 		-DEXT_DIR=${EXT_DIR}
     CMAKE_CACHE_ARGS

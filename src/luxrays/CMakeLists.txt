@@ -34,12 +34,45 @@ if(APPLE)
 
     execute_process(COMMAND sysctl -n hw.ncpu OUTPUT_VARIABLE NPROC_VALUE OUTPUT_STRIP_TRAILING_WHITESPACE)
 else()
-	# Use symlinked default Clang.
-    find_program(CLANG_CC NAMES clang)
-    find_program(CLANG_CXX NAMES clang++)
-    find_program(LLD_LINKER NAMES lld)
+    # Use the Intel compiler if available.
+    if(DEFINED ENV{ONEAPI_ROOT})
+        set(INTEL_CC "$ENV{ONEAPI_ROOT}/compiler/latest/bin/icx")
+        set(INTEL_CXX "$ENV{ONEAPI_ROOT}/compiler/latest/bin/icpx")
+        set(LLD_LINKER "$ENV{ONEAPI_ROOT}/compiler/latest/bin/lld")
+    else()
+        find_program(INTEL_CC NAMES icx)
+        find_program(INTEL_CXX NAMES icpx)
+        find_program(LLD_LINKER NAMES lld) # Only look globally if Intel env isn't set
+    endif()
+    
+    # Look for system Clang if Intel wasn't found.
+    if(NOT INTEL_CC)
+        find_program(CLANG_CC NAMES clang)
+        find_program(CLANG_CXX NAMES clang++)
+        if(NOT LLD_LINKER)
+            find_program(LLD_LINKER NAMES lld)
+        endif()
+    endif()
 
-    if(CLANG_CC AND CLANG_CXX AND LLD_LINKER)
+    if(INTEL_CC AND INTEL_CXX)
+        set(CMAKE_C_COMPILER ${INTEL_CC})
+        set(CMAKE_CXX_COMPILER ${INTEL_CXX})
+        
+        # Force LTO code generation to emit Position Independent Code for executables
+        set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -fPIE")
+        set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fPIE")
+        
+        # 2. Bake linker fixes directly into the LLD call rule.
+        set(CMAKE_C_USING_LINKER_LLD "-fuse-ld=lld -pie -Wl,--ignore-data-address-equality")
+        set(CMAKE_CXX_USING_LINKER_LLD "-fuse-ld=lld -pie -Wl,--ignore-data-address-equality")
+        set(CMAKE_LINKER_TYPE LLD)
+        
+        message(STATUS "Using Intel OneAPI C: ${CMAKE_C_COMPILER}")
+        message(STATUS "Using Intel OneAPI CXX: ${CMAKE_CXX_COMPILER}")
+        message(STATUS "Using Intel OneAPI LLD: ${LLD_LINKER}")
+        set(USING_CLANG TRUE)
+        set(USING_INTEL TRUE)
+    elseif(CLANG_CC AND CLANG_CXX AND LLD_LINKER)
         set(CMAKE_C_COMPILER ${CLANG_CC})
         set(CMAKE_CXX_COMPILER ${CLANG_CXX})
         set(CMAKE_LINKER_TYPE LLD)
@@ -88,17 +121,11 @@ endif()
 # Set the default build type #
 ##############################
 
-# Don't overconfigure.
-SET(CMAKE_CONFIGURATION_TYPES "Debug;Release" CACHE STRING "limit configs" FORCE)
-
-# CMake needs to know which configuration to generate by default.
 IF (NOT CMAKE_BUILD_TYPE)
 	SET(CMAKE_BUILD_TYPE Release)
 ENDIF(NOT CMAKE_BUILD_TYPE)
 
 MESSAGE(STATUS "Building mode: " ${CMAKE_BUILD_TYPE})
-SET(CMAKE_BUILD_TYPE ${CMAKE_BUILD_TYPE} CACHE STRING "assure config" FORCE) # makes sure type is shown in cmake gui
-
 
 ################################################################################
 #
