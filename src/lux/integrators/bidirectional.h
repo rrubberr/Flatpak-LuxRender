@@ -31,112 +31,6 @@
 namespace lux
 {
 
-class BidirPathState : public SurfaceIntegratorState {
-public:
-	enum PathState {
-		TO_INIT, TRACE_SHADOWRAYS, TERMINATE
-	};
-
-	BidirPathState(const Scene &scene, ContributionBuffer *contribBuffer, RandomGenerator *rng);
-	~BidirPathState() {	}
-
-	bool Init(const Scene &scene);
-	void Free(const Scene &scene);
-
-	friend class BidirIntegrator;
-
-private:
-	struct BidirStateVertex {
-		BidirStateVertex() : bsdf(NULL), flags(BxDFType(0)), throughput(1.f),
-			pdf(0.f), pdfR(0.f), rr(1.f), rrR(1.f) {}
-
-		BSDF *bsdf;
-		BxDFType flags;
-
-		// TOFIX: wi is available also inside the bsdf
-		Vector wi, wo;
-		SWCSpectrum throughput;
-
-		// Fields used for evaluating path weight with MIS
-		float pdf, pdfR, rr, rrR;
-	};
-
-	static const BidirStateVertex *GetPathVertex(const u_int index,
-		const BidirStateVertex *eyePath, const u_int eyePathVertexCount,
-		const BidirStateVertex *lightPath, const u_int lightPathVertexCount);
-
-	// Evaluation of total path weight with MIS
-	static float EvalPathMISWeight_PathTracing(
-		const BidirStateVertex *eyePath,
-		const u_int eyePathVertexCount,
-		const float lightDirectPdf);
-	static float EvalPathMISWeight_DirectLight(
-		const BidirStateVertex *eyePath,
-		const u_int eyePathVertexCount,
-		const float lightBSDFPdf,
-		const float lightDirectPdf);
-	static float EvalPathMISWeight_CameraConnection(
-		const BidirStateVertex *lightPath,
-		const u_int lightPathVertexCount,
-		const float cameraPdf,
-		const float lightDirectPdf);
-
-	// Evaluation of total path weight by averaging
-	static float EvalPathWeight(const BidirStateVertex *eyePath,
-		const u_int eyePathVertexCount, const bool isLightVertexSpecular);
-	static float EvalPathWeight(const BidirStateVertex *eyePath, const u_int eyePathVertexCount,
-		const BidirStateVertex *lightPath, const u_int lightPathVertexCount);
-	static float EvalPathWeight(const bool isEyeVertexSpecular,
-		const BidirStateVertex *lightPath, const u_int lightPathVertexCount);
-
-	void Connect(const Scene &scene, luxrays::RayBuffer *rayBuffer,
-		u_int &rayIndex, const BSDF *bsdf,
-		SWCSpectrum *L, SWCSpectrum *Lresult, float *Vresult);
-	void Terminate(const Scene &scene, const u_int eyeBufferId, const u_int lightBufferId);
-
-	// NOTE: the size of this class is extremely important for the total
-	// amount of memory required for hybrid rendering.
-
-	Sample sample;
-
-	// Pure camera importance (We/pdf) captured before the first-bounce BSDF
-	// is folded into eye0.throughput.  Light-to-camera connections must use
-	// this value; eye0.throughput also carries f0 (the initial lens BSDF sample)
-	// which must NOT appear when connecting an arbitrary light vertex to the camera.
-	SWCSpectrum cameraWe;
-
-	BidirStateVertex *eyePath;
-	u_int eyePathLength;
-
-	const Light *light;
-	SWCSpectrum Le;
-	BidirStateVertex *lightPath;
-	u_int lightPathLength;
-
-	// One for each eye path vertex
-	SWCSpectrum *Ld;
-	u_int *LdGroup;
-
-	// One for each connection between eye path and light path
-	SWCSpectrum *Lc;
-
-	// One for each light path vertex (used for direct connection to the eye)
-	SWCSpectrum *LlightPath;
-	float *distanceLightPath;
-	float *imageXYLightPath;
-
-	u_int raysIndexStart; // Index of the first ray in the RayBuffer
-	u_int raysCount;
-
-	float distance, alpha;
-	// One for each light group
-	SWCSpectrum *L;
-	float *V;
-	u_int contribCount;
-
-	PathState state;
-};
-
 class BidirVertex;
 
 // Bidirectional Local Declarations
@@ -145,12 +39,12 @@ public:
 	BidirIntegrator(u_int ed, u_int ld, float et, float lt,
 		LightsSamplingStrategy *lds, u_int src,
 		LightsSamplingStrategy *lps, u_int lrc,
-		bool mis, bool d) : SurfaceIntegrator(),
+		bool d) : SurfaceIntegrator(),
 		maxEyeDepth(ed), maxLightDepth(ld),
 		eyeThreshold(et), lightThreshold(lt),
 		lightDirectStrategy(lds), lightPathStrategy(lps),
 		shadowRayCount(src), lightRayCount(lrc),
-		hybridUseMIS(mis), debug(d) {
+		debug(d) {
 		directSamplingCount = 0;
 		pathSamplingCount = 0;
 		eyeBufferId = 0;
@@ -165,30 +59,7 @@ public:
 	virtual void RequestSamples(Sampler *sample, const Scene &scene);
 	virtual void Preprocess(const RandomGenerator &rng, const Scene &scene);
 
-	//--------------------------------------------------------------------------
-	// DataParallel interface
-	//--------------------------------------------------------------------------
-
-	virtual bool IsDataParallelSupported() const { return true; }
-
-	virtual bool CheckLightStrategy(const Scene &scene) const {
-		if (lightDirectStrategy->GetSamplingLimit(scene) != 1) {
-			LOG(LUX_ERROR, LUX_SEVERE)<< "The direct light sampling strategy must sample a single light, not " << directSamplingCount << ".";
-			return false;
-		}
-
-		return true;
-	}
-	virtual SurfaceIntegratorState *NewState(const Scene &scene,
-		ContributionBuffer *contribBuffer, RandomGenerator *rng);
-	virtual bool GenerateRays(const Scene &scene,
-		SurfaceIntegratorState *state, luxrays::RayBuffer *rayBuffer);
-	virtual bool NextState(const Scene &scene, SurfaceIntegratorState *state,
-		luxrays::RayBuffer *rayBuffer, u_int *nrContribs);
-
 	static SurfaceIntegrator *CreateSurfaceIntegrator(const ParamSet &params);
-
-	friend class BidirPathState;
 
 	u_int maxEyeDepth, maxLightDepth;
 	float eyeThreshold, lightThreshold;
@@ -272,7 +143,7 @@ private:
 	u_int directSamplingCount, pathSamplingCount;
 	u_int lightNumOffset, lightPortalOffset;
 	u_int lightPosOffset, sampleDirectOffset;
-	bool hybridUseMIS, debug;
+	bool debug;
 };
 
 }//namespace lux
