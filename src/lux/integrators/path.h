@@ -28,117 +28,6 @@
 namespace lux
 {
 
-class PathState : public SurfaceIntegratorState {
-public:
-	enum PathStateType {
-		TO_INIT, EYE_VERTEX, NEXT_VERTEX, CONTINUE_SHADOWRAY, TERMINATE
-	};
-
-	PathState(const Scene &scene, ContributionBuffer *contribBuffer, RandomGenerator *rng);
-	~PathState() { }
-
-	bool Init(const Scene &scene);
-	void Free(const Scene &scene);
-
-	friend class PathIntegrator;
-
-private:
-	void Terminate(const Scene &scene, const u_int bufferId,
-			const float alpha = 1.f);
-	bool TerminatePath(const Scene &scene, const u_int bufferId,
-			const float alpha = 1.f);
-
-	PathStateType GetState() const {
-		return (PathStateType)pathState;
-	}
-
-	void SetState(const PathStateType s) {
-		pathState = s;
-	}
-
-#define PATHSTATE_FLAGS_SPECULARBOUNCE (1<<0)
-#define PATHSTATE_FLAGS_SPECULAR (1<<1)
-#define PATHSTATE_FLAGS_SCATTERED (1<<2)
-#define PATHSTATE_FLAGS_TERMINATE (1<<3)
-
-	bool GetSpecularBounce() const {
-		return (flags & PATHSTATE_FLAGS_SPECULARBOUNCE) != 0;
-	}
-
-	void SetSpecularBounce(const bool v) {
-		flags = v ? (flags | PATHSTATE_FLAGS_SPECULARBOUNCE) : (flags & ~PATHSTATE_FLAGS_SPECULARBOUNCE);
-	}
-
-	bool GetSpecular() const {
-		return (flags & PATHSTATE_FLAGS_SPECULAR) != 0;
-	}
-
-	void SetSpecular(const bool v) {
-		flags = v ? (flags | PATHSTATE_FLAGS_SPECULAR) : (flags & ~PATHSTATE_FLAGS_SPECULAR);
-	}
-
-	bool GetScattered() const {
-		return (flags & PATHSTATE_FLAGS_SCATTERED) != 0;
-	}
-
-	void SetScattered(const bool v) {
-		flags = v ? (flags | PATHSTATE_FLAGS_SCATTERED) : (flags & ~PATHSTATE_FLAGS_SCATTERED);
-	}
-
-	bool GetTerminate() const {
-		return (flags & PATHSTATE_FLAGS_TERMINATE) != 0;
-	}
-
-	void SetTerminate() {
-		flags = flags | PATHSTATE_FLAGS_TERMINATE;
-	}
-
-	// NOTE: the size of this class is extremely important for the total
-	// amount of memory required for hybrid rendering.
-
-	Sample sample;
-
-	// Path status information
-	float distance;
-	float VContrib;
-	SWCSpectrum pathThroughput;
-	const Volume *volume;
-	SWCSpectrum *L;
-	float *V;
-
-	// Next path vertex ray
-	Ray pathRay;
-	luxrays::RayHit pathRayHit; // Used when in  CONTINUE_SHADOWRAY state
-	u_int currentPathRayIndex;
-
-	// Direct lighting
-	SWCSpectrum *Ld;
-	float *Vd;
-	u_int *LdGroup;
-	float *lightPdfd, *bsdfPdfd;
-
-	// Direct light sampling rays
-	Ray *shadowRay;
-	u_int *currentShadowRayIndex;
-	const Volume **shadowVolume;
-
-	float bouncePdf;
-	Point lastBounce;
-
-	u_short pathLength;
-	u_short vertexIndex;
-	// Use Get/SetState to access this
-	u_short pathState;
-	u_short tracedShadowRayCount;
-	// Used to save memory and store:
-	//  specularBounce (1bit)
-	//  specular (1bit)
-	//  scattered (1bit)
-	// Use Get/SetState to access this
-	u_short flags;
-	float xi, yi; // Hold the image coordinates of the sample
-};
-
 // PathIntegrator Declarations
 class PathIntegrator : public SurfaceIntegrator {
 public:
@@ -157,33 +46,13 @@ public:
 	virtual void RequestSamples(Sampler *sampler, const Scene &scene);
 	virtual void Preprocess(const RandomGenerator &rng, const Scene &scene);
 
-	// DataParallel interface
-	virtual bool IsDataParallelSupported() const { return true; }
-	//FIXME: just to check SurfaceIntegratorRenderingHints light strategy, to remove
-	virtual bool CheckLightStrategy(const Scene &scene) const {
-		return true;
-	}
-	virtual SurfaceIntegratorState *NewState(const Scene &scene,
-		ContributionBuffer *contribBuffer, RandomGenerator *rng);
-	virtual bool GenerateRays(const Scene &scene,
-		SurfaceIntegratorState *state, luxrays::RayBuffer *rayBuffer);
-	virtual bool NextState(const Scene &scene, SurfaceIntegratorState *state,
-		luxrays::RayBuffer *rayBuffer, u_int *nrContribs);
-
-	const SurfaceIntegratorRenderingHints *GetRenderingHints() const { return &hints; }
-
 	static SurfaceIntegrator *CreateSurfaceIntegrator(const ParamSet &params);
-
-	friend class PathState;
 
 	u_int bufferId;
 
 private:
 	// Used by Queryable interface
 	u_int GetMaxDepth() { return maxDepth; }
-
-	// Used by DataParallel methods
-	void BuildShadowRays(const Scene &scene, PathState *pathState, BSDF *bsdf);
 
 	SurfaceIntegratorRenderingHints hints;
 
@@ -193,10 +62,6 @@ private:
 	float continueProbability;
 	// Declare sample parameters for light source sampling
 	u_int sampleOffset;
-
-	// Used only for HybridSampler
-	u_int hybridRendererLightSampleOffset;
-	u_int samplingCount;
 
 	bool includeEnvironment, enableDirectLightSampling;
 };
