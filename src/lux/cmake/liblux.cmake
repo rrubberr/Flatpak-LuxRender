@@ -888,6 +888,9 @@ SET(luxrays_src
 )
 SOURCE_GROUP("Source Files\\LuxRays" FILES ${luxrays_src})
 
+# -fvisibility=default is required to export LuxRays symbols.
+set_source_files_properties(${luxrays_src} PROPERTIES COMPILE_FLAGS "-fvisibility=default -fvisibility-inlines-hidden")
+
 set(LUX_SOURCES
 	${lux_cpp_api_src}
 	${lux_lib_src}
