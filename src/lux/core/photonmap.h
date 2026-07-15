@@ -28,6 +28,9 @@
 #include "luxrays/core/color/spectrumwavelengths.h"
 #include "kdtree.h"
 #include "bxdf.h"
+#include "core/scheduler.h"
+#include "sampling.h"
+#include "luxrays/utils/mcdistribution.h"
 
 #include "luxrays/utils/mc.h"
 
@@ -463,6 +466,53 @@ enum PhotonMapRRStrategy { RR_EFFICIENCY, RR_PROBABILITY, RR_NONE };
  * @param nCausticPhotons  The number of caustic photons to create.
  * @param causticMap       The target map for the caustic photons.
  */
+// Per-bucket thread state for parallel photon shooting: each bucket owns its
+// own RNG, Sample (with memory arena) and local photon vectors. The shared
+// lightCDF is read-only and the global nshot counter is atomic.
+class PhotonShootThread : public scheduling::Thread {
+public:
+	PhotonShootThread(const Scene &sc, const RandomGenerator &baseRng,
+		const luxrays::Distribution1D &sharedLightCDF, u_int nDirect,
+		u_int nRadiance, u_int nIndirect, u_int nCaustic,
+		u_int maxD, BxDFType photonBxdf, BxDFType radianceBxdf,
+		u_int bucketId, u_int nBuckets);
+	virtual ~PhotonShootThread();
+
+	virtual void Init() {}
+	virtual void End() {}
+
+	// Local photon storage for this bucket
+	vector<LightPhoton> directPhotons;
+	vector<LightPhoton> causticPhotons;
+	vector<LightPhoton> indirectPhotons;
+	vector<RadiancePhoton> radiancePhotons;
+	vector<SWCSpectrum> rpReflectances;
+	vector<SWCSpectrum> rpTransmittances;
+
+	// Per-bucket caps (ceil(target / nBuckets))
+	u_int directCap, radianceCap, indirectCap, causticCap;
+
+	// Per-bucket give-up threshold for the photon shooting loop
+	u_int giveUpShot;
+
+	// Shared, read-only state
+	const Scene &scene;
+	const luxrays::Distribution1D &lightCDF;
+	const RandomGenerator &rng;
+	BxDFType photonBxdfType, radianceBxdfType;
+	u_int maxDepth;
+
+	// Thread-local sample (own camera clone + memory arena)
+	Sample sample;
+
+	bool allLocalCapsReached() const {
+		return directPhotons.size() >= directCap &&
+			causticPhotons.size() >= causticCap &&
+			indirectPhotons.size() >= indirectCap &&
+			radiancePhotons.size() >= radianceCap;
+	}
+};
+
 extern void PhotonMapPreprocess(
 	const RandomGenerator &rng,
 	const Scene &scene, 

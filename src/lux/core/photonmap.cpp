@@ -328,6 +328,266 @@ static bool unsuccessful(u_int needed, u_int found, u_int shot)
 	return (found < needed && (found == 0 || found < shot / 1024));
 }
 
+//------------------------------------------------------------------------------
+// The firing step is split across per-CPU buckets.
+//------------------------------------------------------------------------------
+
+// Global atomic photon index shared by all buckets.
+static boost::uint32_t g_photonNshot = 0;
+
+// Truncate photon count to millions at the hundredths place (e.g. 1.23M).
+static float millions(u_int n)
+{
+	return floorf((float)n / 10000.f) / 100.f;
+}
+
+// Samples the merged totals and the global counter every 5s, to
+// reflect the work of all threads combined.
+static void PhotonProgressLogger(const vector<PhotonShootThread *> *buckets,
+		u_int nDirect, u_int nCaustic, u_int nIndirect, u_int nRadiance)
+{
+	boost::xtime next;
+	boost::xtime_get(&next, boost::TIME_UTC_);
+	while (true) {
+		next.sec += 5;
+		boost::thread::sleep(next);
+
+		u_int d = 0, c = 0, i = 0, r = 0;
+		for (u_int b = 0; b < buckets->size(); ++b) {
+			const PhotonShootThread *t = (*buckets)[b];
+			d += t->directPhotons.size();
+			c += t->causticPhotons.size();
+			i += t->indirectPhotons.size();
+			r += t->radiancePhotons.size();
+		}
+
+		LOG(LUX_INFO,LUX_NOERROR) << "Photon progress: Direct["
+			<< millions(d) << "M/" << millions(nDirect) << "M"
+			<< "] Caustic[" << millions(c) << "M/" << millions(nCaustic) << "M"
+			<< "] Indirect[" << millions(i) << "M/" << millions(nIndirect) << "M"
+			<< "] Radiance[" << millions(r) << "M/" << millions(nRadiance) << "M"
+			<< "] (total: " << millions(g_photonNshot) << "M)";
+	}
+}
+
+PhotonShootThread::PhotonShootThread(const Scene &sc,
+		const RandomGenerator &baseRng, const luxrays::Distribution1D &sharedLightCDF,
+		u_int nDirect, u_int nRadiance, u_int nIndirect, u_int nCaustic,
+		u_int maxD, BxDFType photonBxdf, BxDFType radianceBxdf,
+		u_int bucketId, u_int nBuckets) :
+		scene(sc), lightCDF(sharedLightCDF), rng(baseRng),
+		photonBxdfType(photonBxdf), radianceBxdfType(radianceBxdf),
+		maxDepth(maxD)
+{
+	// Each bucket fills an equal share of every map.
+	directCap = (nDirect + nBuckets - 1) / nBuckets;
+	radianceCap = (nRadiance + nBuckets - 1) / nBuckets;
+	indirectCap = (nIndirect + nBuckets - 1) / nBuckets;
+	causticCap = (nCaustic + nBuckets - 1) / nBuckets;
+
+	// Per-bucket give-up threshold, scaled from the original max (500000, target*10).
+	const u_int bucketTarget = causticCap + indirectCap;
+	giveUpShot = max(500000U, bucketTarget * 10);
+
+	directPhotons.reserve(directCap);
+	causticPhotons.reserve(causticCap);
+	indirectPhotons.reserve(indirectCap);
+	radiancePhotons.reserve(radianceCap);
+	rpReflectances.reserve(radianceCap);
+	rpTransmittances.reserve(radianceCap);
+
+	// Unique RNG stream per bucket, seeded from the base seed.
+	u_long seed = baseRng.uintValue() + bucketId * 0x9E3779B1UL + 1UL;
+	sample.rng = new RandomGenerator(seed);
+	sample.camera = scene.camera()->Clone();
+	sample.realTime = sample.camera->GetTime(.5f); //FIXME sample it
+	sample.camera->SampleMotion(sample.realTime);
+}
+
+PhotonShootThread::~PhotonShootThread()
+{
+	delete sample.rng;
+	// sample.camera is freed by Sample::~Sample().
+}
+
+// The task executed by each scheduler thread.
+static void ShootPhotons(scheduling::Range *range)
+{
+	PhotonShootThread *t = dynamic_cast<PhotonShootThread *>(range->thread);
+	const Scene &scene = t->scene;
+	SpectrumWavelengths &sw(t->sample.swl);
+	const luxrays::Distribution1D &lightCDF = t->lightCDF;
+	const RandomGenerator &rng = t->rng;
+	const BxDFType photonBxdfType = t->photonBxdfType;
+	const BxDFType radianceBxdfType = t->radianceBxdfType;
+	const u_int maxDepth = t->maxDepth;
+	const bool computeRadianceMap = (t->radianceCap > 0);
+
+	while (!scene.terminated && !t->allLocalCapsReached()) {
+		// Globally unique photon index
+		u_int nshot = atomic_inc32(&g_photonNshot);
+
+		// Give up on a map type if too few photons are being stored.
+		if (nshot > t->giveUpShot) {
+			if (t->causticPhotons.size() < t->causticCap &&
+				(t->causticPhotons.empty() ||
+					t->causticPhotons.size() < nshot / 1024))
+				t->causticCap = t->causticPhotons.size(); // stop caustic
+			if (t->radiancePhotons.size() < t->radianceCap &&
+				(t->radiancePhotons.empty() ||
+					t->radiancePhotons.size() < nshot / 1024))
+				t->radianceCap = t->radiancePhotons.size(); // stop radiance
+			if (t->indirectPhotons.size() < t->indirectCap &&
+				(t->indirectPhotons.empty() ||
+					t->indirectPhotons.size() < nshot / 1024)) {
+				// Indirect failure is fatal.
+				t->indirectCap = t->indirectPhotons.size();
+				t->directCap = t->directPhotons.size();
+				t->radianceCap = t->radiancePhotons.size();
+				t->causticCap = t->causticPhotons.size();
+				break;
+			}
+		}
+
+		// Sample the wavelengths
+		sw.Sample(RadicalInverse(nshot, 2));
+
+		// Trace a photon path and store contribution
+		// Choose 6D sample values for photon
+		float u[6];
+		u[0] = RadicalInverse(nshot, 3);
+		u[1] = RadicalInverse(nshot, 5);
+		u[2] = RadicalInverse(nshot, 7);
+		u[3] = RadicalInverse(nshot, 11);
+		u[4] = RadicalInverse(nshot, 13);
+		u[5] = RadicalInverse(nshot, 17);
+
+		// Choose light to shoot photon from
+		float lightPdf;
+		float uln = RadicalInverse(nshot, 19);
+		u_int lightNum = lightCDF.SampleDiscrete(uln, &lightPdf);
+		const Light *light = scene.lights[lightNum].get();
+
+		// Generate _photonRay_ from light source and initialize _alpha_
+		BSDF *bsdf;
+		float pdf;
+		SWCSpectrum alpha;
+		if (!light->SampleL(scene, t->sample, u[0], u[1], u[2],
+			&bsdf, &pdf, &alpha))
+			continue;
+		Ray photonRay;
+		photonRay.o = bsdf->dgShading.p;
+		float pdf2;
+		SWCSpectrum alpha2;
+		if (!bsdf->SampleF(sw, Vector(bsdf->dgShading.nn), &photonRay.d,
+			u[3], u[4], u[5], &alpha2, &pdf2))
+			continue;
+		alpha *= alpha2;
+		alpha /= lightPdf;
+
+		if (!alpha.Black()) {
+			// Follow photon path through scene and record intersections
+			bool specularPath = false, directPhoton = true;
+			Intersection photonIsect;
+			const Volume *volume = NULL; //FIXME: try to get volume from light
+			BSDF *photonBSDF;
+			u_int nIntersections = 0;
+			while (scene.Intersect(t->sample, volume, false,
+				photonRay, 1.f, &photonIsect, &photonBSDF,
+				NULL, NULL, &alpha)) {
+				++nIntersections;
+
+				// Handle photon/surface intersection
+				Vector wo = -photonRay.d;
+
+				if (photonBSDF->NumComponents(photonBxdfType) > 0) {
+					// Deposit photon at surface
+					LightPhoton photon(sw, photonIsect.dg.p, alpha, wo);
+
+					if (directPhoton) {
+						if (computeRadianceMap &&
+							(t->directPhotons.size() < t->directCap)) {
+							// Deposit direct photon
+							t->directPhotons.push_back(photon);
+						}
+					} else {
+						// Deposit either caustic or indirect photon
+						if (specularPath) {
+							// Process caustic photon intersection
+							if (t->causticPhotons.size() < t->causticCap) {
+								t->causticPhotons.push_back(photon);
+							}
+						} else {
+							// Process indirect lighting photon intersection
+							if (t->indirectPhotons.size() < t->indirectCap) {
+								t->indirectPhotons.push_back(photon);
+							}
+						}
+					}
+
+					if (computeRadianceMap &&
+						(t->radiancePhotons.size() < t->radianceCap) &&
+						(photonBSDF->NumComponents(radianceBxdfType) > 0) &&
+						(rng.floatValue() < 0.125f)) {
+						SWCSpectrum rho_t =
+							photonBSDF->rho(sw, BxDFType(radianceBxdfType & BSDF_ALL_TRANSMISSION));
+						SWCSpectrum rho_r =
+							photonBSDF->rho(sw, BxDFType(radianceBxdfType & BSDF_ALL_REFLECTION));
+
+						if(!rho_t.Black() || !rho_r.Black()) {
+							// Store data for radiance photon
+							Normal n = photonIsect.dg.nn;
+							if (Dot(n, photonRay.d) > 0.f)
+								n = -n;
+							t->radiancePhotons.push_back(RadiancePhoton(sw, photonIsect.dg.p, n));
+
+							t->rpReflectances.push_back(rho_r);
+							t->rpTransmittances.push_back(rho_t);
+						}
+					}
+				}
+
+				// Sample new photon ray direction
+				Vector wi;
+				float pdfo;
+				BxDFType flags;
+				// Get random numbers for sampling outgoing photon direction
+				float u1, u2, u3;
+				if (nIntersections == 1) {
+					u1 = RadicalInverse(nshot, 23);
+					u2 = RadicalInverse(nshot, 29);
+					u3 = RadicalInverse(nshot, 31);
+				} else {
+					u1 = rng.floatValue();
+					u2 = rng.floatValue();
+					u3 = rng.floatValue();
+				}
+
+				// Compute new photon weight and possibly terminate with RR
+				SWCSpectrum fr;
+				if (!photonBSDF->SampleF(sw, wo, &wi, u1, u2, u3, &fr, &pdfo, BSDF_ALL, &flags))
+					break;
+				SWCSpectrum anew = fr;
+				float continueProb = min(1.f, anew.Filter(sw));
+				if (nIntersections > maxDepth || rng.floatValue() > continueProb)
+					break;
+				alpha *= anew / continueProb;
+				const bool passThrough = flags == (BSDF_TRANSMISSION | BSDF_SPECULAR) &&
+					photonBSDF->Pdf(sw, wo, wi, BxDFType(BSDF_TRANSMISSION | BSDF_SPECULAR)) > 0.f;
+				if (!passThrough) {
+					specularPath = (directPhoton || specularPath) &&
+						((flags & BSDF_SPECULAR) != 0 || pdfo > 100.f);
+					directPhoton = false;
+				}
+				photonRay = Ray(photonIsect.dg.p, wi);
+				volume = photonBSDF->GetVolume(photonRay.d);
+			}
+		}
+
+		t->sample.arena.FreeAll();
+	}
+}
+
 void PhotonMapPreprocess(const RandomGenerator &rng, const Scene &scene, 
 	const string *mapFileName, const BxDFType photonBxdfType,
 	const BxDFType radianceBxdfType, u_int nDirectPhotons,
@@ -436,39 +696,26 @@ void PhotonMapPreprocess(const RandomGenerator &rng, const Scene &scene,
 	const u_int targetPhotons = nCausticPhotons + nIndirectPhotons;
 	LOG(LUX_INFO,LUX_NOERROR) << "Shooting photons (target: " << targetPhotons << ")...";
 
-	vector<LightPhoton> directPhotons;
-	directPhotons.reserve(nDirectPhotons);
-	bool directDone = (nDirectPhotons == 0);
-
-	vector<LightPhoton> causticPhotons;
-	causticPhotons.reserve(nCausticPhotons);
-	bool causticDone = (nCausticPhotons == 0);
-
-	vector<LightPhoton> indirectPhotons;
-	indirectPhotons.reserve(nIndirectPhotons);
-	bool indirectDone = (nIndirectPhotons == 0);
-
-	vector<RadiancePhoton> radiancePhotons;
-	radiancePhotons.reserve(nRadiancePhotons);
-	bool radianceDone = (nRadiancePhotons == 0);
-
-	// Dade - initialize SpectrumWavelengths
-	Sample sample;
-	sample.rng = &rng;
-	SpectrumWavelengths &sw(sample.swl);
-	sample.camera = scene.camera()->Clone();
-	sample.realTime = sample.camera->GetTime(.5f); //FIXME sample it
-	sample.camera->SampleMotion(sample.realTime);
-
-	// Compute light power CDF for photon shooting
+	// Compute light power CDF for photon shooting (shared, read-only)
 	u_int nLights = scene.lights.size();
 	float *lightPower = new float[nLights];
 	for (u_int i = 0; i < nLights; ++i)
 		lightPower[i] = scene.lights[i]->Power(scene);
-	Distribution1D lightCDF(lightPower, nLights);
+	luxrays::Distribution1D lightCDF(lightPower, nLights);
 	delete[] lightPower;
 
-	// Declare radiance photon reflectance arrays
+	// Split photon firing across available CPUs via scheduling::Scheduler.
+	const u_int nBuckets = max(boost::thread::hardware_concurrency(), 1u);
+
+	// Global merged photon storage
+	vector<LightPhoton> directPhotons;
+	directPhotons.reserve(nDirectPhotons);
+	vector<LightPhoton> causticPhotons;
+	causticPhotons.reserve(nCausticPhotons);
+	vector<LightPhoton> indirectPhotons;
+	indirectPhotons.reserve(nIndirectPhotons);
+	vector<RadiancePhoton> radiancePhotons;
+	radiancePhotons.reserve(nRadiancePhotons);
 	vector<SWCSpectrum> rpReflectances;
 	rpReflectances.reserve(nRadiancePhotons);
 	vector<SWCSpectrum> rpTransmittances;
@@ -478,214 +725,79 @@ void PhotonMapPreprocess(const RandomGenerator &rng, const Scene &scene,
 	boost::xtime lastUpdateTime;
 	boost::xtime_get(&photonShootingStartTime, boost::TIME_UTC_);
 	boost::xtime_get(&lastUpdateTime, boost::TIME_UTC_);
-	u_int nshot = 0;
-	while ((!radianceDone || !directDone || !causticDone || !indirectDone) && !scene.terminated) {
-		// Dade - print some progress information
-		boost::xtime currentTime;
-		boost::xtime_get(&currentTime, boost::TIME_UTC_);
-		if (currentTime.sec - lastUpdateTime.sec > 5) {
-			ss.str("");
-			ss << "Photon shooting progress: Direct[" << directPhotons.size();
-			if (nDirectPhotons > 0)
-				ss << " (" << (100 * directPhotons.size() / nDirectPhotons) << "% limit)";
-			else
-				ss << " (100% limit)";
-			ss << "] Caustic[" << causticPhotons.size();
-			if (nCausticPhotons > 0)
-				ss << " (" << (100 * causticPhotons.size() / nCausticPhotons) << "%)";
-			else
-				ss << " (100%)";
-			ss << "] Indirect[" << indirectPhotons.size();
-			if (nIndirectPhotons > 0)
-				ss << " (" << (100 * indirectPhotons.size() / nIndirectPhotons) << "%)";
-			else
-				ss << " (100%)";
-			ss << "] Radiance[" << radiancePhotons.size();
-			if (nRadiancePhotons > 0)
-				ss << " (" << (100 * radiancePhotons.size() / nRadiancePhotons) << "% limit)";
-			else
-				ss << " (100% limit)";
-			ss << "]";
-			LOG(LUX_INFO,LUX_NOERROR)<< ss.str().c_str();
 
-			lastUpdateTime = currentTime;
+	// Reset the shared atomic photon index before launching buckets
+	g_photonNshot = 0;
+
+	scheduling::Scheduler photonScheduler(1000);
+	vector<PhotonShootThread *> buckets;
+	buckets.reserve(nBuckets);
+	for (u_int b = 0; b < nBuckets; ++b) {
+		PhotonShootThread *t = new PhotonShootThread(scene, rng, lightCDF,
+			nDirectPhotons, nRadiancePhotons, nIndirectPhotons,
+			nCausticPhotons, maxDepth, photonBxdfType, radianceBxdfType,
+			b, nBuckets);
+		buckets.push_back(t);
+		photonScheduler.AddThread(t);
+	}
+
+	// Launch parallel; runs until every bucket fills its share.
+	boost::thread progressLogger(boost::bind(PhotonProgressLogger, &buckets,
+		nDirectPhotons, nCausticPhotons, nIndirectPhotons, nRadiancePhotons));
+	photonScheduler.Launch(boost::bind(ShootPhotons, _1), 0, 1);
+	photonScheduler.Done();
+	progressLogger.interrupt();
+	progressLogger.join();
+
+	if (scene.terminated) {
+		for (u_int b = 0; b < nBuckets; ++b)
+			delete buckets[b];
+		return;
+	}
+
+	// Merge the photon vectors into global storage.
+	for (u_int b = 0; b < nBuckets; ++b) {
+		PhotonShootThread *t = buckets[b];
+		directPhotons.insert(directPhotons.end(),
+			t->directPhotons.begin(), t->directPhotons.end());
+		causticPhotons.insert(causticPhotons.end(),
+			t->causticPhotons.begin(), t->causticPhotons.end());
+		indirectPhotons.insert(indirectPhotons.end(),
+			t->indirectPhotons.begin(), t->indirectPhotons.end());
+		radiancePhotons.insert(radiancePhotons.end(),
+			t->radiancePhotons.begin(), t->radiancePhotons.end());
+		rpReflectances.insert(rpReflectances.end(),
+			t->rpReflectances.begin(), t->rpReflectances.end());
+		rpTransmittances.insert(rpTransmittances.end(),
+			t->rpTransmittances.begin(), t->rpTransmittances.end());
+		delete t;
+	}
+	buckets.clear();
+
+	// Give up if we didn't store enough photons.
+	const u_int nshot = g_photonNshot;
+	if (nshot > max(500000U, targetPhotons * 10)) {
+		if (unsuccessful(nCausticPhotons, causticPhotons.size(), nshot)) {
+			LOG( LUX_WARNING,LUX_CONSISTENCY)<< "Unable to store enough photons in the caustic photonmap. Giving up and disabling the map.";
+			causticPhotons.clear();
+			nCausticPhotons = 0;
 		}
-		
-		++nshot;
-
-		// Give up if we're not storing enough photons
-		if (nshot > max(500000U, targetPhotons * 10)) {
-			if (indirectDone && unsuccessful(nCausticPhotons, causticPhotons.size(), nshot)) {
-				// Dade - disable castic photon map: we are unable to store
-				// enough photons
-				LOG( LUX_WARNING,LUX_CONSISTENCY)<< "Unable to store enough photons in the caustic photonmap. Giving up and disabling the map.";
-
-				causticPhotons.clear();
-				causticDone = true;
-				nCausticPhotons = 0;
-			}
-
-			if (unsuccessful(nIndirectPhotons, indirectPhotons.size(), nshot)) {
-				LOG( LUX_ERROR,LUX_CONSISTENCY)<< "Unable to store enough photons in the indirect photonmap. Unable to render the image.";
-				return;
-			}
+		if (unsuccessful(nIndirectPhotons, indirectPhotons.size(), nshot)) {
+			LOG( LUX_ERROR,LUX_CONSISTENCY)<< "Unable to store enough photons in the indirect photonmap. Unable to render the image.";
+			return;
 		}
-		// Sample the wavelengths
-		sw.Sample(RadicalInverse(nshot, 2));
-
-		// Trace a photon path and store contribution
-		// Choose 6D sample values for photon
-		float u[6];
-		u[0] = RadicalInverse(nshot, 3);
-		u[1] = RadicalInverse(nshot, 5);
-		u[2] = RadicalInverse(nshot, 7);
-		u[3] = RadicalInverse(nshot, 11);
-		u[4] = RadicalInverse(nshot, 13);
-		u[5] = RadicalInverse(nshot, 17);
-
-		// Choose light to shoot photon from
-		float lightPdf;
-		float uln = RadicalInverse(nshot, 19);
-		u_int lightNum = lightCDF.SampleDiscrete(uln, &lightPdf);
-		const Light *light = scene.lights[lightNum].get();
-
-		// Generate _photonRay_ from light source and initialize _alpha_
-		BSDF *bsdf;
-		float pdf;
-		SWCSpectrum alpha;
-		if (!light->SampleL(scene, sample, u[0], u[1], u[2],
-			&bsdf, &pdf, &alpha))
-			continue;
-		Ray photonRay;
-		photonRay.o = bsdf->dgShading.p;
-		float pdf2;
-		SWCSpectrum alpha2;
-		if (!bsdf->SampleF(sw, Vector(bsdf->dgShading.nn), &photonRay.d,
-			u[3], u[4], u[5], &alpha2, &pdf2))
-			continue;
-		alpha *= alpha2;
-		alpha /= lightPdf;
-
-		if (!alpha.Black()) {
-			// Follow photon path through scene and record intersections
-			bool specularPath = false, directPhoton = true;
-			Intersection photonIsect;
-			const Volume *volume = NULL; //FIXME: try to get volume from light
-			BSDF *photonBSDF;
-			u_int nIntersections = 0;
-			while (scene.Intersect(sample, volume, false,
-				photonRay, 1.f, &photonIsect, &photonBSDF,
-				NULL, NULL, &alpha)) {
-				++nIntersections;
-
-				// Handle photon/surface intersection
-				Vector wo = -photonRay.d;
-
-				if (photonBSDF->NumComponents(photonBxdfType) > 0) {
-					// Deposit photon at surface
-					LightPhoton photon(sw, photonIsect.dg.p, alpha, wo);
-
-					if (directPhoton) {
-						if (computeRadianceMap && (!directDone)) {
-							// Deposit direct photon
-							directPhotons.push_back(photon);
-
-							// Dade - check if we have enough direct photons
-							if (directPhotons.size() == nDirectPhotons)
-								directDone = true;
-						}
-					} else {
-						// Deposit either caustic or indirect photon
-						if (specularPath) {
-							// Process caustic photon intersection
-							if (!causticDone) {
-								causticPhotons.push_back(photon);
-
-								if (causticPhotons.size() == nCausticPhotons) {
-									causticDone = true;
-									causticMap->init(nshot, causticPhotons);
-								}
-							}
-						} else {
-							// Process indirect lighting photon intersection
-							if (!indirectDone) {
-								indirectPhotons.push_back(photon);
-
-								if (indirectPhotons.size() == nIndirectPhotons) {
-									indirectDone = true;
-									indirectMap->init(nshot, indirectPhotons);
-								}
-							}
-						}
-					}
-
-					if (computeRadianceMap && 
-						(!radianceDone) && 
-						(photonBSDF->NumComponents(radianceBxdfType) > 0) && 
-						(rng.floatValue() < 0.125f)) {
-						SWCSpectrum rho_t =
-							photonBSDF->rho(sw, BxDFType(radianceBxdfType & BSDF_ALL_TRANSMISSION));
-						SWCSpectrum rho_r = 
-							photonBSDF->rho(sw, BxDFType(radianceBxdfType & BSDF_ALL_REFLECTION));
-
-						if(!rho_t.Black() || !rho_r.Black()) {
-							// Store data for radiance photon
-							Normal n = photonIsect.dg.nn;
-							if (Dot(n, photonRay.d) > 0.f)
-								n = -n;
-							radiancePhotons.push_back(RadiancePhoton(sw, photonIsect.dg.p, n));
-
-							rpReflectances.push_back(rho_r);
-							rpTransmittances.push_back(rho_t);
-							
-							if (radiancePhotons.size() == nRadiancePhotons)
-								radianceDone = true;
-						}
-					}
-				}
-
-				// Sample new photon ray direction
-				Vector wi;
-				float pdfo;
-				BxDFType flags;
-				// Get random numbers for sampling outgoing photon direction
-				float u1, u2, u3;
-				if (nIntersections == 1) {
-					u1 = RadicalInverse(nshot, 23);
-					u2 = RadicalInverse(nshot, 29);
-					u3 = RadicalInverse(nshot, 31);
-				} else {
-					u1 = rng.floatValue();
-					u2 = rng.floatValue();
-					u3 = rng.floatValue();
-				}
-
-				// Compute new photon weight and possibly terminate with RR
-				SWCSpectrum fr;
-				if (!photonBSDF->SampleF(sw, wo, &wi, u1, u2, u3, &fr, &pdfo, BSDF_ALL, &flags))
-					break;
-				SWCSpectrum anew = fr;
-				float continueProb = min(1.f, anew.Filter(sw));
-				if (nIntersections > maxDepth || rng.floatValue() > continueProb)
-					break;
-				alpha *= anew / continueProb;
-				const bool passThrough = flags == (BSDF_TRANSMISSION | BSDF_SPECULAR) &&
-					photonBSDF->Pdf(sw, wo, wi, BxDFType(BSDF_TRANSMISSION | BSDF_SPECULAR)) > 0.f;
-				if (!passThrough) {
-					specularPath = (directPhoton || specularPath) &&
-						((flags & BSDF_SPECULAR) != 0 || pdfo > 100.f);
-					directPhoton = false;
-				}
-				photonRay = Ray(photonIsect.dg.p, wi);
-				volume = photonBSDF->GetVolume(photonRay.d);
-			}
-		}
-
-		sample.arena.FreeAll();
 	}
 
 	if (scene.terminated)
 		return;
+
+	// Build the kd-trees from the merged photon vectors
+	if (nDirectPhotons > 0)
+		; // directMap is built locally in the radiance computation block
+	if (nIndirectPhotons > 0)
+		indirectMap->init(nshot, indirectPhotons);
+	if (nCausticPhotons > 0)
+		causticMap->init(nshot, causticPhotons);
 
 	boost::xtime photonShootingEndTime;
 	boost::xtime_get(&photonShootingEndTime, boost::TIME_UTC_);
@@ -699,6 +811,7 @@ void PhotonMapPreprocess(const RandomGenerator &rng, const Scene &scene,
 		if (nDirectPhotons > 0)
 			directMap.init(nDirectPhotons, directPhotons);
 
+		SpectrumWavelengths sw;
 		for (u_int i = 0; i < radiancePhotons.size(); ++i) {
 			// Dade - print some progress info
 			boost::xtime currentTime;
