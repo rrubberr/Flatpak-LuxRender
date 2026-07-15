@@ -150,9 +150,12 @@ float BidirIntegrator::WeightPath(const vector<BidirVertex> &eye, u_int nEye,
 	// the light vertex with normal sampling
 	if (nLight == 1) {
 		if (isLightDirect) {
-			if ((light[0].flags & BSDF_SPECULAR) == 0 && maxLightDepth > 0)
+			if ((light[0].flags & BSDF_SPECULAR) == 0 && maxLightDepth > 0 &&
+				light[0].dAWeight > 0.f)
 				weight += pBase * pBase;
-		} else {
+		} else if (light[0].dAWeight > 0.f) {
+			// The eye-hits-light strategy is impossible for delta lights
+			// (negative dAWeight), so only add it for non-delta lights.
 			const float pDirect = pdfLightDirect / fabsf(light[0].dAWeight);
 			weight += pDirect * pDirect;
 		}
@@ -220,7 +223,9 @@ float BidirIntegrator::WeightPath(const vector<BidirVertex> &eye, u_int nEye,
 		// is not specular.
 		// Even if the light source vertex is specular,
 		// the special sampling for direct lighting will get it
-		if (i == nLight - 1 && (light[1].flags & BSDF_SPECULAR) == 0) {
+		if (i == nLight - 1 && (light[1].flags & BSDF_SPECULAR) == 0 &&
+			light[0].dAWeight > 0.f) {
+			// Exclude delta lights: the eye cannot hit them directly.
 			const float pDirect = p * pdfLightDirect / fabsf(light[0].dAWeight);
 			weight += pDirect * pDirect;
 		}
@@ -337,6 +342,12 @@ bool BidirIntegrator::EvalPath(const Scene &scene, const Sample &sample,
 	lightV.dARWeight = epdfR * etPdfR / d2;
 	if (!lScat)
 		lightV.dARWeight *= lcoso;
+	// Save the original dARWeight of the second-to-last light vertex so it
+	// can be restored after WeightPath, which reads it for eye-path
+	// extensions (i == 2 term).  Leaving the connection weight in place
+	// corrupts the MIS weight of every subsequent eye-vertex connection,
+	// producing non-converging fireflies.
+	const float lWeight = nLight > 1 ? light[nLight - 2].dARWeight : 0.f;
 	if (nLight > 1) {
 		light[nLight - 2].dARWeight = lpdfR * lightV.tPdfR /
 			light[nLight - 2].d2;
@@ -349,6 +360,9 @@ bool BidirIntegrator::EvalPath(const Scene &scene, const Sample &sample,
 	*L *= w;
 	if (nEye > 1)
 		eye[nEye - 2].dAWeight = eWeight;
+	// Restore the original dARWeight of the second-to-last light vertex
+	if (nLight > 1)
+		light[nLight - 2].dARWeight = lWeight;
 	// return back some eye data
 	eyeV.wi = ewi;
 	eyeV.d2 = d2;
@@ -381,8 +395,16 @@ bool BidirIntegrator::GetDirectLight(const Scene &scene, const Sample &sample,
 	vL.tPdf = 1.f;
 	vL.tPdfR = 1.f;
 	vL.single = sample.swl.single;
-	if (light->IsDeltaLight())
+	if (light->IsDeltaLight()) {
+		// Negative dAWeight signals a delta light to WeightPath; mirror it on
+		// dARWeight so the eye-hits-light strategy is correctly excluded.
 		vL.dAWeight = -vL.dAWeight;
+		vL.dARWeight = -fabsf(vL.dAWeight);
+	} else {
+		// For a non-delta light the eye can hit it directly; dARWeight is the
+		// area-measure pdf, equal to dAWeight here (no prior vertex).
+		vL.dARWeight = fabsf(vL.dAWeight);
+	}
 	ePdfDirect *= directWeight;
 	vE.tPdf = ePdfDirect;
 	bool single; // TODO: where is this used
@@ -742,8 +764,12 @@ u_int BidirIntegrator::Li(const Scene &scene, const Sample &sample) const
 				light0.single = sw.single;
 
 				// Trick to tell subsequent functions that the light is delta
-				if (light->IsDeltaLight())
+				if (light->IsDeltaLight()) {
 					light0.dAWeight = -light0.dAWeight;
+					light0.dARWeight = -fabsf(light0.dAWeight);
+				} else {
+					light0.dARWeight = fabsf(light0.dAWeight);
+				}
 				nLight = 1;
 
 
