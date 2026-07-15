@@ -64,6 +64,7 @@
 #include <QTextCharFormat>
 #include <QTextCursor>
 #include <QTextStream>
+#include <QScrollBar>
 #include <QUrl>
 
 #include "error.h"
@@ -968,13 +969,7 @@ void MainWindow::resumeRender()
 		m_statsTimer->start(1000);
 		m_netTimer->start(10000);
 
-		if (m_guiRenderState == STOPPED) {
-			// reset flags, keep haltspp
-			int haltspp = luxGetIntAttribute("film", "haltSamplesPerPixel");
-			luxSetHaltSamplesPerPixel(haltspp, false, false);
-		}
-
-		if (m_guiRenderState == PAUSED || m_guiRenderState == STOPPED) // Only re-start if we were previously stopped
+		if (m_guiRenderState == PAUSED) // Only re-start if we were previously paused
 			luxStart();
 
 		changeRenderState(RENDERING);
@@ -2116,9 +2111,9 @@ void MainWindow::changeRenderState(LuxGuiRenderState state)
 			ui->action_batchProcess->setEnabled (false);
 			break;
 		case STOPPED:
-			// Rendering is stopped.
-			ui->button_resume->setEnabled (true);
-			ui->action_resumeRender->setEnabled (true);
+			// Rendering is stopped (terminal - cannot be resumed).
+			ui->button_resume->setEnabled (false);
+			ui->action_resumeRender->setEnabled (false);
 			ui->action_saveFLM->setEnabled (true);
 			ui->button_pause->setEnabled (false);
 			ui->action_pauseRender->setEnabled (false);
@@ -2309,7 +2304,10 @@ void MainWindow::logEvent(LuxLogEvent *event)
 
 	// changing cursor does not change the visible cursor
 	QTextCursor cursor = ui->textEdit_log->textCursor();
-	bool atEnd = cursor.atEnd();
+	// Track whether the view is pinned to the bottom via the scrollbar,
+	// not the text cursor (which the user moves by clicking/selecting).
+	QScrollBar *logScrollBar = ui->textEdit_log->verticalScrollBar();
+	bool atBottom = (logScrollBar->value() == logScrollBar->maximum());
 
 	// Append log message to end of document
 	cursor.movePosition(QTextCursor::End);
@@ -2355,9 +2353,9 @@ void MainWindow::logEvent(LuxLogEvent *event)
 	ss << event->getMessage() << '\n';
 	cursor.insertText(ss.readAll());
 
-	// scroll new message into view if cursor was at end
-	if (atEnd)
-		ui->textEdit_log->ensureCursorVisible();
+	// scroll new message into view if the view was pinned to the bottom
+	if (atBottom)
+		logScrollBar->setValue(logScrollBar->maximum());
 
 	int currentIndex = ui->tabs_main->currentIndex();
 	if (currentIndex != getTabIndex(TAB_ID_LOG) && event->getSeverity() > LUX_INFO) {
