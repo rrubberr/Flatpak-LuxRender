@@ -26,11 +26,6 @@
 
 namespace luxrays {
 
-// OpenCL data types
-namespace ocl {
-#include "luxrays/core/geometry/frame_types.cl"
-}
-
 class Frame {
 public:
 	Frame() {

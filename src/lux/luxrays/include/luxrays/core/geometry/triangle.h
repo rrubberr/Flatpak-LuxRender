@@ -29,11 +29,6 @@
 
 namespace luxrays {
 
-// OpenCL data types
-namespace ocl {
-#include "luxrays/core/geometry/triangle_types.cl"
-}
-
 class Triangle {
 public:
 	Triangle() { }

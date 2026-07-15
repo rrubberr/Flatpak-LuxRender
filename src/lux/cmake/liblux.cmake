@@ -858,10 +858,6 @@ INCLUDE_DIRECTORIES(BEFORE
 #############################################################################
 
 SET(luxrays_src
-	luxrays/src/luxrays/accelerators/bvhaccel.cpp
-	luxrays/src/luxrays/accelerators/mbvhaccel.cpp
-	luxrays/src/luxrays/core/bvh/bvhbuild.cpp
-	luxrays/src/luxrays/core/bvh/bvhclassicbuild.cpp
 	luxrays/src/luxrays/core/color/color.cpp
 	luxrays/src/luxrays/core/color/spd.cpp
 	luxrays/src/luxrays/core/color/spds/blackbodyspd.cpp
@@ -874,10 +870,6 @@ SET(luxrays_src
 	luxrays/src/luxrays/core/color/spds/rgbrefl.cpp
 	luxrays/src/luxrays/core/color/spectrumwavelengths.cpp
 	luxrays/src/luxrays/core/color/swcspectrum.cpp
-	luxrays/src/luxrays/core/accelerator.cpp
-	luxrays/src/luxrays/core/context.cpp
-	luxrays/src/luxrays/core/dataset.cpp
-	luxrays/src/luxrays/core/device.cpp
 	luxrays/src/luxrays/core/epsilon.cpp
 	luxrays/src/luxrays/core/exttrianglemesh.cpp
 	luxrays/src/luxrays/core/trianglemesh.cpp
@@ -886,8 +878,6 @@ SET(luxrays_src
 	luxrays/src/luxrays/core/geometry/motionsystem.cpp
 	luxrays/src/luxrays/core/geometry/quaternion.cpp
 	luxrays/src/luxrays/core/geometry/transform.cpp
-	luxrays/src/luxrays/idevices/nativeidevice.cpp
-	luxrays/src/luxrays/idevices/virtualidevice.cpp
 	luxrays/src/luxrays/textures/blender_noiselib.cpp
 	luxrays/src/luxrays/utils/mc.cpp
 	luxrays/src/luxrays/utils/ply/rply.cpp

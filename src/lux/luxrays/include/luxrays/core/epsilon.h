@@ -32,10 +32,7 @@ namespace luxrays {
 // check http://en.wikipedia.org/wiki/Single_precision_floating-point_format for
 // reference. Most method of this class should be thread-safe.
 
-// OpenCL data types
-namespace ocl {
-#include "luxrays/core/epsilon_types.cl"
-}
+#include "luxrays/core/epsilon_defs.h"
 
 class MachineEpsilon {
 public:

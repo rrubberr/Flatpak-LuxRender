@@ -29,11 +29,6 @@ using luxrays::BBox;
 
 namespace luxrays {
 
-// OpenCL data types
-namespace ocl {
-#include "luxrays/core/geometry/motionsystem_types.cl"
-}
-
 // Interpolates between two transforms
 class InterpolatedTransform {
 public:

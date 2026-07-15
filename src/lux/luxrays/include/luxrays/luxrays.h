@@ -62,10 +62,6 @@ typedef unsigned long long u_longlong;
  * \brief The LuxRays core classes are defined within this namespace.
  */
 namespace luxrays {
-// Shared data types (originally the OpenCL "ocl" namespace; kept for CPU code)
-namespace ocl {
-#include "luxrays/luxrays_types.cl"
-}
 
 class Accelerator;
 class BBox;

@@ -30,11 +30,6 @@
 
 namespace luxrays {
 
-// OpenCL data types
-namespace ocl {
-#include "luxrays/core/trianglemesh_types.cl"
-}
-
 typedef u_int TriangleMeshID;
 typedef u_int TriangleID;
 

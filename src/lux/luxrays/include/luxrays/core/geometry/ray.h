@@ -27,11 +27,6 @@
 
 namespace luxrays {
 
-// OpenCL data types
-namespace ocl {
-#include "luxrays/core/geometry/ray_types.cl"
-}
-
 class  Ray {
 public:
 	// Ray Public Methods

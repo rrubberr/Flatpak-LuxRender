@@ -33,8 +33,6 @@
 #include <boost/noncopyable.hpp>
 #include <boost/thread/mutex.hpp>
 
-#include "luxrays/core/dataset.h"
-
 namespace lux {
 
 // Scene Declarations
@@ -156,11 +154,9 @@ public:
 	bool terminated; // rendering is terminated
 
 	// The following data are used when tracing rays with LuxRays
-	// The list of original primitives. It is required by LuxRays to build the DataSet.
-	vector<boost::shared_ptr<Primitive> > primitives;
-	vector<const Primitive *> tessellatedPrimitives;
-	luxrays::DataSet *dataSet;
-
+        // The list of original primitives.
+        vector<boost::shared_ptr<Primitive> > primitives;
+        vector<const Primitive *> tessellatedPrimitives;
 private:
 	bool filmOnly; // whether this scene has entire scene (incl. geometry, ..) or only a film
 };

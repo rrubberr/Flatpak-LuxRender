@@ -28,11 +28,6 @@ using std::vector;
 
 namespace luxrays {
 
-	// OpenCL data types
-namespace ocl {
-#include "luxrays/core/geometry/bbox_types.cl"
-}
-
 class Normal;
 class Ray;
 

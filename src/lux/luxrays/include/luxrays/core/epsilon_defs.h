@@ -16,48 +16,23 @@
  * limitations under the License.                                          *
  ***************************************************************************/
 
-#include "luxrays/core/bvh/bvhbuild.h"
+#ifndef _LUXRAYS_EPSILON_DEFS_H
+#define _LUXRAYS_EPSILON_DEFS_H
 
-using namespace std;
+// NOTE: DEFAULT_EPSILON_MIN is very small. A plane passing exactly for the
+// origin will suffer of self shadow problems because the Ray class will use
+// MachineEpsilon(ray.o) as epsilon for the ray.mint. However it is pretty much
+// the only case where there is a problem so better to not change anything.
+// As workaround, moving the plane away from the origin is enough.
+#define DEFAULT_EPSILON_MIN 1e-9f
+#define DEFAULT_EPSILON_MAX 1e-1f
+#define DEFAULT_EPSILON_STATIC 1e-5f
 
-namespace luxrays {
+// An epsilon that can be used as threshold for cos(theta). For instance:
+// if (Dot(N, LightDir) < DEFAULT_COS_EPSILON_STATIC) return Spectrum();
+#define DEFAULT_COS_EPSILON_STATIC 1e-4f
 
-void FreeBVH(BVHTreeNode *node) {
-	if (node) {
-		FreeBVH(node->leftChild);
-		FreeBVH(node->rightSibling);
-		delete node;
-	}
-}
+// This is about 1e-5f for values near 1.f
+#define DEFAULT_EPSILON_DISTANCE_FROM_VALUE 0x80u
 
-u_int CountBVHNodes(BVHTreeNode *node) {
-	if (node)
-		return 1 + CountBVHNodes(node->leftChild) + CountBVHNodes(node->rightSibling);
-	else
-		return 0;
-}
-
-void PrintBVHNodes(ostream &stream, BVHTreeNode *node) {
-	stream << "BVHNode(" << node << ")[" << endl;
-
-	if (node) {
-		stream << node->bbox << endl;
-		if (node->leftChild) {
-			stream << "LeftChild(" << node->leftChild << ")[" << endl;
-			PrintBVHNodes(stream, node->leftChild);
-			stream << "]" << endl;
-		} else
-			stream << "LeftChild(NULL)" << endl;
-
-		if (node->rightSibling) {
-			stream << "RightSibling(" << node->rightSibling << ")[" << endl;
-			PrintBVHNodes(stream, node->rightSibling);
-			stream << "]" << endl;
-		} else
-			stream << "RightSibling(NULL)" << endl;
-	}
-	
-	stream << "]" << endl;
-}
-
-}
+#endif	/* _LUXRAYS_EPSILON_DEFS_H */

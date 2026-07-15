@@ -27,11 +27,6 @@
 
 namespace luxrays {
 
-// OpenCL data types
-namespace ocl {
-#include "luxrays/core/color/color_types.cl"
-}
-
 class SPD;
 class SpectrumWavelengths;
 class SWCSpectrum;
