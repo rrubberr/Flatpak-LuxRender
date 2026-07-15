@@ -20,32 +20,6 @@
 ###########################################################################
 
 #############################################################################
-##########################      Find LuxRays       ##########################
-#############################################################################
-
-FIND_PATH(LUXRAYS_INCLUDE_DIRS NAMES luxrays/luxrays.h PATHS ../luxrays/include ${LuxRays_HOME}/include )
-FIND_LIBRARY(LUXRAYS_LIBRARY luxrays PATHS ../luxrays/lib ${LuxRays_HOME}/lib PATH_SUFFIXES "" release relwithdebinfo minsizerel dist )
-
-
-IF (LUXRAYS_INCLUDE_DIRS AND LUXRAYS_LIBRARY)
-	MESSAGE(STATUS "LuxRays include directory: " ${LUXRAYS_INCLUDE_DIRS})
-	MESSAGE(STATUS "LuxRays library: " ${LUXRAYS_LIBRARY})
-	INCLUDE_DIRECTORIES(SYSTEM ${LUXRAYS_INCLUDE_DIRS})
-	
-	# Create CMake target for LuxRays
-	if(NOT TARGET luxrays)
-		add_library(luxrays UNKNOWN IMPORTED)
-		set_target_properties(luxrays PROPERTIES
-			IMPORTED_LOCATION "${LUXRAYS_LIBRARY}"
-			INTERFACE_INCLUDE_DIRECTORIES "${LUXRAYS_INCLUDE_DIRS}"
-		)
-	endif()
-	
-ELSE (LUXRAYS_INCLUDE_DIRS AND LUXRAYS_LIBRARY)
-	MESSAGE(FATAL_ERROR "LuxRays not found.")
-ENDIF (LUXRAYS_INCLUDE_DIRS AND LUXRAYS_LIBRARY)
-
-#############################################################################
 ###########################      Find OpenMP       ##########################
 #############################################################################
 

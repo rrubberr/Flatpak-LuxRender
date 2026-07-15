@@ -165,6 +165,25 @@ CONFIGURE_FILE(${CMAKE_SOURCE_DIR}/config.h.cmake ${CMAKE_BINARY_DIR}/config.h)
 ADD_DEFINITIONS(-DLUX_USE_CONFIG_H)
 
 #############################################################################
+#########################      LUXRAYS MERGE      ###########################
+#############################################################################
+
+# Configure the LuxRays version header.
+SET(LUXRAYS_VERSION_MAJOR 1)
+SET(LUXRAYS_VERSION_MINOR 7dev)
+CONFIGURE_FILE(
+	"${CMAKE_SOURCE_DIR}/luxrays/include/luxrays/cfg.h.in"
+	"${CMAKE_SOURCE_DIR}/luxrays/include/luxrays/cfg.h"
+	@ONLY
+)
+
+# LuxRays headers are included via the "luxrays/..." prefix.
+INCLUDE_DIRECTORIES(BEFORE SYSTEM "${CMAKE_SOURCE_DIR}/luxrays/include")
+
+# Do not build OpenCL support.
+ADD_DEFINITIONS("-DLUXRAYS_DISABLE_OPENCL")
+
+#############################################################################
 #########################      COMPILER FLAGS     ###########################
 #############################################################################
 

@@ -854,21 +854,65 @@ INCLUDE_DIRECTORIES(BEFORE
 	)
 
 #############################################################################
-# Here we build the shared core library liblux.so
+# LuxRays sources (merged into liblux)
 #############################################################################
 
+SET(luxrays_src
+	luxrays/src/luxrays/accelerators/bvhaccel.cpp
+	luxrays/src/luxrays/accelerators/mbvhaccel.cpp
+	luxrays/src/luxrays/core/bvh/bvhbuild.cpp
+	luxrays/src/luxrays/core/bvh/bvhclassicbuild.cpp
+	luxrays/src/luxrays/core/color/color.cpp
+	luxrays/src/luxrays/core/color/spd.cpp
+	luxrays/src/luxrays/core/color/spds/blackbodyspd.cpp
+	luxrays/src/luxrays/core/color/spds/equalspd.cpp
+	luxrays/src/luxrays/core/color/spds/frequencyspd.cpp
+	luxrays/src/luxrays/core/color/spds/gaussianspd.cpp
+	luxrays/src/luxrays/core/color/spds/irregular.cpp
+	luxrays/src/luxrays/core/color/spds/regular.cpp
+	luxrays/src/luxrays/core/color/spds/rgbillum.cpp
+	luxrays/src/luxrays/core/color/spds/rgbrefl.cpp
+	luxrays/src/luxrays/core/color/spectrumwavelengths.cpp
+	luxrays/src/luxrays/core/color/swcspectrum.cpp
+	luxrays/src/luxrays/core/accelerator.cpp
+	luxrays/src/luxrays/core/context.cpp
+	luxrays/src/luxrays/core/dataset.cpp
+	luxrays/src/luxrays/core/device.cpp
+	luxrays/src/luxrays/core/epsilon.cpp
+	luxrays/src/luxrays/core/exttrianglemesh.cpp
+	luxrays/src/luxrays/core/trianglemesh.cpp
+	luxrays/src/luxrays/core/geometry/bbox.cpp
+	luxrays/src/luxrays/core/geometry/matrix4x4.cpp
+	luxrays/src/luxrays/core/geometry/motionsystem.cpp
+	luxrays/src/luxrays/core/geometry/quaternion.cpp
+	luxrays/src/luxrays/core/geometry/transform.cpp
+	luxrays/src/luxrays/idevices/nativeidevice.cpp
+	luxrays/src/luxrays/idevices/virtualidevice.cpp
+	luxrays/src/luxrays/textures/blender_noiselib.cpp
+	luxrays/src/luxrays/utils/mc.cpp
+	luxrays/src/luxrays/utils/ply/rply.cpp
+	luxrays/src/luxrays/utils/properties.cpp
+	luxrays/src/luxrays/utils/convtest/convtest.cpp
+	luxrays/src/luxrays/utils/convtest/pdiff/lpyramid.cpp
+	luxrays/src/luxrays/utils/convtest/pdiff/metric.cpp
+)
+SOURCE_GROUP("Source Files\\LuxRays" FILES ${luxrays_src})
 
 set(LUX_SOURCES
 	${lux_cpp_api_src}
 	${lux_lib_src}
 	${lux_lib_hdr}
 	${lux_parser_src}
+	${luxrays_src}
 )
+
+#############################################################################
+# Here we build the shared core library liblux.so
+#############################################################################
 
 add_library(lux SHARED ${LUX_SOURCES})
 
 target_link_libraries(lux PRIVATE
-	luxrays
 	OpenImageIO::OpenImageIO
 	OpenEXR::OpenEXR
 	OpenEXR::Iex

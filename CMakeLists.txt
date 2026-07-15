@@ -191,26 +191,6 @@ endif()
 
 add_subdirectory(ext)
 
-#################
-# Build LuxRays #
-#################
-
-ExternalProject_Add(
-    LuxRays
-    DEPENDS
-        boost
-        OpenImageIO
-    SOURCE_DIR ${CMAKE_SOURCE_DIR}/src/luxrays
-    PREFIX ${LUX_PFX_DIR}/luxrays
-    INSTALL_DIR ${LUX_BUILD_DIR}
-    CMAKE_ARGS
-        ${COMMON_LUX_PROJECT_ARGS}
-        -DCMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE}
-        "-DCMAKE_CXX_FLAGS=${CMAKE_CXX_FLAGS} -DBOOST_BIND_GLOBAL_PLACEHOLDERS -w"
-    INSTALL_COMMAND
-        /bin/sh -c "cp -av ${LUX_PFX_DIR}/luxrays/src/LuxRays-build/lib/. ${LUX_LIB_DIR}/ && cp -av ${CMAKE_SOURCE_DIR}/src/luxrays/include/luxrays ${LUX_INC_DIR}/"
-)
-
 ###################
 # Build LuxRender #
 ###################
@@ -287,7 +267,6 @@ endif()
 ExternalProject_Add(
     LuxRender
     DEPENDS
-        LuxRays
         boost
         OpenImageIO
         embree
@@ -305,7 +284,6 @@ ExternalProject_Add(
         "-DPNG_LIBRARY=${LUX_LIB_DIR}/libpng16.a"
         "-Dminizip-ng_LIBRARY=${LUX_LIB_DIR}/libminizip.a"
         -DJPEG_INCLUDE_DIR=${LUX_INC_DIR}
-        -DLuxRays_HOME=${LUX_BUILD_DIR}
         -DPython3_ROOT_DIR=${LUX_BUILD_DIR}
         -DPython3_FIND_STRATEGY=LOCATION
         -DPython3_FIND_REGISTRY=NEVER
