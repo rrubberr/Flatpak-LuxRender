@@ -63,7 +63,8 @@ public:
 
 	MetropolisSampler(int xStart, int xEnd, int yStart, int yEnd,
 		u_int maxRej, float largeProb, float rng,
-		bool useV, bool useC, bool useNoise);
+		bool useV, bool useC, bool useNoise,
+		float mutationLow = 1.f / 1024.f, float mutationHigh = 1.f / 64.f);
 	virtual ~MetropolisSampler();
 
 	virtual void InitSample(Sample *sample) const {
@@ -89,6 +90,8 @@ public:
 
 	u_int maxRejects;
 	float pLarge, range;
+	// Exponential mutation kernel parameters.
+	float mutationSizeLow, mutationSizeHigh, logRatio;
 	u_int cooldownTime;
 	float *rngSamples;
 	bool useVariance;

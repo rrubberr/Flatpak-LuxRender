@@ -90,34 +90,42 @@ MetropolisSampler::MetropolisData::~MetropolisData()
 	delete[] offset;
 }
 
-// mutate a value in the range [0-1]
-static float mutate(const float x, const float randomValue)
+// Kelemen et al. two-scale exponential mutation kernel in the range [0-1].
+static float mutate(const float x, const float randomValue,
+	const float s2, const float logRatio)
 {
-	static const float s1 = 1.f / 512.f, s2 = 1.f / 16.f;
-	const float dx = s1 / (s1 / s2 + fabsf(2.f * randomValue - 1.f)) -
-		s1 / (s1 / s2 + 1.f);
-	if (randomValue < 0.5f) {
-		float x1 = x + dx;
-		return (x1 < 1.f) ? x1 : x1 - 1.f;
-	} else {
-		float x1 = x - dx;
-		return (x1 < 0.f) ? x1 + 1.f : x1;
-	}
+	// Pick a mutation direction and a magnitude in [s1, s2].
+	float sample = randomValue * 2.f;
+	const bool add = (sample < 1.f);
+	if (!add)
+		sample -= 1.f;
+	const float dv = s2 * expf(sample * logRatio);
+	float x1 = add ? x + dv : x - dv;
+	if (x1 > 1.f)
+		x1 -= 1.f;
+	else if (x1 < 0.f)
+		x1 += 1.f;
+	return x1;
 }
 
-// mutate a value in the range [min-max]
-static float mutateScaled(const float x, const float randomValue, const float mini, const float maxi, const float range)
+// Mutate a value in the range [min-max] using the same exponential kernel,
+// scaled to the requested range. Used for image-space and other bounded
+// dimensions so that all primary samples share the same kernel shape.
+static float mutateScaled(const float x, const float randomValue,
+	const float mini, const float maxi, const float range,
+	const float s2, const float logRatio)
 {
-	static const float s1 = 32.f;
-	const float dx = range / (s1 / (1.f + s1) + (s1 * s1) / (1.f + s1) *
-		fabsf(2.f * randomValue - 1.f)) - range / s1;
-	if (randomValue < 0.5f) {
-		float x1 = x + dx;
-		return (x1 < maxi) ? x1 : x1 - maxi + mini;
-	} else {
-		float x1 = x - dx;
-		return (x1 < mini) ? x1 - mini + maxi : x1;
-	}
+	float sample = randomValue * 2.f;
+	const bool add = (sample < 1.f);
+	if (!add)
+		sample -= 1.f;
+	const float dv = range * s2 * expf(sample * logRatio);
+	float x1 = add ? x + dv : x - dv;
+	if (x1 > maxi)
+		x1 -= maxi - mini;
+	else if (x1 < mini)
+		x1 += maxi - mini;
+	return x1;
 }
 
 static float fracf(const float &v) {
@@ -131,9 +139,13 @@ static float fracf(const float &v) {
 
 // Metropolis method definitions
 MetropolisSampler::MetropolisSampler(int xStart, int xEnd, int yStart, int yEnd,
-	u_int maxRej, float largeProb, float rng, bool useV, bool useC, bool useNoise) :
+	u_int maxRej, float largeProb, float rng, bool useV, bool useC, bool useNoise,
+	float mutationLow, float mutationHigh) :
 	Sampler(xStart, xEnd, yStart, yEnd, 1, useNoise), maxRejects(maxRej),
-	pLarge(largeProb), range(rng), useVariance(useV) {
+	pLarge(largeProb), range(rng), mutationSizeLow(mutationLow),
+	mutationSizeHigh(mutationHigh), useVariance(useV) {
+	// Precompute the log ratio used by the Kelemen exponential mutation kernel.
+	logRatio = -logf(mutationSizeHigh / mutationSizeLow);
 	// Allocate and compute all values of the rng
 	rngSamples = AllocAligned<float>(rngN);
 	rngSamples[0] = 0.f;
@@ -157,6 +169,8 @@ MetropolisSampler::MetropolisSampler(int xStart, int xEnd, int yStart, int yEnd,
 	AddIntAttribute(*this, "maxRejects", "Metropolis max. rejections", &MetropolisSampler::GetMaxRejects);
 	AddFloatAttribute(*this, "pLarge", "Metropolis probability of a large mutation", &MetropolisSampler::pLarge);
 	AddFloatAttribute(*this, "range", "Metropolis image mutation range", &MetropolisSampler::range);
+	AddFloatAttribute(*this, "mutationsizelow", "Metropolis lower mutation size (primary sample space)", &MetropolisSampler::mutationSizeLow);
+	AddFloatAttribute(*this, "mutationsizehigh", "Metropolis upper mutation size (primary sample space)", &MetropolisSampler::mutationSizeHigh);
 }
 
 MetropolisSampler::~MetropolisSampler() {
@@ -246,35 +260,34 @@ bool MetropolisSampler::GetNextSample(Sample *sample)
 		data->currentStamp = 0;
 	} else {
 		// *** small mutation ***
-		// Mutation of non lazy samples
+		// Mutation of non lazy samples. All dimensions use the Kelemen
+		// two-scale exponential kernel. 
+		// Image-space mutations are scaled by the configured pixel range; the remaining
+		// [0,1] dimensions use the kernel directly.
 		sample->imageX = data->currentImage[0] =
 			mutateScaled(data->sampleImage[0], rngGet(0),
-			xPixelStart, xPixelEnd, range);
+			xPixelStart, xPixelEnd, range,
+			mutationSizeHigh, logRatio);
 		sample->imageY = data->currentImage[1] =
 			mutateScaled(data->sampleImage[1], rngGet(1),
-			yPixelStart, yPixelEnd, range);
-
-		// Derive a step size from the image-space range so that
-		// lensU/V, time, and wavelengths use the same kernel shape as image XY,
-		// rather than the hardcoded 0.5f which made small mutations behave nearly
-		// like large ones in those dimensions.
-		const float normRange = range / (0.5f * (xPixelEnd - xPixelStart + yPixelEnd - yPixelStart));
-		const float auxRange = max(0.001f, min(0.5f, normRange));
+			yPixelStart, yPixelEnd, range,
+			mutationSizeHigh, logRatio);
 		sample->lensU = data->currentImage[2] =
-			mutateScaled(data->sampleImage[2], rngGet(2),
-			0.f, 1.f, auxRange);
+			mutate(data->sampleImage[2], rngGet(2),
+			mutationSizeHigh, logRatio);
 		sample->lensV = data->currentImage[3] =
-			mutateScaled(data->sampleImage[3], rngGet(3),
-			0.f, 1.f, auxRange);
+			mutate(data->sampleImage[3], rngGet(3),
+			mutationSizeHigh, logRatio);
 		sample->time = data->currentImage[4] =
-			mutateScaled(data->sampleImage[4], rngGet(4),
-			0.f, 1.f, auxRange);
+			mutate(data->sampleImage[4], rngGet(4),
+			mutationSizeHigh, logRatio);
 		sample->wavelengths = data->currentImage[5] =
-			mutateScaled(data->sampleImage[5], rngGet(5),
-			0.f, 1.f, auxRange);
+			mutate(data->sampleImage[5], rngGet(5),
+			mutationSizeHigh, logRatio);
 		for (u_int i = SAMPLE_FLOATS; i < data->normalSamples; ++i)
 			data->currentImage[i] =
-				mutate(data->sampleImage[i], rngGet(i));
+				mutate(data->sampleImage[i], rngGet(i),
+				mutationSizeHigh, logRatio);
 		for (u_int i = 0; i < data->totalTimes; ++i)
 			data->currentTimeImage[i] = data->timeImage[i];
 		// Increase reference mutation count
@@ -338,7 +351,8 @@ float *MetropolisSampler::GetLazyValues(const Sample &sample, u_int num, u_int p
 		for (; currentTime < stampLimit; ++currentTime) {
 			const u_int roffs = data->rngOffset * static_cast<u_int>(stampLimit - currentTime + 1);
 			for (u_int i = offset; i < offset + size; ++i)
-				data->currentImage[i] = mutate(data->currentImage[i], rngGet2(i, roffs));
+				data->currentImage[i] = mutate(data->currentImage[i], rngGet2(i, roffs),
+					mutationSizeHigh, logRatio);
 		}
 	}
 	return data->currentImage + offset;
@@ -469,6 +483,8 @@ Sampler* MetropolisSampler::CreateSampler(const ParamSet &params, Film *film)
 	bool useCooldown = params.FindOneBool("usecooldown", true); // ramp the largemutationprob from 0.5 to the provided value during the first few seconds of rendering
 	bool useNoiseAware = params.FindOneBool("noiseaware", false); // enables or disables the noise-aware mode
 	float range = params.FindOneFloat("mutationrange", (xEnd - xStart + yEnd - yStart) / 32.f);	// maximum distance in pixel for a small mutation
+	float mutationSizeLow = params.FindOneFloat("mutationsizelow", 1.f / 1024.f);	// lower bound of the Kelemen exponential mutation kernel
+	float mutationSizeHigh = params.FindOneFloat("mutationsizehigh", 1.f / 64.f);	// upper bound of the Kelemen exponential mutation kernel
 
 	if (useNoiseAware) {
 		// Enable Film noise-aware map generation
@@ -476,7 +492,8 @@ Sampler* MetropolisSampler::CreateSampler(const ParamSet &params, Film *film)
 	}
 
 	return new MetropolisSampler(xStart, xEnd, yStart, yEnd, max(maxConsecRejects, 0),
-		largeMutationProb, range, useVariance, useCooldown, useNoiseAware);
+		largeMutationProb, range, useVariance, useCooldown, useNoiseAware,
+		mutationSizeLow, mutationSizeHigh);
 }
 
 static DynamicLoader::RegisterSampler<MetropolisSampler> r("metropolis");
