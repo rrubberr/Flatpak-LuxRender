@@ -67,7 +67,7 @@ set(
 	COMMON_EXT_PROJECT_ARGS
 	-DCMAKE_CXX_STANDARD=17
 	-DCMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE}
-	"-DCMAKE_CXX_FLAGS=${CMAKE_CXX_FLAGS} -I\"${INC_DIR}/python3.5m\" -w"
+	"-DCMAKE_CXX_FLAGS=${CMAKE_CXX_FLAGS} -I\"${DEPS_INC_DIR}/python3.12\" -w"
 	"-DCMAKE_C_FLAGS=${CMAKE_C_FLAGS} -w"
 	-DCMAKE_POSITION_INDEPENDENT_CODE=TRUE
     -DCMAKE_INSTALL_PREFIX=${DEPS_BUILD_DIR}
@@ -152,81 +152,28 @@ project(LuxRenderDeps)
 include(ExternalProject)
 
 #################
-# Build OpenSSL #
-#################
-
-if(APPLE)
-    set(OPENSSL_CONFIGURE_CMD
-        bash -c "cd ${EXT_DIR}/openssl && ./Configure darwin64-x86_64-cc shared -fPIC -w --prefix=${DEPS_BUILD_DIR}"
-    )
-else()
-    set(OPENSSL_CONFIGURE_CMD
-        bash -c "cd ${EXT_DIR}/openssl && ./config shared -fPIC -w -std=c++14 --prefix=${DEPS_BUILD_DIR}"
-    )
-endif()
-
-ExternalProject_Add(
-    openssl
-    SOURCE_DIR ${EXT_DIR}/openssl
-    PREFIX ${DEPS_PFX_DIR}/openssl
-    INSTALL_DIR ${DEPS_BUILD_DIR}
-    WORKING_DIRECTORY ${EXT_DIR}/openssl
-    CONFIGURE_COMMAND ${OPENSSL_CONFIGURE_CMD}
-    BUILD_COMMAND bash -c "cd ${EXT_DIR}/openssl && make -j1 install"
-    INSTALL_COMMAND ""
-)
-
-#################
 # Build cpython #
 #################
 
-if(APPLE)
-    set(CPYTHON_CONFIGURE_CMD
-        /bin/sh -c "cd ${EXT_DIR}/cpython && \
-        CC=${CMAKE_C_COMPILER} \
-        CXX=${CMAKE_CXX_COMPILER} \
-        CFLAGS='-O2 -w -fPIC -D_DARWIN_C_SOURCE -Wno-error=implicit-function-declaration -Wno-error=incompatible-pointer-types' \
-        CXXFLAGS='-I${DEPS_INC_DIR} -I${DEPS_INC_DIR}/openssl' \
-        LDFLAGS='-L${DEPS_LIB_DIR} -Wl,-rpath,@loader_path' \
-        ./configure --prefix=${DEPS_BUILD_DIR} --disable-shared --with-ensurepip=no --enable-optimizations"
-    )
-	set(CPYTHON_PATCH_CMD
-	    /bin/sh -c "(cd ${EXT_DIR}/cpython && grep -q m_sinpi Modules/mathmodule.c || sed -i '' 's@sinpi@m_sinpi@g' Modules/mathmodule.c) && \
-            (cd ${EXT_DIR}/cpython && grep -q is_pad Modules/_cursesmodule.c || sed -i '' 's@(self->win->_flags & _ISPAD)@(is_pad(self->win))@g' Modules/_cursesmodule.c) && \
-            (cd ${EXT_DIR}/cpython && patch -p1 -N -i ${EXT_DIR}/patches/python/python-disable-nis.patch || true)"
-	
-	)
-else()
-    set(CPYTHON_CONFIGURE_CMD
-        /bin/sh -c "cd ${EXT_DIR}/cpython && \
-        CC=${CMAKE_C_COMPILER} \
-        CXX=${CMAKE_CXX_COMPILER} \
-        sh ./configure --prefix=${DEPS_BUILD_DIR} --disable-shared \
-        --with-ensurepip=no --enable-optimizations"
-    )
-	set(CPYTHON_PATCH_CMD
-	/bin/sh -c "(cd ${EXT_DIR}/cpython && grep -q m_sinpi Modules/mathmodule.c || sed -i 's@sinpi@m_sinpi@g' Modules/mathmodule.c) && \
-		(cd ${EXT_DIR}/cpython && grep -q is_pad Modules/_cursesmodule.c || sed -i 's@(self->win->_flags & _ISPAD)@(is_pad(self->win))@g' Modules/_cursesmodule.c) && \
-		(cd ${EXT_DIR}/cpython && patch -p1 -N -i ${EXT_DIR}/patches/python/python-disable-nis.patch || true)"
-	
-	)
-endif()
+set(CPYTHON_CONFIGURE_CMD
+    /bin/sh -c "cd ${EXT_DIR}/cpython && \
+    sh ./configure --prefix=${DEPS_BUILD_DIR} --disable-shared \
+    --with-ensurepip=no --without-test-modules"
+)
 
 ExternalProject_Add(
     cpython
-    DEPENDS openssl
     SOURCE_DIR ${EXT_DIR}/cpython
     PREFIX ${DEPS_PFX_DIR}/cpython
     INSTALL_DIR ${DEPS_BUILD_DIR}
     CMAKE_ARGS
         -DCMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE}
     CONFIGURE_COMMAND ${CPYTHON_CONFIGURE_CMD}
-    PATCH_COMMAND ${CPYTHON_PATCH_CMD}
     BUILD_COMMAND
         /bin/sh -c "cd ${EXT_DIR}/cpython && make install -j$(nproc) cc=g++ cxx=g++ \
             LDFLAGS=\"-Wl,-rpath,'\$\$ORIGIN'\" \
-            cflags=\"-O2 -w -fPIC -I ${BIN_DIR} -I ${INC_DIR}/openssl\" \
-            cxxflags=\"-O2 -w -fPIC -std=c++14 -I ${BIN_DIR} -I ${INC_DIR}/openssl -fpermissive\""
+            cflags=\"-O2 -w -fPIC\" \
+            cxxflags=\"-O2 -w -fPIC -std=c++17\""
     INSTALL_COMMAND ""
 )
 
@@ -569,8 +516,8 @@ ExternalProject_Add(
 		-DEMBREE_GEOMETRY_CURVE=FALSE
 		-DEMBREE_GEOMETRY_USER=TRUE
 		-DEMBREE_GEOMETRY_SUBDIVISION=FALSE
-		-DEMBREE_GEOMETRY_INSTANCE=FALSE
-		-DEMBREE_GEOMETRY_INSTANCE_ARRAY=FALSE
+		-DEMBREE_GEOMETRY_INSTANCE=TRUE
+		-DEMBREE_GEOMETRY_INSTANCE_ARRAY=TRUE
 		-DEMBREE_GEOMETRY_POINT=TRUE
 		-DEMBREE_GEOMETRY_GRID=FALSE
 		-DEMBREE_IGNORE_INVALID_RAYS=TRUE
@@ -606,7 +553,7 @@ ExternalProject_Add(
 		-DBUILD_SHARED_LIBS=OFF
 		-DCMAKE_INSTALL_RPATH_USE_LINK_PATH=TRUE
 		-DCMAKE_BUILD_WITH_INSTALL_RPATH=TRUE
-		-DPython_ROOT_DIR=${BLD_DIR}
+		-DPython_ROOT_DIR=${DEPS_BUILD_DIR}
 		-DPython_FIND_STRATEGY=LOCATION
 		-DCMAKE_FIND_FRAMEWORK=LAST
 )
