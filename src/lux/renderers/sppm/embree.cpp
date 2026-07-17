@@ -81,9 +81,7 @@ bool EmbreeHitPointAccel::PointQueryCallback(struct RTCPointQueryFunctionArgumen
 
 	HitPoint *hp = accel->nodeData[args->primID];
 
-	// The query radius is used to prune the BVH. AddFluxToHitPoint() does
-	// the test against this hit point's accumPhotonRadius2 and
-	// then deposits flux, like every other accelerator.
+	// The query radius is 0,
 	accel->AddFluxToHitPoint(*qctx->sample, hp, *qctx->photon);
 
 	// Hit points generally have different radii.
@@ -147,6 +145,7 @@ void EmbreeHitPointAccel::AddFlux(Sample &sample, const PhotonData &photon) {
 	query.time = 0.f;
 
 	QueryContext qctx = { this, &sample, &photon };
-	rtcPointQuery(scene, &query, &context,
-		&EmbreeHitPointAccel::PointQueryCallback, (void *) &qctx);
+	// The point-query callback is already attached to the geometry in
+	// Refresh() via rtcSetGeometryPointQueryFunction().
+	rtcPointQuery(scene, &query, &context, NULL, (void *) &qctx);
 }
