@@ -1371,464 +1371,464 @@ void export_PyContext()
 
 	export_float_buffer();
 
-	class_<PyContext>(
+	class_<lux::PyContext>(
 		"Context",
 		ds_pylux_Context,
 		init<std::string>(args("Context", "name"), ds_pylux_Context_init)
 		)
 		.def_readonly("name",
-			&PyContext::name
+			&lux::PyContext::name
 		)
 		.def("__repr__",
-			&PyContext::repr,
+			&lux::PyContext::repr,
 			args("Context")
 		)
 		.def("accelerator",
-			&PyContext::accelerator,
+			&lux::PyContext::accelerator,
 			args("Context", "type", "ParamSet"),
 			ds_pylux_Context_accelerator
 		)
 		.def("addServer",
-			&PyContext::addServer,
+			&lux::PyContext::addServer,
 			args("Context", "address"),
 			ds_pylux_Context_addServer
 		)
 		.def("addThread",
-			&PyContext::addThread,
+			&lux::PyContext::addThread,
 			args("Context"),
 			ds_pylux_Context_addThread
 		)
 		.def("areaLightSource",
-			&PyContext::areaLightSource,
+			&lux::PyContext::areaLightSource,
 			args("Context", "type", "ParamSet"),
 			ds_pylux_Context_areaLightSource
 		)
 		.def("attributeBegin",
-			&PyContext::attributeBegin,
+			&lux::PyContext::attributeBegin,
 			args("Context"),
 			ds_pylux_Context_attributeBegin
 		)
 		.def("attributeEnd",
-			&PyContext::attributeEnd,
+			&lux::PyContext::attributeEnd,
 			args("Context"),
 			ds_pylux_Context_attributeEnd
 		)
 		.def("blenderCombinedDepthBuffers",
-			&PyContext::blenderCombinedDepthBuffers,
+			&lux::PyContext::blenderCombinedDepthBuffers,
 			args("Context"),
 			"Blender framebuffer fetcher method; returns combined Color+Alpha and Depth buffers in bottom-up format as Python buffers"
 		)
 		.def("blenderCombinedDepthRects",
-			&PyContext::blenderCombinedDepthRects,
+			&lux::PyContext::blenderCombinedDepthRects,
 			args("Context"),
 			"Blender framebuffer fetcher method; returns combined Color+Alpha and Depth buffers in bottom-up format"
 		)
 		.def("camera",
-			&PyContext::camera,
+			&lux::PyContext::camera,
 			args("Context", "type", "ParamSet"),
 			ds_pylux_Context_camera
 		)
 		.def("cleanup",
-			&PyContext::cleanup,
+			&lux::PyContext::cleanup,
 			args("Context"),
 			ds_pylux_Context_cleanup
 		)
 		.def("concatTransform",
-			&PyContext::concatTransform,
+			&lux::PyContext::concatTransform,
 			args("Context", "transform"),
 			ds_pylux_Context_concatTransform
 		)
 		.def("coordSysTransform",
-			&PyContext::coordSysTransform,
+			&lux::PyContext::coordSysTransform,
 			args("Context", "name"),
 			ds_pylux_Context_coordSysTransform
 		)
 		.def("coordinateSystem",
-			&PyContext::coordinateSystem,
+			&lux::PyContext::coordinateSystem,
 			args("Context", "name"),
 			ds_pylux_Context_coordinateSystem
 		)
 		.def("disableRandomMode",
-			&PyContext::disableRandomMode,
+			&lux::PyContext::disableRandomMode,
 			args("Context"),
 			ds_pylux_Context_disableRandomMode
 		)
 		.def("enableDebugMode",
-			&PyContext::enableDebugMode,
+			&lux::PyContext::enableDebugMode,
 			args("Context"),
 			ds_pylux_Context_enableDebugMode
 		)
 		.def("exit",
-			&PyContext::exit,
+			&lux::PyContext::exit,
 			args("Context"),
 			ds_pylux_Context_exit
 		)
 		.def("exterior",
-			&PyContext::exterior,
+			&lux::PyContext::exterior,
 			args("Context", "VolumeName"),
 			ds_pylux_Context_exterior
 		)
 		.def("film",
-			&PyContext::film,
+			&lux::PyContext::film,
 			args("Context", "type", "ParamSet"),
 			ds_pylux_Context_film
 		)
 		.def("framebuffer",
-			&PyContext::framebuffer,
+			&lux::PyContext::framebuffer,
 			args("Context"),
 			ds_pylux_Context_framebuffer
 		)
 		.def("floatFramebuffer",
-			&PyContext::floatFramebuffer,
+			&lux::PyContext::floatFramebuffer,
 			args("Context"),
 			ds_pylux_Context_floatframebuffer
 		)
 		.def("alphaBuffer",
-			&PyContext::alphaBuffer,
+			&lux::PyContext::alphaBuffer,
 			args("Context"),
 			ds_pylux_Context_alphabuffer
 		)
 		.def("zBuffer",
-			&PyContext::zBuffer,
+			&lux::PyContext::zBuffer,
 			args("Context"),
 			ds_pylux_Context_zbuffer
 		)
 		.def("getDefaultParameterValue",
-			&PyContext::getDefaultParameterValue,
+			&lux::PyContext::getDefaultParameterValue,
 			args("Context", "component", "parameter", "index"),
 			ds_pylux_Context_getDefaultParameterValue
 		)
 		.def("getDefaultStringParameterValue",
-			&PyContext::getDefaultStringParameterValue,
+			&lux::PyContext::getDefaultStringParameterValue,
 			args("Context"),
 			ds_pylux_Context_getDefaultStringParameterValue
 		)
 		.def("getHistogramImage",
-			&PyContext::getHistogramImage,
+			&lux::PyContext::getHistogramImage,
 			args("Context", "width", "height", "options"),
 			ds_pylux_Context_getHistogramImage
 		)
 		.def("getNetworkServerUpdateInterval",
-			&PyContext::getNetworkServerUpdateInterval,
+			&lux::PyContext::getNetworkServerUpdateInterval,
 			args("Context"),
 			ds_pylux_Context_getNetworkServerUpdateInterval
 		)
 		.def("getAttribute",
-			&PyContext::getAttribute,
+			&lux::PyContext::getAttribute,
 			args("Context"),
 			ds_pylux_Context_getAttribute
 		)
 		.def("getAttributes",
-			&PyContext::getAttributes,
+			&lux::PyContext::getAttributes,
 			args("Context"),
 			ds_pylux_Context_getAttributes
 		)
 		.def("getParameterValue",
-			&PyContext::getParameterValue,
+			&lux::PyContext::getParameterValue,
 			args("Context", "component", "parameter", "index"),
 			ds_pylux_Context_getParameterValue
 		)
 		.def("getRenderingServersStatus",
-			&PyContext::getRenderingServersStatus,
+			&lux::PyContext::getRenderingServersStatus,
 			args("Context"),
 			ds_pylux_Context_getRenderingServersStatus
 		)
 		.def("getServerCount",
-			&PyContext::getServerCount,
+			&lux::PyContext::getServerCount,
 			args("Context"),
 			ds_pylux_Context_getServerCount
 		)
 		.def("getStringParameterValue",
-			&PyContext::getStringParameterValue,
+			&lux::PyContext::getStringParameterValue,
 			args("Context"),
 			ds_pylux_Context_getStringParameterValue
 		)
 		.def("identity",
-			&PyContext::identity,
+			&lux::PyContext::identity,
 			args("Context"),
 			ds_pylux_Context_identity
 		)
 		.def("interior",
-			&PyContext::interior,
+			&lux::PyContext::interior,
 			args("Context", "VolumeName"),
 			ds_pylux_Context_interior
 		)
 		.def("lightGroup",
-			&PyContext::lightGroup,
+			&lux::PyContext::lightGroup,
 			args("Context", "name", "ParamSet"),
 			ds_pylux_Context_lightGroup
 		)
 		.def("lightSource",
-			&PyContext::lightSource,
+			&lux::PyContext::lightSource,
 			args("Context", "type", "ParamSet"),
 			ds_pylux_Context_lightSource
 		)
 		.def("loadFLM",
-			&PyContext::loadFLM,
+			&lux::PyContext::loadFLM,
 			args("Context", "filename"),
 			ds_pylux_Context_loadFLM
 		)
 		.def("lookAt",
-			&PyContext::lookAt,
+			&lux::PyContext::lookAt,
 			args("Context", "pos0", "pos1", "pos2", "trg0", "trg1", "trg2", "up0", "up1", "up2"),
 			ds_pylux_Context_lookAt
 		)
 		.def("makeNamedMaterial",
-			&PyContext::makeNamedMaterial,
+			&lux::PyContext::makeNamedMaterial,
 			args("Context", "name", "ParamSet"),
 			ds_pylux_Context_makeNamedMaterial
 		)
 		.def("makeNamedVolume",
-			&PyContext::makeNamedVolume,
+			&lux::PyContext::makeNamedVolume,
 			args("Context", "name", "type", "ParamSet"),
 			ds_pylux_Context_makeNamedVolume
 		)
 		.def("material",
-			&PyContext::material,
+			&lux::PyContext::material,
 			args("Context", "type", "ParamSet"),
 			ds_pylux_Context_material
 		)
 		.def("motionBegin",
-			&PyContext::motionBegin,
+			&lux::PyContext::motionBegin,
 			args("Context"),
 			ds_pylux_Context_motionBegin
 		)
 		.def("motionEnd",
-			&PyContext::motionEnd,
+			&lux::PyContext::motionEnd,
 			args("Context"),
 			ds_pylux_Context_motionEnd
 		)
 		.def("motionInstance",
-			&PyContext::motionInstance,
+			&lux::PyContext::motionInstance,
 			args("Context"),
 			ds_pylux_Context_motionInstance
 		)
 		.def("namedMaterial",
-			&PyContext::namedMaterial,
+			&lux::PyContext::namedMaterial,
 			args("Context", "name"),
 			ds_pylux_Context_namedMaterial
 		)
 		.def("objectBegin",
-			&PyContext::objectBegin,
+			&lux::PyContext::objectBegin,
 			args("Context", "name"),
 			ds_pylux_Context_objectBegin
 		)
 		.def("objectEnd",
-			&PyContext::objectEnd,
+			&lux::PyContext::objectEnd,
 			args("Context"),
 			ds_pylux_Context_objectEnd
 		)
 		.def("objectInstance",
-			&PyContext::objectInstance,
+			&lux::PyContext::objectInstance,
 			args("Context", "name"),
 			ds_pylux_Context_objectInstance
 		)
 		.def("overrideResumeFLM",
-			&PyContext::overrideResumeFLM,
+			&lux::PyContext::overrideResumeFLM,
 			args("Context"),
 			ds_pylux_Context_overrideResumeFLM
 		)
 		.def("parse",
-			&PyContext::parse,
+			&lux::PyContext::parse,
 			args("Context", "filename", "asynchronous"),
 			ds_pylux_Context_parse
 			)
 		.def("parsePartial",
-			&PyContext::parsePartial,
+			&lux::PyContext::parsePartial,
 			args("Context", "filename", "asynchronous"),
 			ds_pylux_Context_parsePartial
 		)
 		.def("parseSuccessful",
-			&PyContext::parseSuccessful,
+			&lux::PyContext::parseSuccessful,
 			args("Context")
 			)
 		.def("pause",
-			&PyContext::pause,
+			&lux::PyContext::pause,
 			args("Context"),
 			ds_pylux_Context_pause
 		)
 		.def("renderer",
-			&PyContext::renderer,
+			&lux::PyContext::renderer,
 			args("Context", "type", "ParamSet"),
 			ds_pylux_Context_renderer
 		)
 		.def("pixelFilter",
-			&PyContext::pixelFilter,
+			&lux::PyContext::pixelFilter,
 			args("Context", "type", "ParamSet"),
 			ds_pylux_Context_pixelFilter
 		)
 		.def("portalShape",
-			&PyContext::portalShape,
+			&lux::PyContext::portalShape,
 			args("Context", "type", "ParamSet"),
 			ds_pylux_Context_portalShape
 		)
 		.def("portalInstance",
-			&PyContext::portalInstance,
+			&lux::PyContext::portalInstance,
 			args("Context", "name"),
 			ds_pylux_Context_portalInstance
 		)
 		.def("removeServer",
-			&PyContext::removeServer,
+			&lux::PyContext::removeServer,
 			args("Context", "address"),
 			ds_pylux_Context_removeServer
 		)
 		.def("removeThread",
-			&PyContext::removeThread,
+			&lux::PyContext::removeThread,
 			args("Context"),
 			ds_pylux_Context_removeThread
 		)
 		.def("resetServer",
-			&PyContext::resetServer,
+			&lux::PyContext::resetServer,
 			args("Context", "address", "password"),
 			ds_pylux_Context_resetServer
 		)
 		.def("reverseOrientation",
-			&PyContext::reverseOrientation,
+			&lux::PyContext::reverseOrientation,
 			args("Context"),
 			ds_pylux_Context_reverseOrientation
 		)
 		.def("rotate",
-			&PyContext::rotate,
+			&lux::PyContext::rotate,
 			args("Context", "degrees", "x", "y", "z"),
 			ds_pylux_Context_rotate
 		)
 		.def("sampler",
-			&PyContext::sampler,
+			&lux::PyContext::sampler,
 			args("Context", "type", "ParamSet"),
 			ds_pylux_Context_sampler
 		)
 		.def("saveFLM",
-			&PyContext::saveFLM,
+			&lux::PyContext::saveFLM,
 			args("Context", "filename"),
 			ds_pylux_Context_saveFLM
 		)
 		.def("saveEXR",
-			&PyContext::saveEXR,
+			&lux::PyContext::saveEXR,
 			args("Context", "filename", "useHalfFloat", "includeZBuffer", "tonemapped"),
 			ds_pylux_Context_saveEXR
 		)
 		.def("scale",
-			&PyContext::scale,
+			&lux::PyContext::scale,
 			args("Context", "x", "y", "z"),
 			ds_pylux_Context_scale
 		)
 		.def("setEpsilon",
-			&PyContext::setEpsilon,
+			&lux::PyContext::setEpsilon,
 			args("Context"),
 			ds_pylux_Context_setEpsilon
 		)
 		.def("setHaltSamplesPerPixel",
-			&PyContext::setHaltSamplesPerPixel,
+			&lux::PyContext::setHaltSamplesPerPixel,
 			args("Context"),
 			ds_pylux_Context_setHaltSamplesPerPixel
 		)
 		.def("setNetworkServerUpdateInterval",
-			&PyContext::setNetworkServerUpdateInterval,
+			&lux::PyContext::setNetworkServerUpdateInterval,
 			args("Context"),
 			ds_pylux_Context_setNetworkServerUpdateInterval
 		)
 		.def("setAttribute",
-			&PyContext::setAttribute,
+			&lux::PyContext::setAttribute,
 			args("Context"),
 			ds_pylux_Context_setAttribute
 		)
 		.def("setParameterValue",
-			&PyContext::setParameterValue,
+			&lux::PyContext::setParameterValue,
 			args("Context"),
 			ds_pylux_Context_setParameterValue
 		)
 		.def("setStringParameterValue",
-			&PyContext::setStringParameterValue,
+			&lux::PyContext::setStringParameterValue,
 			args("Context"),
 			ds_pylux_Context_setStringParameterValue
 		)
 		.def("shape",
-			&PyContext::shape,
+			&lux::PyContext::shape,
 			args("Context", "type", "ParamSet"),
 			ds_pylux_Context_shape
 		)
 		.def("start",
-			&PyContext::start,
+			&lux::PyContext::start,
 			args("Context"),
 			ds_pylux_Context_start
 		)
 		.def("statistics",
-			&PyContext::statistics,
+			&lux::PyContext::statistics,
 			args("Context", "name"),
 			ds_pylux_Context_statistics
 		)
 		.def("printableStatistics",
-			&PyContext::printableStatistics,
+			&lux::PyContext::printableStatistics,
 			args("Context", "add_total"),
 			ds_pylux_Context_printable_statistics
 		)
 		.def("updateStatisticsWindow",
-			&PyContext::updateStatisticsWindow,
+			&lux::PyContext::updateStatisticsWindow,
 			args("Context"),
 			ds_pylux_Context_update_statistics_window
 		)
 		.def("surfaceIntegrator",
-			&PyContext::surfaceIntegrator,
+			&lux::PyContext::surfaceIntegrator,
 			args("Context", "type", "ParamSet"),
 			ds_pylux_Context_surfaceIntegrator
 		)
 		.def("texture",
-			&PyContext::texture,
+			&lux::PyContext::texture,
 			args("Context", "name", "variant", "type", "ParamSet"),
 			ds_pylux_Context_texture
 		)
 		.def("transform",
-			&PyContext::transform,
+			&lux::PyContext::transform,
 			args("Context", "transform"),
 			ds_pylux_Context_transform
 		)
 		.def("transformBegin",
-			&PyContext::transformBegin,
+			&lux::PyContext::transformBegin,
 			args("Context"),
 			ds_pylux_Context_transformBegin
 		)
 		.def("transformEnd",
-			&PyContext::transformEnd,
+			&lux::PyContext::transformEnd,
 			args("Context"),
 			ds_pylux_Context_transformEnd
 		)
 		.def("translate",
-			&PyContext::translate,
+			&lux::PyContext::translate,
 			args("Context", "x", "y", "z"),
 			ds_pylux_Context_translate
 		)
 		.def("updateFilmFromNetwork",
-			&PyContext::updateFilmFromNetwork,
+			&lux::PyContext::updateFilmFromNetwork,
 			args("Context"),
 			ds_pylux_Context_updateFilmFromNetwork
 		)
 		.def("updateFramebuffer",
-			&PyContext::updateFramebuffer,
+			&lux::PyContext::updateFramebuffer,
 			args("Context"),
 			ds_pylux_Context_updateFramebuffer
 		)
 		.def("volume",
-			&PyContext::volume,
+			&lux::PyContext::volume,
 			args("Context", "type", "ParamSet"),
 			ds_pylux_Context_volume
 		)
 		.def("volumeIntegrator",
-			&PyContext::volumeIntegrator,
+			&lux::PyContext::volumeIntegrator,
 			args("Context", "type", "ParamSet"),
 			ds_pylux_Context_volumeIntegrator
 		)
 		.def("wait",
-			&PyContext::wait,
+			&lux::PyContext::wait,
 			args("Context"),
 			ds_pylux_Context_wait
 		)
 		.def("worldBegin",
-			&PyContext::worldBegin,
+			&lux::PyContext::worldBegin,
 			args("Context"),
 			ds_pylux_Context_worldBegin
 		)
 		.def("worldEnd",
-			&PyContext::worldEnd,
+			&lux::PyContext::worldEnd,
 			args("Context"),
 			ds_pylux_Context_worldEnd
 		)
