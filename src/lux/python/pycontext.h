@@ -446,6 +446,27 @@ public:
 	void cleanup()
 	{
 		checkActiveContext();
+
+		// Join any background worldEnd/render threads BEFORE freeing the
+		// Context. worldEnd() launches pyWorldEnd() in a separate thread that
+		// runs Context::WorldEnd() -> ParseEnd() -> MakeScene(), which reads
+		// renderOptions (a member of this Context). If we delete the Context
+		// while that thread is still inside MakeScene(), it dereferences freed
+		// memory and segfaults (SIGSEGV in MakeFilter). ~PyContext() already
+		// joins these threads; cleanup() must do the same, otherwise a render
+		// started via worldEnd() and then torn down via cleanup() (as
+		// LuxBlend45's LuxManager.reset() does) races and crashes.
+		// NOTE: we must call join() explicitly. boost::thread's destructor only
+		// DETACHES a still-running thread (it does not join), so a bare
+		// delete(t) would leave the thread running and still crash.
+		BOOST_FOREACH(boost::thread *t, pyLuxWorldEndThreads)
+		{
+			if (t->joinable())
+				t->join();
+			delete(t);
+		}
+		pyLuxWorldEndThreads.clear();
+
 		context->Cleanup();
 
 		// Ensure the context memory is freed. Any pylux calls

@@ -106,7 +106,8 @@ template <class T,class U> inline Texture<SWCSpectrum> * ScaleTexture<T,U>::Crea
 {
 	boost::shared_ptr<Texture<SWCSpectrum> > tex2(tp.GetSWCSpectrumTexture("tex2", RGBColor(1.f)));
 	map<string, boost::shared_ptr<Texture<float> > > *ft = Context::GetActiveFloatTextures();
-	if (ft->find(string("tex1")) == ft->end()) {
+	const string &tex1name = tp.FindTexture("tex1");
+	if (ft->find(tex1name) == ft->end()) {
 		boost::shared_ptr<Texture<SWCSpectrum> > tex1(tp.GetSWCSpectrumTexture("tex1", RGBColor(1.f)));
 		return new ScaleTexture<SWCSpectrum, SWCSpectrum>(tex1, tex2);
 	} else {
