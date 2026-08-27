@@ -15,20 +15,16 @@ using std::ftell;
 
 #define MAX_STL_FILE_FACES	(16*1024*1024) // 16Mb
 
-#ifndef _MSC_VER
-
-	inline int stricmp(const char* a, const char* b)
+inline int stricmp(const char* a, const char* b)
+{
+	for( ; *a || *b ; a++, b++)
 	{
-		for( ; *a || *b ; a++, b++)
-		{
-			if(int d = toupper(*a) - toupper(*b))
-				return d;
-		}
-		
-		return 0;
+		if(int d = toupper(*a) - toupper(*b))
+			return d;
 	}
-
-#endif // _MSC_VER
+	
+	return 0;
+}
 
 namespace lux
 {

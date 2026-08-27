@@ -482,14 +482,12 @@ extern "C" void luxInit()
 	// as is expected by the fast FP-conversion routines.  In particular,
 	// we want double precision on Linux, not extended precision!
 #ifdef FAST_INT
-#if defined(__linux__) && defined(__i386__)
+#if defined(__i386__)
 	int cword = _FPU_MASK_DM | _FPU_MASK_ZM | _FPU_MASK_OM | _FPU_MASK_PM |
 	_FPU_MASK_UM | _FPU_MASK_IM | _FPU_DOUBLE | _FPU_RC_NEAREST;
 	_FPU_SETCW(cword);
 #endif
-#if defined(WIN32)
-	_control87(_PC_53, MCW_PC);
-#endif
+
 #endif // FAST_INT
 
 	// API Initialization
@@ -1219,7 +1217,6 @@ extern "C" void luxErrorPrint(int code, int severity, const char *message)
 
 	luxLastError = code;
 	cerr<<"[";
-#if !defined(WIN32) || defined(__CYGWIN__) //windows does not support ANSI escape codes (but CYGWIN does) ...
 	//set the color
 	switch (severity) {
 	case LUX_DEBUG:
@@ -1238,25 +1235,6 @@ extern "C" void luxErrorPrint(int code, int severity, const char *message)
 		cerr<<"\033[0;31m";		// RED
 		break;
 	}
-#else // ... but it does have it's own console API
-	switch (severity) {
-	case LUX_DEBUG:
-		w32util::ChangeConsoleColor( FOREGROUND_BLUE );
-		break;
-	case LUX_INFO:
-		w32util::ChangeConsoleColor( FOREGROUND_GREEN );
-		break;
-	case LUX_WARNING:
-		w32util::ChangeConsoleColor( FOREGROUND_YELLOW );
-		break;
-	case LUX_ERROR:
-		w32util::ChangeConsoleColor( FOREGROUND_RED );
-		break;
-	case LUX_SEVERE:
-		w32util::ChangeConsoleColor( FOREGROUND_RED );
-		break;
-	}
-#endif
 	cerr<<"Lux ";
 	cerr<<boost::posix_time::second_clock::local_time()<<' ';
 	switch (severity) {
@@ -1277,11 +1255,7 @@ extern "C" void luxErrorPrint(int code, int severity, const char *message)
 		break;
 	}
 	cerr<<" : "<<code;
-#if !defined(WIN32) || defined(__CYGWIN__) // windows does not support ANSI escape codes (but CYGWIN does) ...
 	cerr<<"\033[0m";
-#else // ... but it does have it's own console API
-	w32util::ChangeConsoleColor( FOREGROUND_WHITE );
-#endif
 	cerr<<"] "<<message<<endl<<std::flush;
 }
 

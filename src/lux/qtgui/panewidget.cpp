@@ -66,11 +66,6 @@ PaneWidget::PaneWidget(QWidget *parent, const QString& label, const QString& ico
         ui->labelPaneName->setStyleSheet("QLabel { background-color: transparent; }");
     }
 
-#if defined(__APPLE__)
-	ui->frame->setLineWidth(2);
-	ui->labelPaneName->setFont(QFont  ("Lucida Grande", 11, QFont::Bold));
-#endif
-
 	expandlabel = new ClickableLabel(">", this);
 	expandlabel->setPixmap(QPixmap(":/icons/collapsedicon.png"));
 	expandlabel->setStyleSheet("QFrame { background-color: transparent; }");
@@ -225,9 +220,6 @@ void PaneWidget::setWidget(QWidget *widget)
 {
 	mainwidget = widget;
 	ui->paneLayout->addWidget(widget);
-#if defined(__APPLE__)
-	expandlabel->setStyleSheet(QString::fromUtf8(" QFrame {\n""background-color: rgba(232, 232, 232, 0)\n""}"));
-#endif
 	if (!mainwidget->isEnabledTo(mainwidget->parentWidget()))
 		onofflabel->setPixmap(QPixmap(":/icons/powerofficon.png"));
 	if (expanded)

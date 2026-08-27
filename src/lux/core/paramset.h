@@ -30,10 +30,6 @@
 
 #include <map>
 using std::map;
-#if (_MSC_VER >= 1400) // NOBOOK
-#include <stdio.h>     // NOBOOK
-#define snprintf _snprintf // NOBOOK
-#endif // NOBOOK
 
 namespace lux
 {

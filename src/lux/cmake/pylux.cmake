@@ -53,20 +53,11 @@ IF(Python3_FOUND)
 		pystring::pystring
 	)
 
-	if(APPLE)
-		set_target_properties(pylux PROPERTIES
-			PREFIX ""
-			SUFFIX ".so" # Python expects .so even on macOS for extensions
-			BUILD_WITH_INSTALL_RPATH TRUE
-			INSTALL_RPATH "@loader_path"
-		)
-	else()
-		set_target_properties(pylux PROPERTIES
-			PREFIX ""
-			BUILD_WITH_INSTALL_RPATH TRUE
-			INSTALL_RPATH "$ORIGIN"
-		)
-	endif()
+	set_target_properties(pylux PROPERTIES
+		PREFIX ""
+		BUILD_WITH_INSTALL_RPATH TRUE
+		INSTALL_RPATH "$ORIGIN"
+	)
 
 ELSE(Python3_FOUND)
 	MESSAGE( STATUS "Warning: could not find Python libraries - not building python module")

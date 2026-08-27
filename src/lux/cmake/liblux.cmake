@@ -27,9 +27,6 @@
 IF (NOT BISON_NOT_AVAILABLE AND NOT FLEX_NOT_AVAILABLE)
 	# Create custom command for bison/yacc
 	BISON_TARGET(LuxParser ${CMAKE_SOURCE_DIR}/core/luxparse.y ${CMAKE_BINARY_DIR}/luxparse.cpp)
-	IF(APPLE AND !APPLE_64)
-		EXECUTE_PROCESS(COMMAND mv ${CMAKE_SOURCE_DIR}/luxparse.cpp.h ${CMAKE_BINARY_DIR}/luxparse.hpp)
-	ENDIF(APPLE AND !APPLE_64)
 	SET_SOURCE_FILES_PROPERTIES(${CMAKE_BINARY_DIR}/core/luxparse.cpp GENERATED)
 	#SOURCE_GROUP("Parser Files" FILES core/luxparse.y)
 
@@ -926,21 +923,9 @@ target_link_libraries(lux PRIVATE
 
 target_compile_definitions(lux PRIVATE LUX_INTERNAL)
 
-if(APPLE)
-    set_target_properties(lux PROPERTIES
-        BUILD_WITH_INSTALL_RPATH TRUE
-
-        # Let this dylib find OTHER dylibs in the Frameworks folder.
-        INSTALL_RPATH "@loader_path/../Frameworks;@executable_path/../Frameworks"
-
-        # Ensure the install name is @rpath-based.
-        INSTALL_NAME_DIR "@rpath"
-    )
-else()
-    set_target_properties(lux PROPERTIES
-        BUILD_WITH_INSTALL_RPATH TRUE
-        INSTALL_RPATH "$ORIGIN"
-    )
-endif()
+set_target_properties(lux PROPERTIES
+    BUILD_WITH_INSTALL_RPATH TRUE
+    INSTALL_RPATH "$ORIGIN"
+)
 
 #ADD_CUSTOM_TARGET(luxStatic SOURCES ${lux_lib_hdr})

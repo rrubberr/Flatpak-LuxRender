@@ -121,11 +121,7 @@ void overlayStatistics(QImage *image)
 	stats = stats.replace(QChar(' '), QChar::Nbsp);
 	stats = stats.replace("|", " |  ");
 
-#if defined(__APPLE__)
-	QFont font("Monaco");
-#else
 	QFont font("Helvetica");
-#endif
 	font.setStyleHint(QFont::SansSerif, static_cast<QFont::StyleStrategy>(QFont::PreferAntialias | QFont::PreferQuality));
 	
 	int fontSize = (int)min(max(image->width() / 100.0f, 10.f), 18.f);

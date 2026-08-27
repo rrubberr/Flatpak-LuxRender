@@ -42,9 +42,6 @@ LowdiscrepancyPixelSampler::LowdiscrepancyPixelSampler(int xstart, int xend,
 }
 
 u_int LowdiscrepancyPixelSampler::GetTotalPixels() {
-#if defined(WIN32) && !defined(__CYGWIN__)
-#undef max // before the use of vaR.max function
-#endif
 	return std::numeric_limits<unsigned int>::max();
 }
 

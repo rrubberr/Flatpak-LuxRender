@@ -26,68 +26,56 @@ MESSAGE(STATUS "CMAKE VERSION DETECTED " ${CMAKE_VERSION})
 # Set the compiler #
 ####################
 
-if(APPLE)
-    # Use Xcode's Clang
+# Use the Intel compiler if available.
+if(DEFINED ENV{ONEAPI_ROOT})
+    set(INTEL_CC "$ENV{ONEAPI_ROOT}/compiler/latest/bin/icx")
+    set(INTEL_CXX "$ENV{ONEAPI_ROOT}/compiler/latest/bin/icpx")
+    set(LLD_LINKER "$ENV{ONEAPI_ROOT}/compiler/latest/bin/lld")
+else()
+    find_program(INTEL_CC NAMES icx)
+    find_program(INTEL_CXX NAMES icpx)
+    find_program(LLD_LINKER NAMES lld)
+endif()
+
+# Look for system Clang if Intel wasn't found.
+if(NOT INTEL_CC)
     find_program(CLANG_CC NAMES clang)
     find_program(CLANG_CXX NAMES clang++)
+    if(NOT LLD_LINKER)
+        find_program(LLD_LINKER NAMES lld)
+    endif()
+endif()
+
+if(INTEL_CC AND INTEL_CXX)
+    set(CMAKE_C_COMPILER ${INTEL_CC})
+    set(CMAKE_CXX_COMPILER ${INTEL_CXX})
     
+    # Force LTO code generation to emit Position Independent Code for executables
+    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -fPIE")
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fPIE")
+    
+    # 2. Bake linker fixes directly into the LLD call rule.
+    set(CMAKE_C_USING_LINKER_LLD "-fuse-ld=lld -pie -Wl,--ignore-data-address-equality")
+    set(CMAKE_CXX_USING_LINKER_LLD "-fuse-ld=lld -pie -Wl,--ignore-data-address-equality")
+    set(CMAKE_LINKER_TYPE LLD)
+    
+    message(STATUS "Using Intel OneAPI C: ${CMAKE_C_COMPILER}")
+    message(STATUS "Using Intel OneAPI CXX: ${CMAKE_CXX_COMPILER}")
+    message(STATUS "Using Intel OneAPI LLD: ${LLD_LINKER}")
+    set(USING_CLANG TRUE)
+    set(USING_INTEL TRUE)
+elseif(CLANG_CC AND CLANG_CXX AND LLD_LINKER)
     set(CMAKE_C_COMPILER ${CLANG_CC})
     set(CMAKE_CXX_COMPILER ${CLANG_CXX})
-    message(STATUS "Using Apple Clang: ${CMAKE_C_COMPILER}")
-
-    execute_process(COMMAND sysctl -n hw.ncpu OUTPUT_VARIABLE NPROC_VALUE OUTPUT_STRIP_TRAILING_WHITESPACE)
+    set(CMAKE_LINKER_TYPE LLD)
+    message(STATUS "Using LLVM Clang: ${CMAKE_C_COMPILER}")
+    set(USING_CLANG TRUE)
 else()
-    # Use the Intel compiler if available.
-    if(DEFINED ENV{ONEAPI_ROOT})
-        set(INTEL_CC "$ENV{ONEAPI_ROOT}/compiler/latest/bin/icx")
-        set(INTEL_CXX "$ENV{ONEAPI_ROOT}/compiler/latest/bin/icpx")
-        set(LLD_LINKER "$ENV{ONEAPI_ROOT}/compiler/latest/bin/lld")
-    else()
-        find_program(INTEL_CC NAMES icx)
-        find_program(INTEL_CXX NAMES icpx)
-        find_program(LLD_LINKER NAMES lld) # Only look globally if Intel env isn't set
-    endif()
-    
-    # Look for system Clang if Intel wasn't found.
-    if(NOT INTEL_CC)
-        find_program(CLANG_CC NAMES clang)
-        find_program(CLANG_CXX NAMES clang++)
-        if(NOT LLD_LINKER)
-            find_program(LLD_LINKER NAMES lld)
-        endif()
-    endif()
-
-    if(INTEL_CC AND INTEL_CXX)
-        set(CMAKE_C_COMPILER ${INTEL_CC})
-        set(CMAKE_CXX_COMPILER ${INTEL_CXX})
-        
-        # Force LTO code generation to emit Position Independent Code for executables
-        set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -fPIE")
-        set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fPIE")
-        
-        # 2. Bake linker fixes directly into the LLD call rule.
-        set(CMAKE_C_USING_LINKER_LLD "-fuse-ld=lld -pie -Wl,--ignore-data-address-equality")
-        set(CMAKE_CXX_USING_LINKER_LLD "-fuse-ld=lld -pie -Wl,--ignore-data-address-equality")
-        set(CMAKE_LINKER_TYPE LLD)
-        
-        message(STATUS "Using Intel OneAPI C: ${CMAKE_C_COMPILER}")
-        message(STATUS "Using Intel OneAPI CXX: ${CMAKE_CXX_COMPILER}")
-        message(STATUS "Using Intel OneAPI LLD: ${LLD_LINKER}")
-        set(USING_CLANG TRUE)
-        set(USING_INTEL TRUE)
-    elseif(CLANG_CC AND CLANG_CXX AND LLD_LINKER)
-        set(CMAKE_C_COMPILER ${CLANG_CC})
-        set(CMAKE_CXX_COMPILER ${CLANG_CXX})
-        set(CMAKE_LINKER_TYPE LLD)
-        message(STATUS "Using LLVM Clang: ${CMAKE_C_COMPILER}")
-        set(USING_CLANG TRUE)
-    else()
-        message(STATUS "Using GCC")
-        set(USING_CLANG FALSE)
-    endif()
-
-    execute_process(COMMAND nproc OUTPUT_VARIABLE NPROC_VALUE OUTPUT_STRIP_TRAILING_WHITESPACE)
+    message(STATUS "Using GCC")
+    set(USING_CLANG FALSE)
 endif()
+
+execute_process(COMMAND nproc OUTPUT_VARIABLE NPROC_VALUE OUTPUT_STRIP_TRAILING_WHITESPACE)
 
 ##########################
 # Set the CMake policies #
@@ -231,21 +219,7 @@ ADD_DEFINITIONS(-DLUX_DLL) # for controlling visibility
 # Control how the linker handles relative paths
 set(CMAKE_BUILD_WITH_INSTALL_RPATH TRUE)
 
-if(APPLE)
-    # Ensure all binaries look for libs in the app bundle's Frameworks folder.
-    set(CMAKE_INSTALL_RPATH "@executable_path/../Frameworks;@loader_path/../Frameworks")
-
-    # Use @rpath for install names (required for macdeployqt)
-    set(CMAKE_INSTALL_NAME_DIR "@rpath")
-
-    # Ensure build uses the same rpath.
-    set(CMAKE_BUILD_WITH_INSTALL_RPATH ON)
-    
-    # Force CMake to use these RPATHs during the build phase too.
-    set(CMAKE_BUILD_WITH_INSTALL_RPATH TRUE) 
-else()
-    set(CMAKE_INSTALL_RPATH "$ORIGIN")
-endif()
+set(CMAKE_INSTALL_RPATH "$ORIGIN")
 
 set(LUX_DEPS
 	OpenImageIO::OpenImageIO

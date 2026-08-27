@@ -29,14 +29,8 @@ using boost::uint32_t;
 #include <istream>
 #include <ostream>
 
-#if defined(__linux__) || defined(__APPLE__) || defined(__CYGWIN__)
 #include <stddef.h>
 #include <sys/time.h>
-#elif defined (WIN32)
-#include <windows.h>
-#else
-#error "Unsupported Platform !!!"
-#endif
 
 #include <boost/version.hpp>
 #include <boost/interprocess/detail/atomic.hpp>
@@ -46,17 +40,13 @@ using boost::interprocess::detail::atomic_cas32;
 using boost::interprocess::detail::atomic_inc32;
 using boost::interprocess::detail::atomic_read32;
 using boost::interprocess::detail::atomic_write32;
-#if !defined(WIN32)
 using boost::interprocess::detail::atomic_add32;
-#endif
 #else
 using boost::interprocess::ipcdetail::atomic_cas32;
 using boost::interprocess::ipcdetail::atomic_inc32;
 using boost::interprocess::ipcdetail::atomic_read32;
 using boost::interprocess::ipcdetail::atomic_write32;
-#if !defined(WIN32)
 using boost::interprocess::ipcdetail::atomic_add32;
-#endif
 #endif // BOOST_VERSION >= 104800
 
 
@@ -84,16 +74,10 @@ extern uint32_t osReadLittleEndianUInt(bool isLittleEndian,
 		std::basic_istream<char> &is);
 
 inline double osWallClockTime() {
-#if defined(__linux__) || defined(__APPLE__) || defined(__CYGWIN__)
 	struct timeval t;
 	gettimeofday(&t, NULL);
 
 	return t.tv_sec + t.tv_usec / 1000000.0;
-#elif defined (WIN32)
-	return GetTickCount() / 1000.0;
-#else
-#error "Unsupported Platform !!!"
-#endif
 }
 
 //------------------------------------------------------------------------------
@@ -119,19 +103,7 @@ inline void osAtomicAdd(float *val, const float delta) {
 }
 
 inline void osAtomicAdd(unsigned int *val, const unsigned int delta) {
-#if defined(WIN32)
-	uint32_t oldVal, newVal;
-	do
-	{
-#if (defined(__i386__) || defined(__amd64__))
-		 __asm__ __volatile__("pause\n");
-#endif
-		oldVal = *val;
-		newVal = oldVal + delta;
-	} while (atomic_cas32(reinterpret_cast<uint32_t*>(val), newVal, oldVal) != oldVal);
-#else
 	atomic_add32(((uint32_t *)val), (uint32_t)delta);
-#endif
 }
 
 /**
@@ -167,7 +139,7 @@ namespace fpdebug
 
 //#define DEBUGFP
 
-#if defined(DEBUGFP) &&  defined(__linux__)
+#if defined(DEBUGFP)
 void disable();
 void enable();
 

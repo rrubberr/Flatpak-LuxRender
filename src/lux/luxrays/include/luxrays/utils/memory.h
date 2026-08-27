@@ -20,14 +20,8 @@
 #define _LUXRAYS_MEMORY_H
 
 #include <cstdlib>  // posix_memalign, free, malloc
-#if !defined(__APPLE__) && !defined(__OpenBSD__) && !defined(__FreeBSD__)
 #  include <malloc.h> // for _alloca
-#  if !defined(WIN32) || defined(__CYGWIN__)
-#    include <alloca.h>
-#  else
-#    define alloca _alloca
-#  endif
-#endif
+#  include <alloca.h>
 
 #include <vector>
 #include <boost/serialization/split_member.hpp>
@@ -49,22 +43,14 @@ namespace luxrays {
 // and a multiple of sizeof(void*), i.e. 16/32/64 are all fine).
 template<class T> inline T *AllocAligned(size_t size, std::size_t N = L1_CACHE_LINE_SIZE)
 {
-#if defined(WIN32) && !defined(__CYGWIN__)
-	return static_cast<T *>(_aligned_malloc(size * sizeof(T), N));
-#else
 	void *ptr = nullptr;
 	if (::posix_memalign(&ptr, N, size * sizeof(T)) != 0)
 		return nullptr;
 	return static_cast<T *>(ptr);
-#endif
 }
 template<class T> inline void FreeAligned(T *ptr)
 {
-#if defined(WIN32) && !defined(__CYGWIN__) // NOBOOK
-	_aligned_free(ptr);
-#else // NOBOOK
 	free(ptr);
-#endif // NOBOOK
 }
 
 template <typename T, std::size_t N = 16> class AlignedAllocator
@@ -125,87 +111,26 @@ public:
 #define P_CLASS_ATTR __attribute__
 #define P_CLASS_ATTR __attribute__
 
-#if defined(WIN32) && !defined(__CYGWIN__) // NOBOOK
-class __declspec(align(16)) Aligned16 {
-#else // NOBOOK
 class Aligned16 {
-#endif // NOBOOK
 public:
 	void *operator new(size_t s) { return AllocAligned<char>(s, 16); }
 	void *operator new (size_t s, void *q) { return q; }
 	void operator delete(void *p) { FreeAligned(p); }
-#if defined(WIN32) && !defined(__CYGWIN__) // NOBOOK
-} ;
-#else // NOBOOK
 } __attribute__ ((aligned(16)));
-#endif // NOBOOK
 
-#if defined(WIN32) && !defined(__CYGWIN__) // NOBOOK
-class __declspec(align(32)) Aligned32 {
-#else // NOBOOK
 class Aligned32 {
-#endif // NOBOOK
 public:
 	void *operator new(size_t s) { return AllocAligned<char>(s, 32); }
 	void *operator new (size_t s, void *q) { return q; }
 	void operator delete(void *p) { FreeAligned(p); }
-#if defined(WIN32) && !defined(__CYGWIN__) // NOBOOK
-} ;
-#else // NOBOOK
 } __attribute__ ((aligned(32)));
-#endif // NOBOOK
 
-#if defined(WIN32) && !defined(__CYGWIN__) // NOBOOK
-class __declspec(align(64)) Aligned64 {
-#else // NOBOOK
 class Aligned64 {
-#endif // NOBOOK
 public:
 	void *operator new(size_t s) { return AllocAligned<char>(s, 64); }
 	void *operator new (size_t s, void *q) { return q; }
 	void operator delete(void *p) { FreeAligned(p); }
-#if defined(WIN32) && !defined(__CYGWIN__) // NOBOOK
-} ;
-#else // NOBOOK
 } __attribute__ ((aligned(64)));
-#endif // NOBOOK
-
-/*
-template <class T> class ObjectArena {
-public:
-	// ObjectArena Public Methods
-	ObjectArena() {
-		nAvailable = 0;
-	}
-	T *Alloc() {
-		if (nAvailable == 0) {
-			int nAlloc = max((unsigned long)16,
-				(unsigned long)(65536/sizeof(T)));
-			mem = (T *)AllocAligned(nAlloc * sizeof(T));
-			nAvailable = nAlloc;
-			toDelete.push_back(mem);
-		}
-		--nAvailable;
-		return mem++;
-	}
-	operator T *() {
-		return Alloc();
-	}
-	~ObjectArena() { FreeAll(); }
-	void FreeAll() {
-		for (u_int i = 0; i < toDelete.size(); ++i)
-			FreeAligned(toDelete[i]);
-		toDelete.erase(toDelete.begin(), toDelete.end());
-		nAvailable = 0;
-	}
-
-
-private:
-	// ObjectArena Private Data
-	T *mem;
-	int nAvailable;
-	vector<T *> toDelete;
-};*/
 
 class  MemoryArena {
 public:

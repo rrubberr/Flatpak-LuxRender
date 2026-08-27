@@ -152,12 +152,6 @@ ColorSpaceWidget::ColorSpaceWidget(QWidget *parent) : QWidget(parent), ui(new Ui
 	connect(ui->slider_temperature, SIGNAL(valueChanged(int)), this, SLOT(temperatureChanged(int)));
 	connect(ui->spinBox_temperature, SIGNAL(valueChanged(double)), this, SLOT(temperatureChanged(double)));
 
-#if defined(__APPLE__)
-	ui->tab_whitepoint->setFont(QFont  ("Lucida Grande", 11));
-	ui->tab_rgb->setFont(QFont  ("Lucida Grande", 11));
-	ui->tab_temperature->setFont(QFont  ("Lucida Grande", 11));
-#endif
-
 }
 
 ColorSpaceWidget::~ColorSpaceWidget()

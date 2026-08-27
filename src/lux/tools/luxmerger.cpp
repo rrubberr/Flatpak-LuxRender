@@ -38,10 +38,7 @@
 #include <boost/filesystem.hpp>
 #include <boost/scoped_ptr.hpp>
 
-#if defined(WIN32) && !defined(__CYGWIN__) /* We need the following two to set stdout to binary */
-#include <io.h>
-#include <fcntl.h>
-#endif
+
 
 using namespace lux;
 namespace po = boost::program_options;

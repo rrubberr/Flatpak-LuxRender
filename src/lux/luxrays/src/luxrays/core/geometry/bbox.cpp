@@ -138,10 +138,6 @@ vector<Point> BBox::ClipPolygon(const vector<Point> &vertexList) const {
 }
 
 // NOTE - lordcrc - BBox::IntersectP relies on IEEE 754 behaviour of infinity and /fp:fast breaks this
-#if defined(WIN32) && !defined(__CYGWIN__)
-#pragma float_control(push)
-#pragma float_control(precise, on)
-#endif
 bool BBox::IntersectP(const Ray &ray,
 		const Point &pMin, const Point &pMax,
 		float *hitt0, float *hitt1) {
@@ -165,8 +161,5 @@ bool BBox::IntersectP(const Ray &ray,
 bool BBox::IntersectP(const Ray &ray, float *hitt0, float *hitt1) const {
 	return IntersectP(ray, pMin, pMax, hitt0, hitt1);
 }
-#if defined(WIN32) && !defined(__CYGWIN__)
-#pragma float_control(pop)
-#endif
 
 }

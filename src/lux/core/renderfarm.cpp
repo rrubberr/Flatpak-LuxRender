@@ -892,8 +892,7 @@ void RenderFarm::updateFilm(Scene *scene) {
 			// Enable keep alive option
 //			stream.rdbuf()->socket().set_option(boost::asio::socket_base::keep_alive(true));
 			stream.socket().set_option(boost::asio::socket_base::keep_alive(true));
-#if defined(__linux__) || defined(__MACOSX__)
-			// Set keep alive parameters on *nix platforms
+			// Set keep alive parameters on Linux
 			const int nativeSocket = static_cast<int>(stream.rdbuf()->socket().native_handle());
 			int optval = 3; // Retry count
 			const socklen_t optlen = sizeof(optval);
@@ -902,7 +901,6 @@ void RenderFarm::updateFilm(Scene *scene) {
 			setsockopt(nativeSocket, SOL_TCP, TCP_KEEPIDLE, &optval, optlen);
 			optval = 5; // Time between retries
 			setsockopt(nativeSocket, SOL_TCP, TCP_KEEPINTVL, &optval, optlen);
-#endif
 
 			// Send the command to get the film
 			stream << "luxGetFilm" << std::endl;

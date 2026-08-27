@@ -137,39 +137,4 @@ macro(findpkg_finish PREFIX)
 endmacro(findpkg_finish)
 
 
-# Slightly customised framework finder
-MACRO(findpkg_framework fwk)
-  IF(APPLE)
-    SET(${fwk}_FRAMEWORK_PATH
-      ${${fwk}_FRAMEWORK_SEARCH_PATH}
-      ${CMAKE_FRAMEWORK_PATH}
-      ~/Library/Frameworks
-      /Library/Frameworks
-      /System/Library/Frameworks
-      /Network/Library/Frameworks
-      /Developer/Platforms/iPhoneOS.platform/Developer/SDKs/iPhoneOS3.0.sdk/System/Library/Frameworks/
-      ${CMAKE_CURRENT_SOURCE_DIR}/lib/Release
-      ${CMAKE_CURRENT_SOURCE_DIR}/lib/Debug
-    )
-    # These could be arrays of paths, add each individually to the search paths
-    foreach(i ${LUXRAYS_PREFIX_PATH})
-      set(${fwk}_FRAMEWORK_PATH ${${fwk}_FRAMEWORK_PATH} ${i}/lib/Release ${i}/lib/Debug)
-    endforeach(i)
 
-    foreach(i ${LUXRAYS_PREFIX_BUILD})
-      set(${fwk}_FRAMEWORK_PATH ${${fwk}_FRAMEWORK_PATH} ${i}/lib/Release ${i}/lib/Debug)
-    endforeach(i)
-
-    FOREACH(dir ${${fwk}_FRAMEWORK_PATH})
-      SET(fwkpath ${dir}/${fwk}.framework)
-      IF(EXISTS ${fwkpath})
-        SET(${fwk}_FRAMEWORK_INCLUDES ${${fwk}_FRAMEWORK_INCLUDES}
-          ${fwkpath}/Headers ${fwkpath}/PrivateHeaders)
-        SET(${fwk}_FRAMEWORK_PATH ${dir})
-        if (NOT ${fwk}_LIBRARY_FWK)
-          SET(${fwk}_LIBRARY_FWK "-framework ${fwk}")
-        endif ()
-      ENDIF(EXISTS ${fwkpath})
-    ENDFOREACH(dir)
-  ENDIF(APPLE)
-ENDMACRO(findpkg_framework)

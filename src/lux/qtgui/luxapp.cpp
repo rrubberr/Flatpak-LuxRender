@@ -36,23 +36,7 @@
 #include "luxapp.hxx"
 #include "queue.hxx"
 
-#if defined(WIN32) && !defined(__CYGWIN__) && (_M_IX86_FP >= 2)
-// for stderr redirection
-#include <windows.h>
-#include <stdio.h>
-#include <io.h>
-#include <fcntl.h>
 
-void AttachStderr()
-{
-	int hCrt = _open_osfhandle((intptr_t)GetStdHandle(STD_ERROR_HANDLE), _O_TEXT);
-
-	FILE *hf = _fdopen(hCrt, "w");
-	*stderr = *hf;
-
-	setvbuf(stderr, NULL, _IONBF, 0);
-} 
-#endif
 
 LuxGuiApp::LuxGuiApp(int &argc, char **argv) : QApplication(argc, argv), mainwin(NULL)
 {
@@ -80,21 +64,9 @@ LuxGuiApp::~LuxGuiApp()
 
 void LuxGuiApp::init(clConfig* config)
 {
-	// AttachConsole is XP only, restrict to SSE2+
-#if defined(WIN32) && !defined(__CYGWIN__) && (_M_IX86_FP >= 2)
-	// attach to parent process' console if it exists, otherwise ignore
-	if (config->log2console && AttachConsole(ATTACH_PARENT_PROCESS)) {
-		AttachStderr();
-		std::cerr << "\nRedirecting log to console...\n";
-	}
-#endif
 
 	mainwin = new MainWindow(0, config->log2console);
 	mainwin->show();
-#if defined(__APPLE__)
-	mainwin->raise();
-	mainwin->activateWindow();
-#endif
 	mainwin->SetRenderThreads(config->threadCount);
 	mainwin->setVerbosity(config->verbosity);
 
@@ -128,20 +100,3 @@ void LuxGuiApp::init(clConfig* config)
 		mainwin->AddNetworkSlaves(slaveNodes);
 	}
 }
-
-#if defined(__APPLE__) // Doubleclick or dragging .lxs, .flm or .lxq in OSX Finder to LuxRender
-bool LuxGuiApp::event(QEvent *event)
-{
-	switch (event->type()) {
-	case QEvent::FileOpen:
-		if (config->inputFiles.empty()) {
-			mainwin->loadFile(static_cast<QFileOpenEvent *>(event)->file());
-			return true;
-		}
-		break;
-	default:
-		break;
-	}
-	return QApplication::event(event);
-}
-#endif

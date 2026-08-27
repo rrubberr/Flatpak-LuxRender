@@ -29,10 +29,6 @@
 
 #include <boost/serialization/access.hpp>
 
-#ifdef WIN32
-#undef max
-#undef min
-#endif // WIN32
 #include <limits>
 
 namespace lux

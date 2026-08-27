@@ -42,11 +42,6 @@ public:
 
 	void init(clConfig* config);
 	clConfig* config;
-
-#if defined(__APPLE__)
-protected:
-	bool event(QEvent *);
-#endif
 };
 
 #endif // LUXAPP_H

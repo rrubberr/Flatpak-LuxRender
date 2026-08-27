@@ -81,11 +81,6 @@ ToneMapWidget::ToneMapWidget(QWidget *parent) : QWidget(parent), ui(new Ui::Tone
 	connect(ui->spinBox_gamma_linear, SIGNAL(valueChanged(double)), this, SLOT(gammaLinearChanged(double)));
 	connect(ui->button_linearEstimate, SIGNAL(clicked()), this, SLOT(estimateLinear()));
 
-#if defined(Q_WS_X11) // On Linux the pulldowns look oversized, changed individually to not break other OS balanced outcome
-	ui->comboBox_SensitivityPreset->setFont(QFont  ("Sans Serif", 10));
-	ui->comboBox_ExposurePreset->setFont(QFont  ("Sans Serif", 10));
-	ui->comboBox_FStopPreset->setFont(QFont  ("Sans Serif", 10));
-#endif
 	// Max contrast
 	connect(ui->slider_ywa, SIGNAL(valueChanged(int)), this, SLOT(ywaChanged(int)));
 	connect(ui->spinBox_ywa, SIGNAL(valueChanged(double)), this, SLOT(ywaChanged(double)));
@@ -96,13 +91,7 @@ ToneMapWidget::ToneMapWidget(QWidget *parent) : QWidget(parent), ui(new Ui::Tone
 	connect(ui->comboBox_false_Method, SIGNAL(currentIndexChanged(int)), this, SLOT(setFalseMethod(int)));
 	connect(ui->comboBox_false_colorscale, SIGNAL(currentIndexChanged(int)), this, SLOT(setFalseColorScale(int)));
 	connect(ui->lineEdit_false_legendeTest, SIGNAL(returnPressed()), this, SLOT(legendeChanged()));
-	
-#if defined(__APPLE__)
-	ui->frame_toneMapReinhard->setFont(QFont  ("Lucida Grande", 11));
-	ui->frame_toneMapLinear->setFont(QFont  ("Lucida Grande", 11));
-	ui->frame_toneMapContrast->setFont(QFont  ("Lucida Grande", 11));
-	ui->frame_toneMapFalse->setFont(QFont  ("Lucida Grande", 11));
-#endif
+
 }
 
 ToneMapWidget::~ToneMapWidget() { }

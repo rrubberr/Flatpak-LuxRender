@@ -35,16 +35,6 @@
 struct ParamArray;
 
 #include "luxparse.hpp"
-/*
-#ifdef WIN32
-#include "luxparse.hpp"
-#else
-#include "luxparse.h"
-#endif*/
-
-#if defined(WIN32) && !defined(__CYGWIN__)
-#pragma warning ( disable: 4244 )
-#endif
 
 struct IncludeInfo {
 	string filename;

@@ -24,18 +24,10 @@
 #define LUX_API_H 1
 
 #ifdef LUX_DLL
-#	if defined(WIN32) || defined(__CYGWIN__)
-#		ifdef LUX_INTERNAL
-#			define LUX_EXPORT __declspec(dllexport)
-#		else
-#			define LUX_EXPORT __declspec(dllimport)
-#		endif
-#	else // unix
-#		ifdef LUX_INTERNAL
-#			define LUX_EXPORT __attribute__ ((visibility ("default")))
-#		else
-#			define LUX_EXPORT
-#		endif
+#	ifdef LUX_INTERNAL
+#		define LUX_EXPORT __attribute__ ((visibility ("default")))
+#	else
+#		define LUX_EXPORT
 #	endif
 #else
 #	define LUX_EXPORT

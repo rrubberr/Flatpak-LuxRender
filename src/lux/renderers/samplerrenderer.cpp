@@ -374,11 +374,6 @@ void SamplerRenderer::RenderThread::RenderImpl(RenderThread *myThread) {
 
 		// Free BSDF memory from computing image sample value
 		sample.arena.FreeAll();
-
-#ifdef WIN32
-		// Work around Windows bad scheduling -- Jeanphi
-		myThread->thread->yield();
-#endif
 	}
 
 	scene.camera()->film->contribPool->End(sample.contribBuffer);

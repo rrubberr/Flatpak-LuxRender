@@ -59,9 +59,6 @@ Compiling from source:
     sudo pacman -S base-devel bison cmake fftw flex git pkgconf python \
     qt6-base qt6-imageformats
 
- - On an Intel Mac, first install XCode and Brew, then run:
-    brew install bison cmake fftw flex gpatch pkgconf qt xquartz
-
  - Then do the standard cmake dance from the main folder:
     mkdir build
     cd build

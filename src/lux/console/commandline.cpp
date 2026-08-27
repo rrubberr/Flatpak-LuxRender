@@ -23,9 +23,7 @@
 #include <iostream>
 #include <exception>
 #include <fstream>
-#if !defined(WIN32)
 #include <unistd.h>
-#endif
 
 #include <boost/thread.hpp>
 #include <boost/lexical_cast.hpp>
@@ -41,11 +39,7 @@ namespace po = boost::program_options;
 
 boost::filesystem::path getDefaultWorkingDirectory()
 {
-#if defined(WIN32)
-	boost::filesystem::path workingDirectory = boost::filesystem::temp_directory_path() / "luxrender";
-#else
 	boost::filesystem::path workingDirectory = boost::filesystem::temp_directory_path() / std::string("luxrender-").append(boost::lexical_cast<std::string>(geteuid()));
-#endif
 	return workingDirectory;
 }
 

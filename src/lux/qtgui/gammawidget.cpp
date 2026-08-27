@@ -214,11 +214,7 @@ void GammaWidget::activateCRF()
 
 		if ( m_CRF_enabled )
 		{
-#if defined(__APPLE__) // OSX locale is UTF-8, TODO check this for other OS
-			luxSetStringAttribute("film", "CameraResponse", m_CRF_file.toUtf8().data());
-#else
 			luxSetStringAttribute("film", "CameraResponse", m_CRF_file.toLatin1().data());
-#endif
 		}
 	}
 }

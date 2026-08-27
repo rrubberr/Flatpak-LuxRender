@@ -22,20 +22,7 @@
 
 #include "osfunc.h"
 
-#ifdef WIN32
-#include <windows.h>
-#else
-
-#ifdef __linux__
 #include <sys/sysinfo.h>
-#elif defined(__APPLE__) || defined(__FreeBSD__)
-#include <sys/types.h>
-#include <sys/sysctl.h>
-#elif defined(__sun)
-#include <unistd.h>
-#endif
-
-#endif //WIN32
 
 namespace lux
 {
@@ -138,7 +125,7 @@ uint32_t osReadLittleEndianUInt(bool isLittleEndian,
 namespace fpdebug
 {
 
-#if defined(DEBUGFP) &&  defined(__linux__)
+#if defined(DEBUGFP)
 #include <boost/detail/fenv.hpp>
 
 void disable()

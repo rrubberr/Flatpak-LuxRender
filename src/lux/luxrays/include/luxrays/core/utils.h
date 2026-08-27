@@ -21,59 +21,23 @@
 
 #include <cmath>
 
-#if defined (__linux__)
 #include <pthread.h>
-#endif
 
 #include <boost/lexical_cast.hpp>
 #include <boost/thread.hpp>
 
-#if (defined(WIN32) && defined(_MSC_VER) && _MSC_VER < 1800)
-#include <float.h>
-#define isnan(a) _isnan(a)
-#define isinf(f) (!_finite((f)))
-#else
 #define isnan(a) std::isnan(a)
 #define isinf(f) std::isinf(f)
-#endif
 
-#if defined(WIN32)
-#define isnanf(a) _isnan(a)
 typedef unsigned int u_int;
-#endif
 
-#if defined(__APPLE__)
-#include <string>
-typedef unsigned int u_int;
-#endif
-
-#if !defined(__APPLE__) && !defined(__OpenBSD__) && !defined(__FreeBSD__)
 #  include <malloc.h> // for _alloca, memalign
-#  if !defined(WIN32) || defined(__CYGWIN__)
-#    include <alloca.h>
-#  else
-#    define memalign(a,b) _aligned_malloc(b, a)
-#    define alloca _alloca
-#  endif
-#else
-#  include <stdlib.h>
-#  if defined(__APPLE__)
-#    define memalign(a,b) valloc(b)
-#  elif defined(__OpenBSD__) || defined(__FreeBSD__)
-#    define memalign(a,b) malloc(b)
-#  endif
-#endif
+#  include <alloca.h>
 
 #include <sstream>
 
-#if defined(__linux__) || defined(__APPLE__) || defined(__CYGWIN__) || defined(__OpenBSD__) || defined(__FreeBSD__)
 #include <stddef.h>
 #include <sys/time.h>
-#elif defined (WIN32)
-#include <windows.h>
-#else
-#error "Unsupported Platform !!!"
-#endif
 
 #ifndef M_PI
 #define M_PI 3.14159265358979323846f
@@ -96,16 +60,10 @@ typedef unsigned int u_int;
 namespace luxrays {
 
 inline double WallClockTime() {
-#if defined(__linux__) || defined(__APPLE__) || defined(__CYGWIN__) || defined(__OpenBSD__) || defined(__FreeBSD__)
 	struct timeval t;
 	gettimeofday(&t, NULL);
 
 	return t.tv_sec + t.tv_usec / 1000000.0;
-#elif defined (WIN32)
-	return GetTickCount() / 1000.0;
-#else
-#error "Unsupported Platform !!!"
-#endif
 }
 
 template<class T> inline T Lerp(float t, T v1, T v2) {
@@ -330,7 +288,6 @@ inline unsigned int UIntLog2(unsigned int value) {
 }
 
 inline bool SetThreadRRPriority(boost::thread *thread, int pri = 0) {
-#if defined (__linux__) || defined (__APPLE__) || defined(__CYGWIN__) || defined(__OpenBSD__) || defined(__FreeBSD__)
 	{
 		const pthread_t tid = (pthread_t)thread->native_handle();
 
@@ -341,22 +298,8 @@ inline bool SetThreadRRPriority(boost::thread *thread, int pri = 0) {
 
 		return pthread_setschedparam(tid, policy, &param);
 	}
-#elif defined (WIN32)
-	{
-		const HANDLE tid = (HANDLE)thread->native_handle();
-		if (!SetPriorityClass(tid, HIGH_PRIORITY_CLASS))
-			return false;
-		else
-			return true;
-
-		/*if (!SetThreadPriority(tid, THREAD_PRIORITY_HIGHEST))
-			return false;
-		else
-			return true;*/
-	}
-#endif
 }
 
-}
+}	/* namespace luxrays */
 
 #endif	/* _LUXRAYS_UTILS_H */

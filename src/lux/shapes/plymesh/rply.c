@@ -1225,12 +1225,12 @@ static int oascii_uint16(p_ply ply, double value) {
 }
 
 static int oascii_int32(p_ply ply, double value) {
-    if (value > LONG_MAX || value < LONG_MIN) return 0;
+    if (value > (double)LONG_MAX || value < (double)LONG_MIN) return 0;
     return fprintf(ply->fp, "%d ", (int) value) > 0;
 }
 
 static int oascii_uint32(p_ply ply, double value) {
-    if (value > ULONG_MAX || value < 0) return 0;
+    if (value > (double)ULONG_MAX || value < 0) return 0;
     return fprintf(ply->fp, "%d ", (unsigned int) value) > 0;
 }
 
@@ -1270,13 +1270,13 @@ static int obinary_uint16(p_ply ply, double value) {
 
 static int obinary_int32(p_ply ply, double value) {
     int32_t int32 = (int32_t) value;
-    if (value > LONG_MAX || value < LONG_MIN) return 0;
+    if (value > (double)LONG_MAX || value < (double)LONG_MIN) return 0;
     return ply->odriver->ochunk(ply, &int32, sizeof(int32));
 }
 
 static int obinary_uint32(p_ply ply, double value) {
     uint32_t uint32 = (uint32_t) value;
-    if (value > ULONG_MAX || value < 0) return 0;
+    if (value > (double)ULONG_MAX || value < 0) return 0;
     return ply->odriver->ochunk(ply, &uint32, sizeof(uint32));
 }
 
@@ -1329,7 +1329,7 @@ static int iascii_int32(p_ply ply, double *value) {
     char *end;
     if (!ply_read_word(ply)) return 0;
     *value = strtol(BWORD(ply), &end, 10);
-    if (*end || *value > LONG_MAX || *value < LONG_MIN) return 0;
+    if (*end || *value > (double)LONG_MAX || *value < (double)LONG_MIN) return 0;
     return 1;
 }
 

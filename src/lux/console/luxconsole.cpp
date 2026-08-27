@@ -33,10 +33,7 @@
 #include <boost/date_time/posix_time/posix_time.hpp>
 #include <boost/filesystem.hpp>
 
-#if defined(WIN32) && !defined(__CYGWIN__) /* We need the following two to set stdout to binary */
-#include <io.h>
-#include <fcntl.h>
-#endif
+
 
 using namespace lux;
 
@@ -194,9 +191,7 @@ int main(int argc, char **argv) {
 				int h = luxGetIntAttribute("film", "yPixelCount");
 				luxUpdateFramebuffer();
 
-#if defined(WIN32) && !defined(__CYGWIN__) /* On WIN32 we need to set stdout to binary */
-				_setmode(_fileno(stdout), _O_BINARY);
-#endif
+
 
 				// Dump RGB imagebuffer data to stdout
 				for (int i = 0; i < w * h * 3; i++)

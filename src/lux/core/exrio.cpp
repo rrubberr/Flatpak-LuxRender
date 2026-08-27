@@ -78,9 +78,7 @@
 #include "cimg.h"
 using namespace cimg_library;
 
-#if defined(WIN32) && !defined(__CYGWIN__)
-#define hypotf hypot // For the OpenEXR headers
-#endif
+
 
 // OpenEXR 3.x includes - updated header paths
 #include <OpenEXR/ImfInputFile.h>

@@ -46,10 +46,6 @@ LightGroupWidget::LightGroupWidget(QWidget *parent) : QWidget(parent), ui(new Ui
 	connect(ui->spinBox_colortemp, SIGNAL(valueChanged(double)), this, SLOT(colortempChanged(double)));
 	connect(ui->toolButton_colorpicker, SIGNAL(clicked()), this, SLOT(colorPicker()));
 	
-#if defined(__APPLE__)
-	setFont(QFont  ("Lucida Grande", 11));
-#endif
-
 	m_Index = -1;
 	ResetValues();
 }
@@ -187,9 +183,6 @@ void LightGroupWidget::colorPicker()
                   (int)(m_LG_scaleGreen * 255.0),
                   (int)(m_LG_scaleBlue * 255.0));
 	QColorDialog colorDlg(dcolor,this);
-#if defined(__APPLE__)
-		colorDlg.setOptions( QColorDialog::NoButtons );
-#endif
 	connect(&colorDlg, SIGNAL(colorSelected(const QColor &)), this, SLOT(colorSelected(const QColor &)));
 	connect(&colorDlg, SIGNAL(currentColorChanged(const QColor &)), this, SLOT(colorSelected(const QColor &)));
 	colorDlg.exec();

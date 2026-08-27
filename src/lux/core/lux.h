@@ -65,63 +65,14 @@ using std::sort;
 #endif
 
 // Platform-specific definitions
-#if defined(WIN32) && !defined(__CYGWIN__)
-#  include <float.h>
-#  pragma warning (disable: 4244) // conversion from double to float (VS2005) - Radiance
-#  pragma warning (disable: 4305) // truncation from double to float (VS2005) - Radiance
-#  pragma warning (disable: 4996) // deprecated functions (VS2005) - Radiance
-#  pragma warning (disable: 4267) // conversion from 'size_t' [asio\detail\socket_ops.hpp; boost\serialization\collections_save_imp.hpp] - zcott
-#  pragma warning (disable: 4311) // pointer truncation from 'void *' to 'long' [Fl_Widget.H; Fl_Menu_Item.H;; asio\detail\win_iocp_socket_service.hpp] - zcott
-#  pragma warning (disable : 4312) // conversion from 'long' to 'void *' of greater size [Fl_Widget.H; Fl_Menu_Item.H; asio\detail\win_iocp_socket_service.hpp] - zcott
-//note: the above are duplicated in compiler options, kept here for reference only - zcott
-#  pragma warning (disable: 4267 4251 4065 4102)
-#  pragma warning (disable: 4190) // extern "C" nonsense when returning a template
-#  pragma warning (disable: 4290) // C++ exception specification ignored except to indicate a function is not __declspec(nothrow) ; pointless warning
-#  pragma warning (disable: 4355) // 'this' used in base member initializer list
-//#define WIN32_LEAN_AND_MEAN //defined in project properties
-#  include <windows.h>
 
-inline float atanhf(float x) {
-	// if outside of domain, return NaN
-	// not 100% correct but should be good for now
-	if(x <= -1.f || x >= 1.f) 
-		return sqrtf(-1.f); 
-  
-	return logf((1.f + x) / (1.f - x)) / 2.f;
-}
-
-
-namespace w32util
-{
-# include <stdio.h>
-# include <wincon.h>
-#define FOREGROUND_YELLOW FOREGROUND_RED | FOREGROUND_GREEN
-#define FOREGROUND_WHITE FOREGROUND_RED | FOREGROUND_GREEN | FOREGROUND_BLUE
-inline void ChangeConsoleColor(WORD col)
-{
-	HANDLE hConsole = GetStdHandle(STD_OUTPUT_HANDLE);
-
-	// keep user-defined background and foreground intensity
-	CONSOLE_SCREEN_BUFFER_INFO screenBufferInfo;
-	GetConsoleScreenBufferInfo(hConsole, &screenBufferInfo);
-	col |= screenBufferInfo.wAttributes & static_cast<WORD>(FOREGROUND_INTENSITY | BACKGROUND_INTENSITY);
-
-	SetConsoleTextAttribute(hConsole, col);
-}
-}
-#endif
-
-#if defined (__INTEL_COMPILER) && !defined(WIN32)
+#if defined (__INTEL_COMPILER)
 // Dade - to fix a problem with expf undefined with Intel CC
 inline float expf(float a) { return exp(a); }
 #endif
 
 // Global Constants
-#if defined(WIN32) && !defined(__CYGWIN__)
-#  define LUX_PATH_SEP ";"
-#else
-#  define LUX_PATH_SEP ":"
-#endif
+#define LUX_PATH_SEP ":"
 
 // Global Type Declarations
 #define BC_GRID_SIZE 40

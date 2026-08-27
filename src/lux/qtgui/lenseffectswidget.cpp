@@ -68,12 +68,6 @@ LensEffectsWidget::LensEffectsWidget(QWidget *parent) : QWidget(parent), ui(new 
 	connect(ui->button_browsePupilMap, SIGNAL(clicked()), this, SLOT(glareBrowsePupilMap()));
 	connect(ui->button_browseLashesMap, SIGNAL(clicked()), this, SLOT(glareBrowseLashesMap()));
 
-#if defined(__APPLE__) // for better design on OSX
-	ui->tab_gaussianBloom->setFont(QFont  ("Lucida Grande", 11));
-	ui->tab_vignetting->setFont(QFont  ("Lucida Grande", 11));
-	ui->tab_chromaticAbberationTab->setFont(QFont  ("Lucida Grande", 11));
-	ui->tab_glare->setFont(QFont  ("Lucida Grande", 11));
-#endif
 }
 
 LensEffectsWidget::~LensEffectsWidget()

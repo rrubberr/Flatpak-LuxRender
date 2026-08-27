@@ -275,12 +275,6 @@ MainWindow::MainWindow(QWidget *parent, bool copylog2console)
 
 	advpanes[0] = new PaneWidget(ui->advancedAreaContents, "Scene information", ":/icons/logtabicon.png");
 
-#if defined(__APPLE__) // cosmetical work to have the tabs less crowded
-	ui->outputTabs->setFont(QFont  ("Lucida Grande", 10));
-	QSize iconSize(12, 12);
-	ui->outputTabs->setIconSize(iconSize);
-#endif
-
 	// Tonemap page
 	tonemapwidget = new ToneMapWidget(panes[0]);
 	panes[0]->setWidget(tonemapwidget);
@@ -374,12 +368,6 @@ MainWindow::MainWindow(QWidget *parent, bool copylog2console)
 	connect(ui->timeEdit_overrideHaltTime, SIGNAL(timeChanged(const QTime&)), this, SLOT(overrideHaltTimeValueChanged(const QTime&)));
 	connect(ui->spinBox_overrideHaltProgress, SIGNAL(valueChanged(int)), this, SLOT(overrideHaltProgressValueChanged(int)));
 	connect(ui->doubleSpinBox_overrideHaltThreshold, SIGNAL(valueChanged(double)), this, SLOT(overrideHaltThresholdValueChanged(double)));
-	
-#if defined(__APPLE__) // cosmetical work
-	ui->tab_queue->setFont(QFont  ("Lucida Grande", 12));
-	ui->textEdit_log->setFont(QFont  ("Lucida Grande", 12));
-	ui->horizontalLayout_queueControls->setSpacing(6);
-#endif
 	
 	// Log tab
 	connect(ui->comboBox_verbosity, SIGNAL(currentIndexChanged(int)), this, SLOT(setVerbosity(int)));
@@ -1694,30 +1682,6 @@ void MainWindow::SetRenderThreads(int num)
 	ui->label_threadCount->setText(QString("Threads:"));
 	updateWidgetValue(ui->spinBox_Threads, m_numThreads);
 }
-
-#if defined(__APPLE__) // Doubleclick or dragging .lxs, .flm or .lxq in OSX Finder to LuxRender
-void  MainWindow::loadFile(const QString &fileName)
-{
-	if (fileName.endsWith(".lxs") || fileName.endsWith(".lxq"))
-	{
-		if (canStopRendering())
-			openFiles(QStringList(fileName), true);
-	}
-	else if (fileName.endsWith(".flm"))
-	{
-		loadFLM(fileName);
-	}
-	else
-	{
-		QMessageBox msgBox;
-		msgBox.setIcon(QMessageBox::Information);
-		QFileInfo fi(fileName);
-		QString name = fi.fileName();
-		msgBox.setText(name +(" is not a supported filetype. Choose an .lxs, .flm or .lxq"));
-		msgBox.exec();
-	}
-}
-#endif
 
 // Helper class for MainWindow::updateStatistics()
 // class AttributeFormatter {
