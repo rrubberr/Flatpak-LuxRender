@@ -26,8 +26,10 @@
 #include "texture.h"
 #include "geometry/raydifferential.h"
 #include "paramset.h"
+#include "filedata.h"
 #include <algorithm>
 #include <numeric>
+#include <fstream>
 
 namespace lux
 {
@@ -173,16 +175,67 @@ private:
 inline Texture<float> * DensityGridTexture::CreateFloatTexture(const Transform &tex2world,
 	const ParamSet &tp)
 {
-	// Read density values
-	u_int nItems;
-	const float *data = tp.FindFloat("density", &nItems);
-	if (!data) {
-		LOG(LUX_ERROR, LUX_MISSINGDATA) << "No \"density\" values provided for density grid?";
-		return NULL;
-	}
 	int nx = tp.FindOneInt("nx", 1);
 	int ny = tp.FindOneInt("ny", 1);
 	int nz = tp.FindOneInt("nz", 1);
+
+	// Attempt decode of embedded data (base64+zlib in "filename_data"),
+	// mirroring tabulateddata. No-op when no embedded data is present.
+	FileData::decode(tp, "filename");
+
+	// Read density values: either from an external .dg file (filename)
+	// or inlined in the paramset (density)
+	vector<float> fileData;
+	const float *data = NULL;
+	u_int nItems = 0;
+
+	const string filename = AdjustFilename(tp.FindOneString("filename", ""));
+	if (!filename.empty()) {
+		std::ifstream fs(filename.c_str(), std::ios::in | std::ios::binary);
+		if (!fs.is_open()) {
+			LOG(LUX_ERROR, LUX_BADFILE) << "Unable to open density grid file '" << filename << "'";
+			return NULL;
+		}
+
+		// Parse header: "DG" magic (2), version (1), nx/ny/nz (4 each),
+		// channel name (16, null-padded)
+		char magic[2];
+		unsigned char version;
+		unsigned int fnx, fny, fnz;
+		char channel[16];
+		fs.read(magic, 2);
+		fs.read(reinterpret_cast<char*>(&version), 1);
+		fs.read(reinterpret_cast<char*>(&fnx), 4);
+		fs.read(reinterpret_cast<char*>(&fny), 4);
+		fs.read(reinterpret_cast<char*>(&fnz), 4);
+		fs.read(channel, 16);
+		(void)version; // consumed to advance the stream; not yet used
+		(void)channel; // consumed to advance the stream; not yet used
+		if (!fs.good() || magic[0] != 'D' || magic[1] != 'G') {
+			LOG(LUX_ERROR, LUX_BADFILE) << "Invalid density grid file header in '" << filename << "'";
+			return NULL;
+		}
+
+		// Prefer the dimensions declared in the file header
+		nx = fnx; ny = fny; nz = fnz;
+		nItems = static_cast<u_int>(nx * ny * nz);
+		fileData.resize(nItems);
+		fs.read(reinterpret_cast<char*>(&fileData[0]),
+			static_cast<std::streamsize>(nItems * sizeof(float)));
+		if (!fs.good() || fileData.size() != nItems) {
+			LOG(LUX_ERROR, LUX_BADFILE) << "Unable to read density data from '" << filename << "'";
+			return NULL;
+		}
+		data = &fileData[0];
+		LOG(LUX_DEBUG, LUX_NOERROR) << "Read " << nItems << " density values from '" << filename << "'";
+	} else {
+		data = tp.FindFloat("density", &nItems);
+		if (!data) {
+			LOG(LUX_ERROR, LUX_MISSINGDATA) << "No \"density\" values provided for density grid?";
+			return NULL;
+		}
+	}
+
 	if (nItems != static_cast<u_int>(nx * ny * nz)) {
 		LOG(LUX_ERROR, LUX_CONSISTENCY) <<
 			"DensityGrid has " << nItems <<
