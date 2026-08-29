@@ -63,11 +63,22 @@ SET(CMAKE_BUILD_TYPE ${CMAKE_BUILD_TYPE} CACHE STRING "assure config" FORCE) # m
 # Set the default build args #
 ##############################
 
+file(READ "${EXT_DIR}/cpython/Include/patchlevel.h" _lux_patchlevel_h)
+string(REGEX MATCH "#define[ \t]+PY_MAJOR_VERSION[ \t]+([0-9]+)" _ ""
+	${_lux_patchlevel_h})
+set(LUX_PYTHON_MAJOR "${CMAKE_MATCH_1}")
+string(REGEX MATCH "#define[ \t]+PY_MINOR_VERSION[ \t]+([0-9]+)" _ ""
+	${_lux_patchlevel_h})
+set(LUX_PYTHON_MINOR "${CMAKE_MATCH_1}")
+set(LUX_PYTHON_INCLUDE_DIR
+	"${DEPS_INC_DIR}/python${LUX_PYTHON_MAJOR}.${LUX_PYTHON_MINOR}")
+message(STATUS "Vendored CPython headers: ${LUX_PYTHON_INCLUDE_DIR}")
+
 set(
 	COMMON_EXT_PROJECT_ARGS
 	-DCMAKE_CXX_STANDARD=17
 	-DCMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE}
-	"-DCMAKE_CXX_FLAGS=${CMAKE_CXX_FLAGS} -I\"${DEPS_INC_DIR}/python3.12\" -w"
+	"-DCMAKE_CXX_FLAGS=${CMAKE_CXX_FLAGS} -I\"${LUX_PYTHON_INCLUDE_DIR}\" -w"
 	"-DCMAKE_C_FLAGS=${CMAKE_C_FLAGS} -w"
 	-DCMAKE_POSITION_INDEPENDENT_CODE=TRUE
     -DCMAKE_INSTALL_PREFIX=${DEPS_BUILD_DIR}
@@ -156,7 +167,8 @@ include(ExternalProject)
 #################
 
 set(CPYTHON_CONFIGURE_CMD
-    /bin/sh -c "cd ${EXT_DIR}/cpython && \
+    /bin/sh -c "cd \"${EXT_DIR}/cpython\" && \
+    CC=\"${CMAKE_C_COMPILER}\" CXX=\"${CMAKE_CXX_COMPILER}\" \
     sh ./configure --prefix=${DEPS_BUILD_DIR} --disable-shared \
     --with-ensurepip=no --without-test-modules"
 )
@@ -170,10 +182,10 @@ ExternalProject_Add(
         -DCMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE}
     CONFIGURE_COMMAND ${CPYTHON_CONFIGURE_CMD}
     BUILD_COMMAND
-        /bin/sh -c "cd ${EXT_DIR}/cpython && make install -j$(nproc) cc=g++ cxx=g++ \
-            LDFLAGS=\"-Wl,-rpath,'\$\$ORIGIN'\" \
-            cflags=\"-O2 -w -fPIC\" \
-            cxxflags=\"-O2 -w -fPIC -std=c++17\""
+        /bin/sh -c "cd \"${EXT_DIR}/cpython\" && make install -j${NPROC_VALUE} \
+            CC=\"${CMAKE_C_COMPILER}\" CXX=\"${CMAKE_CXX_COMPILER}\" \
+            CFLAGS=\"-O2 -w -fPIC\" \
+            LDFLAGS='-Wl,-rpath,\$ORIGIN'"
     INSTALL_COMMAND ""
 )
 

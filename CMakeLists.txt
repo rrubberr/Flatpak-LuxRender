@@ -20,7 +20,7 @@
 ###########################################################################
 
 MESSAGE(STATUS "CMAKE VERSION DETECTED " ${CMAKE_VERSION})
-	cmake_minimum_required(VERSION 3.10)
+cmake_minimum_required(VERSION 3.25)
 
 ####################
 # Set the compiler #
@@ -77,21 +77,6 @@ endif()
 
 execute_process(COMMAND nproc OUTPUT_VARIABLE NPROC_VALUE OUTPUT_STRIP_TRAILING_WHITESPACE)
 
-##########################
-# Set the CMake policies #
-##########################
-
-IF(COMMAND cmake_policy)
-	cmake_policy(SET CMP0003 NEW)
-    cmake_policy(SET CMP0074 NEW)
-	cmake_policy(SET CMP0111 OLD)
-    cmake_policy(SET CMP0144 OLD)
-	cmake_policy(SET CMP0148 OLD)
-	if(POLICY CMP0167)
-    cmake_policy(SET CMP0167 OLD)
-    endif()
-ENDIF(COMMAND cmake_policy)
-
 #####################
 # Setup the project #
 #####################
@@ -142,7 +127,6 @@ set(
     -DCMAKE_CXX_STANDARD=17
 	-DCMAKE_POSITION_INDEPENDENT_CODE=TRUE
     -DCMAKE_PREFIX_PATH=${LUX_BUILD_DIR}
-    -DBoost_DIR=${LUX_LIB_DIR}/cmake/Boost-1.90.0
     -DBoost_LIBRARY_DIRS=${LUX_LIB_DIR}
     -DBoost_INCLUDE_DIRS=${LUX_INC_DIR}
     -DBoost_NO_SYSTEM_PATHS=ON
@@ -165,14 +149,22 @@ add_subdirectory(ext)
 
 set(LUX_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DBOOST_BIND_GLOBAL_PLACEHOLDERS -w -I${LUX_INC_DIR}/Imath -I${LUX_INC_DIR}/OpenEXR")
 
-set(LUX_INSTALL_CMD
-    ${CMAKE_COMMAND} -E make_directory "${CMAKE_SOURCE_DIR}/release" &&
-    ${CMAKE_COMMAND} -E copy "${LUX_PFX_DIR}/LuxRender/src/LuxRender-build/luxcomp" "${CMAKE_SOURCE_DIR}/release/" &&
-    ${CMAKE_COMMAND} -E copy "${LUX_PFX_DIR}/LuxRender/src/LuxRender-build/luxconsole" "${CMAKE_SOURCE_DIR}/release/" &&
-    ${CMAKE_COMMAND} -E copy "${LUX_PFX_DIR}/LuxRender/src/LuxRender-build/luxmerger" "${CMAKE_SOURCE_DIR}/release/" &&
-    ${CMAKE_COMMAND} -E copy "${LUX_PFX_DIR}/LuxRender/src/LuxRender-build/luxrender" "${CMAKE_SOURCE_DIR}/release/" &&
-    ${CMAKE_COMMAND} -E copy "${LUX_PFX_DIR}/LuxRender/src/LuxRender-build/pylux.so" "${CMAKE_SOURCE_DIR}/release/" &&
-    ${CMAKE_COMMAND} -E copy "${LUX_PFX_DIR}/LuxRender/src/LuxRender-build/liblux.so" "${CMAKE_SOURCE_DIR}/release/"
+# Where the finished binaries are collected.
+set(LUX_RELEASE_DIR "${CMAKE_BINARY_DIR}/release" CACHE PATH
+    "Directory the LuxRender binaries are copied to after the build")
+
+# The inner project's build directory.
+set(LUX_INNER_BUILD_DIR ${LUX_PFX_DIR}/LuxRender/build)
+
+# One COMMAND per copy.
+set(LUX_INSTALL_COMMANDS
+    ${CMAKE_COMMAND} -E make_directory "${LUX_RELEASE_DIR}"
+    COMMAND ${CMAKE_COMMAND} -E copy "${LUX_INNER_BUILD_DIR}/luxcomp"    "${LUX_RELEASE_DIR}/"
+    COMMAND ${CMAKE_COMMAND} -E copy "${LUX_INNER_BUILD_DIR}/luxconsole" "${LUX_RELEASE_DIR}/"
+    COMMAND ${CMAKE_COMMAND} -E copy "${LUX_INNER_BUILD_DIR}/luxmerger"  "${LUX_RELEASE_DIR}/"
+    COMMAND ${CMAKE_COMMAND} -E copy "${LUX_INNER_BUILD_DIR}/luxrender"  "${LUX_RELEASE_DIR}/"
+    COMMAND ${CMAKE_COMMAND} -E copy "${LUX_INNER_BUILD_DIR}/pylux.so"   "${LUX_RELEASE_DIR}/"
+    COMMAND ${CMAKE_COMMAND} -E copy "${LUX_INNER_BUILD_DIR}/liblux.so"  "${LUX_RELEASE_DIR}/"
 )
 
 ExternalProject_Add(
@@ -182,6 +174,7 @@ ExternalProject_Add(
         OpenImageIO
         embree
     SOURCE_DIR ${CMAKE_SOURCE_DIR}/src/lux
+    BINARY_DIR ${LUX_INNER_BUILD_DIR}
     PREFIX ${LUX_PFX_DIR}/LuxRender
     BUILD_ALWAYS 1
     INSTALL_DIR ${LUX_BUILD_DIR}
@@ -199,10 +192,11 @@ ExternalProject_Add(
         -DPython3_FIND_STRATEGY=LOCATION
         -DPython3_FIND_REGISTRY=NEVER
         -DPython3_FIND_FRAMEWORK=NEVER
-        "-DCMAKE_EXE_LINKER_FLAGS=-L${LUX_LIB_DIR} -static -lpystring"
-        "-DCMAKE_SHARED_LINKER_FLAGS=-L${LUX_LIB_DIR} -lpystring"
+        -DCMAKE_C_COMPILER=${CMAKE_C_COMPILER}
+        -DCMAKE_CXX_COMPILER=${CMAKE_CXX_COMPILER}
+        -DCMAKE_LINKER_TYPE=${CMAKE_LINKER_TYPE}
 		-DEXT_DIR=${EXT_DIR}
     CMAKE_CACHE_ARGS
         "-DCMAKE_CXX_FLAGS:STRING=${LUX_CXX_FLAGS}"
-    INSTALL_COMMAND ${LUX_INSTALL_CMD}
+    INSTALL_COMMAND ${LUX_INSTALL_COMMANDS}
 )

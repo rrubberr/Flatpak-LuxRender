@@ -20,11 +20,20 @@
 ###########################################################################
 
 MESSAGE(STATUS "CMAKE VERSION DETECTED " ${CMAKE_VERSION})
-	cmake_minimum_required(VERSION 3.10)
+cmake_minimum_required(VERSION 3.25)
 
 ####################
 # Set the compiler #
 ####################
+
+if(DEFINED CMAKE_C_COMPILER AND DEFINED CMAKE_CXX_COMPILER)
+    if(CMAKE_CXX_COMPILER MATCHES "icpx$")
+        set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -fPIE")
+        set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fPIE")
+    endif()
+    message(STATUS "Using forwarded C:   ${CMAKE_C_COMPILER}")
+    message(STATUS "Using forwarded CXX: ${CMAKE_CXX_COMPILER}")
+else()
 
 # Use the Intel compiler if available.
 if(DEFINED ENV{ONEAPI_ROOT})
@@ -53,10 +62,7 @@ if(INTEL_CC AND INTEL_CXX)
     # Force LTO code generation to emit Position Independent Code for executables
     set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -fPIE")
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fPIE")
-    
-    # 2. Bake linker fixes directly into the LLD call rule.
-    set(CMAKE_C_USING_LINKER_LLD "-fuse-ld=lld -pie -Wl,--ignore-data-address-equality")
-    set(CMAKE_CXX_USING_LINKER_LLD "-fuse-ld=lld -pie -Wl,--ignore-data-address-equality")
+
     set(CMAKE_LINKER_TYPE LLD)
     
     message(STATUS "Using Intel OneAPI C: ${CMAKE_C_COMPILER}")
@@ -77,20 +83,7 @@ endif()
 
 execute_process(COMMAND nproc OUTPUT_VARIABLE NPROC_VALUE OUTPUT_STRIP_TRAILING_WHITESPACE)
 
-##########################
-# Set the CMake policies #
-##########################
-
-IF(COMMAND cmake_policy)
-	cmake_policy(SET CMP0003 NEW)
-    cmake_policy(SET CMP0074 NEW)
-	cmake_policy(SET CMP0111 OLD)
-    cmake_policy(SET CMP0144 OLD)
-	cmake_policy(SET CMP0148 OLD)
-	if(POLICY CMP0167)
-    cmake_policy(SET CMP0167 OLD)
-    endif()
-ENDIF(COMMAND cmake_policy)
+endif() # forwarded-compiler guard
 
 #####################
 # Setup the project #
@@ -112,7 +105,13 @@ option(LUX_DOCUMENTATION "Generate project documentation" OFF)
 # Use LTO on Clang configs #
 ############################
 
-if(USING_CLANG)
+# Keyed off the standard compiler-identification variables rather than the
+# hand-maintained USING_CLANG flag, so it also holds when the toolchain is
+# forwarded from the superbuild (where USING_CLANG is never set). IntelLLVM is
+# listed explicitly because icpx reports that ID, not "Clang" - matching the
+# previous behaviour where the Intel branch also set USING_CLANG TRUE.
+if(CMAKE_CXX_COMPILER_ID MATCHES "Clang"
+   OR CMAKE_CXX_COMPILER_ID STREQUAL "IntelLLVM")
     message(STATUS "Enabling ThinLTO (-flto=thin)")
     add_compile_options(-flto=thin)
     add_link_options(-flto=thin)
@@ -128,17 +127,54 @@ ENDIF(NOT CMAKE_BUILD_TYPE)
 
 MESSAGE(STATUS "Building mode: " ${CMAKE_BUILD_TYPE})
 
-# Export symbols on Linux.
-IF(${CMAKE_SYSTEM_NAME} MATCHES "Linux")
-	set(CMAKE_EXE_LINKER_FLAGS -Wl,-rpath,$ORIGIN,--version-script='${CMAKE_SOURCE_DIR}/cmake/exportmaps/linux_symbol_exports.map')
-	set(CMAKE_SHARED_LINKER_FLAGS -Wl,-rpath,$ORIGIN,--version-script='${CMAKE_SOURCE_DIR}/cmake/exportmaps/linux_symbol_exports.map')
-ENDIF()
+# Export symbols on Linux. The LINKER: generator-expression form quotes the
+# path correctly under every generator and, unlike the unquoted set() it
+# replaces, it never shadows the linker flags the superbuild passes in
+# (findings #1, #2, #35). The manual "-rpath,$ORIGIN" that used to be baked in
+# here is gone: RPATH is owned by CMAKE_BUILD_WITH_INSTALL_RPATH /
+# CMAKE_INSTALL_RPATH below, and having both produced "$ORIGIN:$ORIGIN".
+if(CMAKE_SYSTEM_NAME MATCHES "Linux")
+	add_link_options(
+		"LINKER:--version-script=${CMAKE_SOURCE_DIR}/cmake/exportmaps/linux_symbol_exports.map"
+	)
+endif()
 
 #############################################################################
 ######################    FIND PROJECT DEPENDENCIES    ######################
 #############################################################################
 
 INCLUDE(Dependencies)
+
+#############################################################################
+##########################      LINKER FLAGS     ############################
+#############################################################################
+
+# --ignore-data-address-equality is an LLD-only flag that used to be baked into
+# CMAKE_<LANG>_USING_LINKER_LLD in the Intel branch only, so it disappeared
+# whenever the build fell back to plain Clang (finding #4). Probe it once
+# against the linker CMAKE_LINKER_TYPE actually selected, and apply it to every
+# target. This must run after project(): the check needs an enabled CXX
+# language, and the compiler-selection block above runs before PROJECT().
+#
+# Two deliberate departures from the plan's snippet, both verified on this
+# toolchain:
+#   - check_cxx_source_compiles(), not check_cxx_compiler_flag(). The latter
+#     only *compiles* its test, so it reports Success even for a nonsense
+#     linker flag and would never actually gate on linker support. The
+#     source-compiles form links the test (confirmed: a bogus -Wl flag fails,
+#     this one succeeds) and uses the -fuse-ld=lld selected by
+#     CMAKE_LINKER_TYPE.
+#   - the flag is probed in "-Wl,..." form, not "LINKER:...". Generator
+#     expressions are not expanded inside the try-compile, so the LINKER: form
+#     always reports unsupported and the flag would be dropped again.
+include(CheckCXXSourceCompiles)
+set(CMAKE_REQUIRED_FLAGS "-Wl,--ignore-data-address-equality")
+check_cxx_source_compiles("int main() { return 0; }"
+	HAVE_LINKER_IGNORE_DATA_EQ)
+set(CMAKE_REQUIRED_FLAGS "")
+if(HAVE_LINKER_IGNORE_DATA_EQ)
+	add_link_options("-Wl,--ignore-data-address-equality")
+endif()
 
 #############################################################################
 ############################    DOCUMENTATION    ############################
@@ -158,15 +194,17 @@ ADD_DEFINITIONS(-DLUX_USE_CONFIG_H)
 
 # Configure the LuxRays version header.
 SET(LUXRAYS_VERSION_MAJOR 1)
-SET(LUXRAYS_VERSION_MINOR 7dev)
+SET(LUXRAYS_VERSION_MINOR 9)
 CONFIGURE_FILE(
 	"${CMAKE_SOURCE_DIR}/luxrays/include/luxrays/cfg.h.in"
-	"${CMAKE_SOURCE_DIR}/luxrays/include/luxrays/cfg.h"
+	"${CMAKE_BINARY_DIR}/luxrays/include/luxrays/cfg.h"
 	@ONLY
 )
 
 # LuxRays headers are included via the "luxrays/..." prefix.
 INCLUDE_DIRECTORIES(BEFORE SYSTEM "${CMAKE_SOURCE_DIR}/luxrays/include")
+# The generated cfg.h lives in the build tree.
+INCLUDE_DIRECTORIES(BEFORE SYSTEM "${CMAKE_BINARY_DIR}/luxrays/include")
 
 # Do not build OpenCL support.
 ADD_DEFINITIONS("-DLUXRAYS_DISABLE_OPENCL")
@@ -177,7 +215,8 @@ ADD_DEFINITIONS("-DLUXRAYS_DISABLE_OPENCL")
 
 # Dade - default compiler options
 # Removed "-O3" from definitions in order to have CMake Release/Debug options to work
-ADD_DEFINITIONS(-march=native -ftree-vectorize -funroll-loops -Wall -fPIC -DHAVE_PTHREAD_H)
+ADD_DEFINITIONS(-march=native -ftree-vectorize -funroll-loops -fPIC -DHAVE_PTHREAD_H)
+add_compile_options(-w)
 
 # Look for the highest supported AVX version.
 FIND_PACKAGE(AVX)
