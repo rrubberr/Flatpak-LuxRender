@@ -12,12 +12,8 @@ photographic quality.
 What's new in 1.9:
 -----------------
  - The LuxRender build system has been updated to support native
-   compilation on modern Linux distributions, using GCC 15+
+   compilation on modern Linux distributions, using LLVM 22+, GCC 16+
    and CMake 4.0+.
-
- - A new collapsing BVH accelerator using AVX2 will be compiled
-   if host CPU support is detected. Set your accelerator to "BVH"
-   in Blender. (Wald et al. 2008)
 
  - The Bidirectional integrator now supports ray connections from
    light sources directly to the camera. (Veach & Guibas 1994)
@@ -35,27 +31,20 @@ What's included:
    Two example scenes for LuxRender which you can try right away:
    LuxTime (by freejack) and School Corridor (by B.Y.O.B.).
 
-Notes:
------
- - Please note that our precompiled LuxRender builds are only
-   compatible with official Blender builds from http://blender.org. If
-   you are using a custom Blender build from your Linux distribution
-   repository or some alternative source, you should build LuxRender.
-
 Compiling from source:
 ---------------------
  - To compile from source, you'll need to install several libraries.
 
- - On Debian or Ubuntu run:
+ - On Ubuntu run:
     sudo apt install bison build-essential cmake flex git libfftw3-dev \
     patch pkg-config python3-dev qt6-base-dev qt6-image-formats-plugins
 
- - On Fedora or RHEL run:
+ - On Fedora run:
     sudo dnf group install "c-development"
     sudo dnf install bison cmake expat-devel fftw-devel patch flex git \
     pkgconf-pkg-config python3-devel qt6-qtbase-devel qt6-qtimageformats 
  
- - On Arch & friends run:
+ - On Arch run:
     sudo pacman -S base-devel bison cmake fftw flex git pkgconf python \
     qt6-base qt6-imageformats
 
