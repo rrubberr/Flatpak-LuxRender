@@ -54,10 +54,6 @@
 	path = ext/OpenImageIO
 	url = https://github.com/AcademySoftwareFoundation/OpenImageIO.git
 	shallow = true
-[submodule "ext/openssl"]
-	path = ext/openssl
-	url = https://github.com/openssl/openssl.git
-	shallow = true
 [submodule "ext/cpython"]
 	path = ext/cpython
 	url = https://github.com/python/cpython.git
@@ -71,3 +67,18 @@
 	url = https://github.com/RenderKit/embree
 	branch = v4.4.1
 	shallow = true
+[submodule "ext/bzip2"]
+	path = ext/bzip2
+	url = https://gitlab.com/bzip2/bzip2
+[submodule "ext/xz"]
+	path = ext/xz
+	url = https://github.com/tukaani-project/xz
+[submodule "ext/libexpat"]
+	path = ext/libexpat
+	url = https://github.com/libexpat/libexpat
+[submodule "ext/libdeflate"]
+	path = ext/libdeflate
+	url = https://github.com/ebiggers/libdeflate
+[submodule "ext/tbb"]
+	path = ext/tbb
+	url = https://github.com/uxlfoundation/oneTBB
