@@ -20,7 +20,7 @@
 ###########################################################################
 
 # Find Python (interpreter + headers + lib)
-find_package(Python3 REQUIRED COMPONENTS Interpreter Development)
+FIND_PACKAGE(Python3 REQUIRED COMPONENTS Interpreter Development)
 
 message(STATUS "Python executable: ${Python3_EXECUTABLE}")
 message(STATUS "Python include dir: ${Python3_INCLUDE_DIRS}")

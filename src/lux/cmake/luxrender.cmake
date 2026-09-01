@@ -23,104 +23,107 @@ set(CMAKE_AUTOMOC ON)
 set(CMAKE_AUTOUIC ON)
 set(CMAKE_AUTORCC ON)
 
+# Temporarily allow searching system paths for Qt6 and its transitive dependencies.
+set(OLD_CMAKE_FIND_ROOT_PATH_MODE_PACKAGE ${CMAKE_FIND_ROOT_PATH_MODE_PACKAGE})
+set(OLD_CMAKE_FIND_ROOT_PATH_MODE_MODULE ${CMAKE_FIND_ROOT_PATH_MODE_MODULE})
+set(OLD_CMAKE_FIND_ROOT_PATH_MODE_LIBRARY ${CMAKE_FIND_ROOT_PATH_MODE_LIBRARY})
+set(OLD_CMAKE_FIND_ROOT_PATH_MODE_INCLUDE ${CMAKE_FIND_ROOT_PATH_MODE_INCLUDE})
+
+set(CMAKE_FIND_ROOT_PATH_MODE_PACKAGE BOTH)
+set(CMAKE_FIND_ROOT_PATH_MODE_MODULE BOTH)
+set(CMAKE_FIND_ROOT_PATH_MODE_LIBRARY BOTH)
+set(CMAKE_FIND_ROOT_PATH_MODE_INCLUDE BOTH)
+
 FIND_PACKAGE(Qt6 COMPONENTS Core Gui Widgets REQUIRED)
 
-IF(Qt6_FOUND)
-	MESSAGE(STATUS "Qt library directory: " ${QT_LIBRARY_DIR} )
-	MESSAGE( STATUS "Qt include directory: " ${QT_INCLUDE_DIR} )
+# Restore strict mode for everything else.
+set(CMAKE_FIND_ROOT_PATH_MODE_PACKAGE ${OLD_CMAKE_FIND_ROOT_PATH_MODE_PACKAGE})
+set(CMAKE_FIND_ROOT_PATH_MODE_MODULE ${OLD_CMAKE_FIND_ROOT_PATH_MODE_MODULE})
+set(CMAKE_FIND_ROOT_PATH_MODE_LIBRARY ${OLD_CMAKE_FIND_ROOT_PATH_MODE_LIBRARY})
+set(CMAKE_FIND_ROOT_PATH_MODE_INCLUDE ${OLD_CMAKE_FIND_ROOT_PATH_MODE_INCLUDE})
 
-	SET(LUXQTGUI_SRCS
-		qtgui/aboutdialog.cpp
-		qtgui/advancedinfowidget.cpp
-		qtgui/batchprocessdialog.cpp
-		qtgui/colorspacewidget.cpp
-		qtgui/gammawidget.cpp
-		qtgui/guiutil.cpp
-		qtgui/histogramview.cpp
-		qtgui/histogramwidget.cpp
-		qtgui/lenseffectswidget.cpp
-		qtgui/lightgroupwidget.cpp
-		qtgui/luxapp.cpp
-		qtgui/main.cpp
-		qtgui/mainwindow.cpp
-		qtgui/noisereductionwidget.cpp
-		qtgui/openexroptionsdialog.cpp
-		qtgui/panewidget.cpp
-		qtgui/queue.cpp
-		qtgui/renderview.cpp
-		qtgui/tonemapwidget.cpp
-		console/commandline.cpp
-		)
-	SOURCE_GROUP("Source Files\\Qt GUI" FILES ${LUXQTGUI_SRCS})
-
-	SET(LUXQTGUI_MOC
-		qtgui/aboutdialog.hxx
-		qtgui/advancedinfowidget.hxx
-		qtgui/batchprocessdialog.hxx
-		qtgui/colorspacewidget.hxx
-		qtgui/gammawidget.hxx
-		qtgui/histogramview.hxx
-		qtgui/histogramwidget.hxx
-		qtgui/lenseffectswidget.hxx
-		qtgui/lightgroupwidget.hxx
-		qtgui/luxapp.hxx
-		qtgui/mainwindow.hxx
-		qtgui/noisereductionwidget.hxx
-		qtgui/openexroptionsdialog.hxx
-		qtgui/panewidget.hxx
-		qtgui/queue.hxx
-		qtgui/renderview.hxx
-		qtgui/tonemapwidget.hxx
-		)
-	SOURCE_GROUP("Header Files\\Qt GUI" FILES ${LUXQTGUI_MOC} qtgui/quiutil.h console/commandline.h)
-
-	SET(LUXQTGUI_UIS
-		qtgui/aboutdialog.ui
-		qtgui/advancedinfo.ui
-		qtgui/batchprocessdialog.ui
-		qtgui/colorspace.ui
-		qtgui/gamma.ui
-		qtgui/histogram.ui
-		qtgui/lenseffects.ui
-		qtgui/lightgroup.ui
-		qtgui/luxrender.ui
-		qtgui/noisereduction.ui
-		qtgui/openexroptionsdialog.ui
-		qtgui/pane.ui
-		qtgui/tonemap.ui
-		)
-	SOURCE_GROUP("UI Files\\Qt GUI" FILES ${LUXQTGUI_UIS})
-
-	SET(LUXQTGUI_RCS
-		qtgui/icons.qrc
-		qtgui/splash.qrc
-		qtgui/images.qrc
-		)
-	SOURCE_GROUP("Resource Files\\Qt GUI" FILES ${LUXQTGUI_RCS})
-
-	set(GUI_TYPE "")
-
-
-	ADD_EXECUTABLE(luxrender ${GUI_TYPE}
-		${LUXQTGUI_SRCS}
-		${LUXQTGUI_MOC}
-		${LUXQTGUI_UIS}
-		${LUXQTGUI_RCS}
+SET(LUXQTGUI_SRCS
+	qtgui/aboutdialog.cpp
+	qtgui/advancedinfowidget.cpp
+	qtgui/batchprocessdialog.cpp
+	qtgui/colorspacewidget.cpp
+	qtgui/gammawidget.cpp
+	qtgui/guiutil.cpp
+	qtgui/histogramview.cpp
+	qtgui/histogramwidget.cpp
+	qtgui/lenseffectswidget.cpp
+	qtgui/lightgroupwidget.cpp
+	qtgui/luxapp.cpp
+	qtgui/main.cpp
+	qtgui/mainwindow.cpp
+	qtgui/noisereductionwidget.cpp
+	qtgui/openexroptionsdialog.cpp
+	qtgui/panewidget.cpp
+	qtgui/queue.cpp
+	qtgui/renderview.cpp
+	qtgui/tonemapwidget.cpp
+	console/commandline.cpp
 	)
+SOURCE_GROUP("Source Files\\Qt GUI" FILES ${LUXQTGUI_SRCS})
 
-
-	target_link_libraries(luxrender PRIVATE
-    	Qt6::Core
-    	Qt6::Gui
-    	Qt6::Widgets
-    	Boost::program_options
-		Boost::filesystem
-		Boost::thread
-		lux
+SET(LUXQTGUI_MOC
+	qtgui/aboutdialog.hxx
+	qtgui/advancedinfowidget.hxx
+	qtgui/batchprocessdialog.hxx
+	qtgui/colorspacewidget.hxx
+	qtgui/gammawidget.hxx
+	qtgui/histogramview.hxx
+	qtgui/histogramwidget.hxx
+	qtgui/lenseffectswidget.hxx
+	qtgui/lightgroupwidget.hxx
+	qtgui/luxapp.hxx
+	qtgui/mainwindow.hxx
+	qtgui/noisereductionwidget.hxx
+	qtgui/openexroptionsdialog.hxx
+	qtgui/panewidget.hxx
+	qtgui/queue.hxx
+	qtgui/renderview.hxx
+	qtgui/tonemapwidget.hxx
 	)
+SOURCE_GROUP("Header Files\\Qt GUI" FILES ${LUXQTGUI_MOC} qtgui/quiutil.h console/commandline.h)
 
+SET(LUXQTGUI_UIS
+	qtgui/aboutdialog.ui
+	qtgui/advancedinfo.ui
+	qtgui/batchprocessdialog.ui
+	qtgui/colorspace.ui
+	qtgui/gamma.ui
+	qtgui/histogram.ui
+	qtgui/lenseffects.ui
+	qtgui/lightgroup.ui
+	qtgui/luxrender.ui
+	qtgui/noisereduction.ui
+	qtgui/openexroptionsdialog.ui
+	qtgui/pane.ui
+	qtgui/tonemap.ui
+	)
+SOURCE_GROUP("UI Files\\Qt GUI" FILES ${LUXQTGUI_UIS})
 
+SET(LUXQTGUI_RCS
+	qtgui/icons.qrc
+	qtgui/splash.qrc
+	qtgui/images.qrc
+	)
+SOURCE_GROUP("Resource Files\\Qt GUI" FILES ${LUXQTGUI_RCS})
 
-ELSE(Qt6_FOUND)
-	MESSAGE( FATAL_ERROR "Warning : could not find Qt - not building Qt GUI")
-ENDIF(Qt6_FOUND)
+ADD_EXECUTABLE(luxrender
+	${LUXQTGUI_SRCS}
+	${LUXQTGUI_MOC}
+	${LUXQTGUI_UIS}
+	${LUXQTGUI_RCS}
+)
+
+TARGET_LINK_LIBRARIES(luxrender PRIVATE
+	Qt6::Core
+	Qt6::Gui
+	Qt6::Widgets
+	Boost::program_options
+	Boost::filesystem
+	Boost::thread
+	lux
+)

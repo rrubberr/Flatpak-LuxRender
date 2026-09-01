@@ -19,46 +19,38 @@
 #   Lux website: http://www.luxrender.net                                 #
 ###########################################################################
 
-#############################################################################
-###########################      Find OpenMP       ##########################
-#############################################################################
+###############
+# Find OpenMP #
+###############
 
 FIND_PACKAGE(OpenMP)
 IF (OPENMP_FOUND)
 	MESSAGE(STATUS "OpenMP found - compiling with")
-	SET (CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${OpenMP_C_FLAGS}")
-	SET (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${OpenMP_CXX_FLAGS}")
+	if(TARGET OpenMP::OpenMP_CXX)
+		SET (CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${OpenMP_C_FLAGS}")
+		SET (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${OpenMP_CXX_FLAGS}")
+	endif()
 ELSE(OPENMP_FOUND)
 	MESSAGE(WARNING "OpenMP not found - compiling without")
 endif(OPENMP_FOUND)
 
-#############################################################################
-###########################      Find BISON       ###########################
-#############################################################################
+##############
+# Find Bison #
+##############
 
-IF (NOT BISON_NOT_AVAILABLE)
-	FIND_PACKAGE(BISON REQUIRED)
-	IF (NOT BISON_FOUND)
-		MESSAGE(FATAL_ERROR "bison not found - aborting")
-	ENDIF (NOT BISON_FOUND)
-ENDIF (NOT BISON_NOT_AVAILABLE)
+FIND_PACKAGE(BISON REQUIRED)
 
-#############################################################################
-###########################      Find FLEX        ###########################
-#############################################################################
+#############
+# Find Flex #
+#############
 
-IF (NOT FLEX_NOT_AVAILABLE)
-	FIND_PACKAGE(FLEX REQUIRED)
-	IF (NOT FLEX_FOUND)
-		MESSAGE(FATAL_ERROR "flex not found - aborting")
-	ENDIF (NOT FLEX_FOUND)
-ENDIF (NOT FLEX_NOT_AVAILABLE)
+FIND_PACKAGE(FLEX REQUIRED)
 
-#############################################################################
-########################### BOOST LIBRARIES SETUP ###########################
-#############################################################################
+##############
+# Find Boost #
+##############
 
-find_package(Boost REQUIRED COMPONENTS
+FIND_PACKAGE(Boost CONFIG REQUIRED COMPONENTS
     thread
     program_options
     filesystem
@@ -68,32 +60,59 @@ find_package(Boost REQUIRED COMPONENTS
     python
 )
 
-include_directories(${Boost_INCLUDE_DIRS})
+IF(Boost_FOUND)
+	MESSAGE(STATUS "Boost include directory: " ${Boost_INCLUDE_DIRS})
+	include_directories(${Boost_INCLUDE_DIRS})
+ENDIF(Boost_FOUND)
 
-#############################################################################
-##########################   OPENIMAGEIO LIBRARIES    #######################
-#############################################################################
+####################
+# Find OpenImageIO #
+####################
 
-find_package(OpenImageIO CONFIG REQUIRED)
-find_package(OpenEXR CONFIG REQUIRED)
-find_package(Imath CONFIG REQUIRED)
+FIND_PACKAGE(OpenImageIO CONFIG REQUIRED)
+if(TARGET OpenImageIO::OpenImageIO)
+    get_target_property(OIIO_INC OpenImageIO::OpenImageIO INTERFACE_INCLUDE_DIRECTORIES)
+    MESSAGE(STATUS "OpenImageIO include directory: ${OIIO_INC}")
+endif()
+FIND_PACKAGE(OpenEXR CONFIG REQUIRED)
+if(TARGET OpenEXR::OpenEXR)
+    get_target_property(EXR_INC OpenEXR::OpenEXR INTERFACE_INCLUDE_DIRECTORIES)
+    MESSAGE(STATUS "OpenEXR include directory: ${EXR_INC}")
+endif()
+FIND_PACKAGE(Imath CONFIG REQUIRED)
+if(TARGET Imath::Imath)
+    get_target_property(IMATH_INC Imath::Imath INTERFACE_INCLUDE_DIRECTORIES)
+    MESSAGE(STATUS "Imath include directory: ${IMATH_INC}")
+endif()
 
+FIND_PACKAGE(MINIZIP CONFIG REQUIRED)
+if(TARGET minizip::minizip)
+    get_target_property(MINIZIP_INC minizip::minizip INTERFACE_INCLUDE_DIRECTORIES)
+    MESSAGE(STATUS "minizip include directory: ${MINIZIP_INC}")
+endif()
+############
 
-#############################################################################
-########################### PNG   LIBRARIES SETUP ###########################
-#############################################################################
-
-FIND_PACKAGE(PNG)
+FIND_PACKAGE(PNG CONFIG REQUIRED)
 IF(PNG_INCLUDE_DIRS)
 	MESSAGE(STATUS "PNG include directory: " ${PNG_INCLUDE_DIRS})
 	INCLUDE_DIRECTORIES(BEFORE SYSTEM ${PNG_INCLUDE_DIRS})
 ELSE(PNG_INCLUDE_DIRS)
 	MESSAGE(STATUS "Warning : could not find PNG headers - building without png support")
-ENDIF(PNG_INCLUDE_DIRS)
+endif()
 
-#############################################################################
-########################### FFTW  LIBRARIES SETUP ###########################
-#############################################################################
+##############
+# Find Expat #
+##############
+
+FIND_PACKAGE(EXPAT REQUIRED)
+IF(EXPAT_FOUND)
+	MESSAGE(STATUS "Expat include directory: " ${EXPAT_INCLUDE_DIR})
+	INCLUDE_DIRECTORIES(${EXPAT_INCLUDE_DIR})
+endif()
+
+#############
+# Find FFTW #
+#############
 
 if(NOT TARGET FFTW3::fftw3)
     find_path(FFTW3_INCLUDE_DIR fftw3.h)
@@ -109,35 +128,37 @@ if(NOT TARGET FFTW3::fftw3)
         INTERFACE_INCLUDE_DIRECTORIES "${FFTW3_INCLUDE_DIR}"
     )
 endif()
+MESSAGE(STATUS "FFTW3 include directory: " ${FFTW3_INCLUDE_DIR})
 
-#############################################################################
-############################ THREADING LIBRARIES ############################
-#############################################################################
+################
+# Find Threads #
+################
 
-find_package(Threads REQUIRED)
+FIND_PACKAGE(Threads REQUIRED)
+if(TARGET Threads::Threads)
+    get_target_property(THREADS_INC Threads::Threads INTERFACE_INCLUDE_DIRECTORIES)
+endif()
 
-#############################################################################
-############################ FIX TIFF CMATH #################################
-#############################################################################
+#############
+# Find TIFF #
+#############
 
-find_package(TIFF REQUIRED)
-add_library(CMath::CMath INTERFACE IMPORTED GLOBAL)
-target_link_libraries(CMath::CMath INTERFACE m)
+FIND_PACKAGE(TIFF CONFIG REQUIRED)
+IF(TIFF_FOUND)
+	MESSAGE(STATUS "TIFF include directory: " ${TIFF_INCLUDE_DIRS})
+ENDIF(TIFF_FOUND)
 
-#############################################################################
-############################ NO OPENCL FOR US ###############################
-#############################################################################
+###############
+# Find Embree #
+###############
 
-ADD_DEFINITIONS("-DLUXRAYS_DISABLE_OPENCL")
-
-#############################################################################
-############################### EMBREE ######################################
-#############################################################################
-
-find_package(embree REQUIRED)
-IF(EMBREE_INCLUDE_DIRS)
-	MESSAGE(STATUS "Embree include directory: " ${EMBREE_INCLUDE_DIRS})
-	INCLUDE_DIRECTORIES(BEFORE SYSTEM ${EMBREE_INCLUDE_DIRS})
-ELSE(EMBREE_INCLUDE_DIRS)
+FIND_PACKAGE(embree CONFIG REQUIRED)
+IF(embree_FOUND)
+	MESSAGE(STATUS "Embree found")
+	if(TARGET embree::embree)
+		get_target_property(EMBREE_INC embree::embree INTERFACE_INCLUDE_DIRECTORIES)
+	endif()
+	# The target is embree::embree
+ELSE(embree_FOUND)
 	MESSAGE(STATUS "Warning : could not find Embree headers.")
-ENDIF(EMBREE_INCLUDE_DIRS)
+ENDIF(embree_FOUND)

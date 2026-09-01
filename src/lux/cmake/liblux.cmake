@@ -24,23 +24,21 @@
 #########################      CUSTOM COMMAND     ###########################
 #############################################################################
 #############################################################################
-IF (NOT BISON_NOT_AVAILABLE AND NOT FLEX_NOT_AVAILABLE)
-	# Create custom command for bison/yacc
-	BISON_TARGET(LuxParser ${CMAKE_SOURCE_DIR}/core/luxparse.y ${CMAKE_BINARY_DIR}/luxparse.cpp)
-	SET_SOURCE_FILES_PROPERTIES(${CMAKE_BINARY_DIR}/core/luxparse.cpp GENERATED)
-	#SOURCE_GROUP("Parser Files" FILES core/luxparse.y)
+# Create custom command for bison/yacc
+BISON_TARGET(LuxParser ${CMAKE_SOURCE_DIR}/core/luxparse.y ${CMAKE_BINARY_DIR}/luxparse.cpp)
+SET_SOURCE_FILES_PROPERTIES(${CMAKE_BINARY_DIR}/core/luxparse.cpp GENERATED)
+#SOURCE_GROUP("Parser Files" FILES core/luxparse.y)
 
-	# Create custom command for flex/lex
-	FLEX_TARGET(LuxLexer ${CMAKE_SOURCE_DIR}/core/luxlex.l ${CMAKE_BINARY_DIR}/luxlex.cpp COMPILE_FLAGS "${FLEX_FLAGS}")
-	SET_SOURCE_FILES_PROPERTIES(${CMAKE_BINARY_DIR}/luxlex.cpp GENERATED)
-	#SOURCE_GROUP("Parser Files" FILES core/luxlex.l)
-	SET(lux_parser_src
-		core/luxparse.y
-		core/luxlex.l)
-	SOURCE_GROUP("Parser Files" FILES ${lux_core_parser_src})
+# Create custom command for flex/lex
+FLEX_TARGET(LuxLexer ${CMAKE_SOURCE_DIR}/core/luxlex.l ${CMAKE_BINARY_DIR}/luxlex.cpp)
+SET_SOURCE_FILES_PROPERTIES(${CMAKE_BINARY_DIR}/luxlex.cpp GENERATED)
+#SOURCE_GROUP("Parser Files" FILES core/luxlex.l)
+SET(lux_parser_src
+	core/luxparse.y
+	core/luxlex.l)
+SOURCE_GROUP("Parser Files" FILES ${lux_parser_src})
 
-	ADD_FLEX_BISON_DEPENDENCY(LuxLexer LuxParser)
-ENDIF (NOT BISON_NOT_AVAILABLE AND NOT FLEX_NOT_AVAILABLE)
+ADD_FLEX_BISON_DEPENDENCY(LuxLexer LuxParser)
 #############################################################################
 #############################################################################
 #####################  SOURCE FILES FOR static liblux.a  ####################

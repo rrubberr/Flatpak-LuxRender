@@ -6,21 +6,27 @@
 #   LuxRender is free software; you can redistribute it and/or modify     #
 #   it under the terms of the GNU General Public License as published by  #
 #   the Free Software Foundation; either version 3 of the License, or     #
-#   (at your option) any later version.                                   #
+#   any later version.                                                    #
 #                                                                         #
 #   LuxRender is distributed in the hope that it will be useful,          #
 #   but WITHOUT ANY WARRANTY; without even the implied warranty of        #
-#   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the         #
+#   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the          #
 #   GNU General Public License for more details.                          #
 #                                                                         #
 #   You should have received a copy of the GNU General Public License     #
-#   along with this program.  If not, see <http://www.gnu.org/licenses/>. #
+#   along with this program. If not, see <http://www.gnu.org/licenses/>   #
 #                                                                         #
-#   LuxRender website: https://github.com/rrubberr/LuxRender              #
+#   This project is based on PBRT; see <http://www.pbrt.org>              #
 ###########################################################################
 
 MESSAGE(STATUS "CMAKE VERSION DETECTED " ${CMAKE_VERSION})
-	cmake_minimum_required(VERSION 3.10)
+cmake_minimum_required(VERSION 3.25)
+
+###################################
+# Set the compiler and build type #
+###################################
+
+include(${CMAKE_CURRENT_SOURCE_DIR}/../cmake/CompilerSetup.cmake)
 
 ##################
 # Set up folders #
@@ -30,34 +36,27 @@ MESSAGE(STATUS "CMAKE VERSION DETECTED " ${CMAKE_VERSION})
 set(EXT_DIR ${CMAKE_CURRENT_SOURCE_DIR})
 
 # This points to LuxRender/ext/build.
-set(DEPS_BUILD_DIR ${EXT_DIR}/build)
+set(BUILD_DIR ${EXT_DIR}/build)
 
 # This points to LuxRender/ext/build/bin.
-set(DEPS_BIN_DIR ${DEPS_BUILD_DIR}/bin)
+set(BIN_DIR ${BUILD_DIR}/bin)
 
 # This points to LuxRender/ext/build/lib.
-set(DEPS_LIB_DIR ${DEPS_BUILD_DIR}/lib)
+set(LIB_DIR ${BUILD_DIR}/lib)
 
 # This points to LuxRender/ext/build/include.
-set(DEPS_INC_DIR ${DEPS_BUILD_DIR}/include)
+set(INC_DIR ${BUILD_DIR}/include)
 
 #This points to LuxRender/ext/build/pfx.
-set(DEPS_PFX_DIR ${DEPS_BUILD_DIR}/pfx)
+set(PFX_DIR ${EXT_DIR}/pfx)
 
-##############################
-# Set the default build type #
-##############################
+#####################
+# Setup the project #
+#####################
 
-# Don't overconfigure.
-SET(CMAKE_CONFIGURATION_TYPES "Debug;Release" CACHE STRING "limit configs" FORCE)
+project(LuxRenderDeps)
 
-# CMake needs to know which configuration to generate by default.
-IF (NOT CMAKE_BUILD_TYPE)
-	SET(CMAKE_BUILD_TYPE Release)
-ENDIF(NOT CMAKE_BUILD_TYPE)
-
-MESSAGE(STATUS "Building mode: " ${CMAKE_BUILD_TYPE})
-SET(CMAKE_BUILD_TYPE ${CMAKE_BUILD_TYPE} CACHE STRING "assure config" FORCE) # makes sure type is shown in cmake gui
+include(ExternalProject)
 
 ##############################
 # Set the default build args #
@@ -71,134 +70,79 @@ string(REGEX MATCH "#define[ \t]+PY_MINOR_VERSION[ \t]+([0-9]+)" _ ""
 	${_lux_patchlevel_h})
 set(LUX_PYTHON_MINOR "${CMAKE_MATCH_1}")
 set(LUX_PYTHON_INCLUDE_DIR
-	"${DEPS_INC_DIR}/python${LUX_PYTHON_MAJOR}.${LUX_PYTHON_MINOR}")
+	"${INC_DIR}/python${LUX_PYTHON_MAJOR}.${LUX_PYTHON_MINOR}")
 message(STATUS "Vendored CPython headers: ${LUX_PYTHON_INCLUDE_DIR}")
 
-set(
-	COMMON_EXT_PROJECT_ARGS
+set(COMMON_EXT_PROJECT_ARGS
 	-DCMAKE_CXX_STANDARD=17
 	-DCMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE}
 	"-DCMAKE_CXX_FLAGS=${CMAKE_CXX_FLAGS} -I\"${LUX_PYTHON_INCLUDE_DIR}\" -w"
 	"-DCMAKE_C_FLAGS=${CMAKE_C_FLAGS} -w"
 	-DCMAKE_POSITION_INDEPENDENT_CODE=TRUE
-    -DCMAKE_INSTALL_PREFIX=${DEPS_BUILD_DIR}
+    -DCMAKE_INSTALL_PREFIX=${BUILD_DIR}
     -DCMAKE_INSTALL_LIBDIR=lib
     -DCMAKE_INSTALL_INCLUDEDIR=include
-    -DCMAKE_PREFIX_PATH=${DEPS_BUILD_DIR}
+	-DCMAKE_FIND_ROOT_PATH_MODE_PROGRAM=NEVER
+    -DCMAKE_FIND_ROOT_PATH_MODE_LIBRARY=ONLY
+    -DCMAKE_FIND_ROOT_PATH_MODE_INCLUDE=ONLY
+    -DCMAKE_FIND_ROOT_PATH_MODE_PACKAGE=ONLY
+    -DCMAKE_PREFIX_PATH=${BUILD_DIR}
 )
 
-####################
-# Set the compiler #
-####################
+#############################################
+# Optional serialized builds for debugging #
+#############################################
 
-if(APPLE)
-    # Use Xcode's Clang
-    find_program(CLANG_CC NAMES clang)
-    find_program(CLANG_CXX NAMES clang++)
-    
-    set(CMAKE_C_COMPILER ${CLANG_CC})
-    set(CMAKE_CXX_COMPILER ${CLANG_CXX})
-    message(STATUS "Using Apple Clang: ${CMAKE_C_COMPILER}")
+# Each external project is chained so one project builds at a time.
+# Enable with: cmake -DLUX_EXT_SERIAL=ON ..
+option(LUX_EXT_SERIAL "Build external projects one at a time" OFF)
 
-    execute_process(COMMAND sysctl -n hw.ncpu OUTPUT_VARIABLE NPROC_VALUE OUTPUT_STRIP_TRAILING_WHITESPACE)
-else()
-    # Use the Intel compiler if available.
-    if(DEFINED ENV{ONEAPI_ROOT})
-        set(INTEL_CC "$ENV{ONEAPI_ROOT}/compiler/latest/bin/icx")
-        set(INTEL_CXX "$ENV{ONEAPI_ROOT}/compiler/latest/bin/icpx")
-        set(LLD_LINKER "$ENV{ONEAPI_ROOT}/compiler/latest/bin/lld")
-    else()
-        find_program(INTEL_CC NAMES icx)
-        find_program(INTEL_CXX NAMES icpx)
-        find_program(LLD_LINKER NAMES lld) # Only look globally if Intel env isn't set
-    endif()
-    
-    # Look for system Clang if Intel wasn't found.
-    if(NOT INTEL_CC)
-        find_program(CLANG_CC NAMES clang)
-        find_program(CLANG_CXX NAMES clang++)
-        if(NOT LLD_LINKER)
-            find_program(LLD_LINKER NAMES lld)
-        endif()
-    endif()
+function(lux_external_project_add TARGET_NAME)
+	if(LUX_EXT_SERIAL AND DEFINED LUX_EXT_PREV_TARGET)
+		ExternalProject_Add(${TARGET_NAME} ${ARGN} DEPENDS ${LUX_EXT_PREV_TARGET})
+	else()
+		ExternalProject_Add(${TARGET_NAME} ${ARGN})
+	endif()
 
-    if(INTEL_CC AND INTEL_CXX)
-        set(CMAKE_C_COMPILER ${INTEL_CC})
-        set(CMAKE_CXX_COMPILER ${INTEL_CXX})
-        
-        # Force LTO code generation to emit Position Independent Code for executables
-        set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -fPIE")
-        set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fPIE")
-        
-        # 2. Bake linker fixes directly into the LLD call rule.
-        set(CMAKE_C_USING_LINKER_LLD "-fuse-ld=lld -pie -Wl,--ignore-data-address-equality")
-        set(CMAKE_CXX_USING_LINKER_LLD "-fuse-ld=lld -pie -Wl,--ignore-data-address-equality")
-        set(CMAKE_LINKER_TYPE LLD)
-        
-        message(STATUS "Using Intel OneAPI C: ${CMAKE_C_COMPILER}")
-        message(STATUS "Using Intel OneAPI CXX: ${CMAKE_CXX_COMPILER}")
-        message(STATUS "Using Intel OneAPI LLD: ${LLD_LINKER}")
-        set(USING_CLANG TRUE)
-        set(USING_INTEL TRUE)
-    elseif(CLANG_CC AND CLANG_CXX AND LLD_LINKER)
-        set(CMAKE_C_COMPILER ${CLANG_CC})
-        set(CMAKE_CXX_COMPILER ${CLANG_CXX})
-        set(CMAKE_LINKER_TYPE LLD)
-        message(STATUS "Using LLVM Clang: ${CMAKE_C_COMPILER}")
-        set(USING_CLANG TRUE)
-    else()
-        message(STATUS "Using GCC")
-        set(USING_CLANG FALSE)
-    endif()
+	if(LUX_EXT_SERIAL)
+		set(LUX_EXT_PREV_TARGET ${TARGET_NAME} PARENT_SCOPE)
+	endif()
+endfunction()
 
-    execute_process(COMMAND nproc OUTPUT_VARIABLE NPROC_VALUE OUTPUT_STRIP_TRAILING_WHITESPACE)
+if(LUX_EXT_SERIAL)
+	message(STATUS "LuxRender ext: serialized external project builds ENABLED")
 endif()
-
-#####################
-# Setup the project #
-#####################
-
-project(LuxRenderDeps)
-
-include(ExternalProject)
 
 #################
 # Build cpython #
 #################
 
-set(CPYTHON_CONFIGURE_CMD
-    /bin/sh -c "cd \"${EXT_DIR}/cpython\" && \
-    CC=\"${CMAKE_C_COMPILER}\" CXX=\"${CMAKE_CXX_COMPILER}\" \
-    sh ./configure --prefix=${DEPS_BUILD_DIR} --disable-shared \
-    --with-ensurepip=no --without-test-modules"
-)
-
-ExternalProject_Add(
+lux_external_project_add(
     cpython
     SOURCE_DIR ${EXT_DIR}/cpython
-    PREFIX ${DEPS_PFX_DIR}/cpython
-    INSTALL_DIR ${DEPS_BUILD_DIR}
-    CMAKE_ARGS
-        -DCMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE}
-    CONFIGURE_COMMAND ${CPYTHON_CONFIGURE_CMD}
-    BUILD_COMMAND
-        /bin/sh -c "cd \"${EXT_DIR}/cpython\" && make install -j${NPROC_VALUE} \
-            CC=\"${CMAKE_C_COMPILER}\" CXX=\"${CMAKE_CXX_COMPILER}\" \
-            CFLAGS=\"-O2 -w -fPIC\" \
-            LDFLAGS='-Wl,-rpath,\$ORIGIN'"
-    INSTALL_COMMAND ""
+    PREFIX ${PFX_DIR}/cpython
+    INSTALL_DIR ${BUILD_DIR}
+    CONFIGURE_COMMAND
+        ${EXT_DIR}/cpython/configure
+        --prefix=${BUILD_DIR}
+        --disable-shared
+        --with-ensurepip=no
+        --disable-test-modules
+        CFLAGS=-O2\ -w\ -fPIC
+        LDFLAGS=-Wl,-rpath,$$ORIGIN
+    BUILD_COMMAND make
+    INSTALL_COMMAND make install
 )
 
 #################
 # Build zlib-ng #
 #################
 
-ExternalProject_Add(
+lux_external_project_add(
 	zlib-ng
-    DEPENDS cpython
 	SOURCE_DIR ${EXT_DIR}/zlib-ng
-	PREFIX ${DEPS_PFX_DIR}/zlib-ng
-	INSTALL_DIR ${DEPS_BUILD_DIR}
+	PREFIX ${PFX_DIR}/zlib-ng
+	INSTALL_DIR ${BUILD_DIR}
 	CMAKE_ARGS
 		${COMMON_EXT_PROJECT_ARGS}
 		-DZLIB_COMPAT=TRUE
@@ -206,16 +150,46 @@ ExternalProject_Add(
         -DBUILD_SHARED_LIBS=FALSE
 )
 
+###############
+# Build bzip2 #
+###############
+
+lux_external_project_add(
+	bzip2
+	SOURCE_DIR ${EXT_DIR}/bzip2
+	PREFIX ${PFX_DIR}/bzip2
+	INSTALL_DIR ${BUILD_DIR}
+	CMAKE_ARGS
+		${COMMON_EXT_PROJECT_ARGS}
+		-DENABLE_LIB_ONLY=ON
+		-DENABLE_APP=OFF
+		-DENABLE_EXAMPLES=OFF
+		-DENABLE_TESTS=OFF
+		-DENABLE_DOCS=OFF
+)
+
+############
+# Build xz #
+############
+
+lux_external_project_add(
+	xz
+	SOURCE_DIR ${EXT_DIR}/xz
+	PREFIX ${PFX_DIR}/xz
+	INSTALL_DIR ${BUILD_DIR}
+	CMAKE_ARGS
+		${COMMON_EXT_PROJECT_ARGS}
+)
+
 ###################
 # Build robin-map #
 ###################
 
-ExternalProject_Add(
+lux_external_project_add(
 	robin-map
-    DEPENDS cpython
 	SOURCE_DIR ${EXT_DIR}/robin-map
-	PREFIX ${DEPS_PFX_DIR}/robin-map
-	INSTALL_DIR ${DEPS_BUILD_DIR}
+	PREFIX ${PFX_DIR}/robin-map
+	INSTALL_DIR ${BUILD_DIR}
 	CMAKE_ARGS
 		${COMMON_EXT_PROJECT_ARGS}
 		-DTSL_ROBIN_MAP_ENABLE_INSTALL=TRUE
@@ -225,12 +199,11 @@ ExternalProject_Add(
 # Build yaml-cpp #
 ##################
 
-ExternalProject_Add(
+lux_external_project_add(
 	yaml-cpp
-    DEPENDS cpython
 	SOURCE_DIR ${EXT_DIR}/yaml-cpp
-	PREFIX ${DEPS_PFX_DIR}/yaml-cpp
-	INSTALL_DIR ${DEPS_BUILD_DIR}
+	PREFIX ${PFX_DIR}/yaml-cpp
+	INSTALL_DIR ${BUILD_DIR}
 	CMAKE_ARGS
 		${COMMON_EXT_PROJECT_ARGS}
 		-DYAML_CPP_BUILD_CONTRIB=FALSE
@@ -242,12 +215,12 @@ ExternalProject_Add(
 # Build pybind11 #
 ##################
 
-ExternalProject_Add(
+lux_external_project_add(
 	pybind11
     DEPENDS cpython
 	SOURCE_DIR ${EXT_DIR}/pybind11
-	PREFIX ${DEPS_PFX_DIR}/pybind11
-	INSTALL_DIR ${DEPS_BUILD_DIR}
+	PREFIX ${PFX_DIR}/pybind11
+	INSTALL_DIR ${BUILD_DIR}
 	CMAKE_ARGS
 		${COMMON_EXT_PROJECT_ARGS}
 		-DPYBIND11_TEST=FALSE
@@ -257,12 +230,11 @@ ExternalProject_Add(
 # Build pystring #
 ##################
 
-ExternalProject_Add(
+lux_external_project_add(
 	pystring
-    DEPENDS cpython
 	SOURCE_DIR ${EXT_DIR}/pystring
-	PREFIX ${DEPS_PFX_DIR}/pystring
-	INSTALL_DIR ${DEPS_BUILD_DIR}
+	PREFIX ${PFX_DIR}/pystring
+	INSTALL_DIR ${BUILD_DIR}
 	CMAKE_ARGS
 		${COMMON_EXT_PROJECT_ARGS}
         -DBUILD_SHARED_LIBS=FALSE
@@ -273,12 +245,12 @@ ExternalProject_Add(
 # Build minizip-ng #
 ####################
 
-ExternalProject_Add(
+lux_external_project_add(
 	minizip-ng
-    DEPENDS zlib-ng
+    DEPENDS zlib-ng bzip2 xz
 	SOURCE_DIR ${EXT_DIR}/minizip-ng
-	PREFIX ${DEPS_PFX_DIR}/minizip-ng
-	INSTALL_DIR ${DEPS_BUILD_DIR}
+	PREFIX ${PFX_DIR}/minizip-ng
+	INSTALL_DIR ${BUILD_DIR}
 	CMAKE_ARGS
 		${COMMON_EXT_PROJECT_ARGS}
 		-DMZ_ZLIB_FLAVOR=zlib
@@ -292,39 +264,83 @@ ExternalProject_Add(
         -DMZ_ZSTD=FALSE
         -DMZ_LIBBSD=FALSE
         -DMZ_ICONV=TRUE
+		-DMZ_PPMD=OFF
         -DBUILD_SHARED_LIBS=FALSE
+)
+
+##################
+# Build libexpat #
+##################
+
+lux_external_project_add(
+	libexpat
+	SOURCE_DIR ${EXT_DIR}/libexpat/expat
+	PREFIX ${PFX_DIR}/libexpat
+	INSTALL_DIR ${BUILD_DIR}
+	CMAKE_ARGS
+		${COMMON_EXT_PROJECT_ARGS}
+		-DBUILD_SHARED_LIBS=FALSE
+)
+
+####################
+# Build libdeflate #
+####################
+
+lux_external_project_add(
+	libdeflate
+	SOURCE_DIR ${EXT_DIR}/libdeflate
+	PREFIX ${PFX_DIR}/libdeflate
+	INSTALL_DIR ${BUILD_DIR}
+	CMAKE_ARGS
+		${COMMON_EXT_PROJECT_ARGS}
+		-DLIBDEFLATE_BUILD_STATIC_LIB=ON
+		-DLIBDEFLATE_BUILD_SHARED_LIB=OFF
+)
+
+###############
+# Build FFTW3 #
+###############
+
+lux_external_project_add(
+	fftw
+	URL ${EXT_DIR}/fftw/fftw-3.3.11.tar.gz
+	PREFIX ${PFX_DIR}/fftw
+	INSTALL_DIR ${BUILD_DIR}
+	CMAKE_ARGS
+		${COMMON_EXT_PROJECT_ARGS}
+		-DBUILD_SHARED_LIBS=OFF
+		-DCMAKE_POLICY_VERSION_MINIMUM=3.5
 )
 
 ################
 # Build libpng #
 ################
 
-ExternalProject_Add(
+lux_external_project_add(
 	libpng
-    DEPENDS minizip-ng
+    DEPENDS zlib-ng
 	SOURCE_DIR ${EXT_DIR}/libpng
-	PREFIX ${DEPS_PFX_DIR}/libpng
-	INSTALL_DIR ${DEPS_BUILD_DIR}
+	PREFIX ${PFX_DIR}/libpng
+	INSTALL_DIR ${BUILD_DIR}
 	CMAKE_ARGS
 		${COMMON_EXT_PROJECT_ARGS}
 		-DPNG_STATIC=TRUE
 		-DPNG_SHARED=FALSE
 		-DPNG_TESTS=FALSE
 		-DPNG_EXECUTABLES=FALSE
-		-DZLIB_INCLUDE_DIR=${DEPS_INC_DIR}
-        -DZLIB_LIBRARY=${DEPS_LIB_DIR}/libz.a
+		-DZLIB_INCLUDE_DIR=${INC_DIR}
+        -DZLIB_LIBRARY=${LIB_DIR}/libz.a
 )
 
 #################
 # Build OpenJPH #
 #################
 
-ExternalProject_Add(
+lux_external_project_add(
 	OpenJPH
-    DEPENDS minizip-ng
 	SOURCE_DIR ${EXT_DIR}/OpenJPH
-	PREFIX ${DEPS_PFX_DIR}/OpenJPH
-	INSTALL_DIR ${DEPS_BUILD_DIR}
+	PREFIX ${PFX_DIR}/OpenJPH
+	INSTALL_DIR ${BUILD_DIR}
 	CMAKE_ARGS
 		${COMMON_EXT_PROJECT_ARGS}
 		-DOJPH_BUILD_EXECUTABLES=FALSE
@@ -336,15 +352,13 @@ ExternalProject_Add(
 # Build libjpeg-turbo #
 #######################
 
-ExternalProject_Add(
+lux_external_project_add(
 	libjpeg-turbo
-    DEPENDS OpenJPH
 	SOURCE_DIR ${EXT_DIR}/libjpeg-turbo
-	PREFIX ${DEPS_PFX_DIR}/libjpeg-turbo
-	INSTALL_DIR ${DEPS_BUILD_DIR}
+	PREFIX ${PFX_DIR}/libjpeg-turbo
+	INSTALL_DIR ${BUILD_DIR}
 	CMAKE_ARGS
 		${COMMON_EXT_PROJECT_ARGS}
-		-DWITH_JAVA=FALSE
 		-DWITH_TESTS=FALSE
 		-DWITH_TURBOJPEG=FALSE
         -DENABLE_SHARED=FALSE
@@ -357,12 +371,12 @@ ExternalProject_Add(
 # Build libtiff #
 #################
 
-ExternalProject_Add(
+lux_external_project_add(
 	libtiff
-    DEPENDS libjpeg-turbo libpng
+    DEPENDS zlib-ng libdeflate
 	SOURCE_DIR ${EXT_DIR}/libtiff
-	PREFIX ${DEPS_PFX_DIR}/libtiff
-	INSTALL_DIR ${DEPS_BUILD_DIR}
+	PREFIX ${PFX_DIR}/libtiff
+	INSTALL_DIR ${BUILD_DIR}
 	CMAKE_ARGS
 		${COMMON_EXT_PROJECT_ARGS}
 		-Dtiff-static=TRUE
@@ -379,8 +393,6 @@ ExternalProject_Add(
 		-Dtiff-opengl=FALSE
 		-Dlerc=FALSE
 		-Djbig=FALSE
-		-Dtiff-jpeg=FALSE
-        -Dtiff-jpeg12=FALSE
 		-Djpeg12=FALSE
 		-Djpeg=FALSE
 )
@@ -389,12 +401,11 @@ ExternalProject_Add(
 # Build Imath #
 ###############
 
-ExternalProject_Add(
+lux_external_project_add(
 	Imath
-    DEPENDS libtiff
 	SOURCE_DIR ${EXT_DIR}/Imath
-	PREFIX ${DEPS_PFX_DIR}/Imath
-	INSTALL_DIR ${DEPS_BUILD_DIR}
+	PREFIX ${PFX_DIR}/Imath
+	INSTALL_DIR ${BUILD_DIR}
 	CMAKE_ARGS
 		${COMMON_EXT_PROJECT_ARGS}
         -DBUILD_SHARED_LIBS=FALSE
@@ -404,12 +415,12 @@ ExternalProject_Add(
 # Build openexr #
 #################
 
-ExternalProject_Add(
+lux_external_project_add(
 	openexr
-	DEPENDS OpenJPH Imath zlib-ng minizip-ng
+	DEPENDS OpenJPH Imath zlib-ng minizip-ng bzip2 xz
 	SOURCE_DIR ${EXT_DIR}/openexr
-	PREFIX ${DEPS_PFX_DIR}/openexr
-	INSTALL_DIR ${DEPS_BUILD_DIR}
+	PREFIX ${PFX_DIR}/openexr
+	INSTALL_DIR ${BUILD_DIR}
 	CMAKE_ARGS
 		${COMMON_EXT_PROJECT_ARGS}
 		-DOPENEXR_BUILD_TOOLS=FALSE
@@ -420,24 +431,20 @@ ExternalProject_Add(
 		-DOPENEXR_INSTALL_DEVELOPER_TOOLS=FALSE
 		-DOPENEXR_FORCE_INTERNAL_OPENJPH=FALSE # Do not use internal. This will break the universe.
         -DBUILD_SHARED_LIBS=FALSE
-		-DOpenJPH_ROOT=${DEPS_BUILD_DIR}
-        -DOpenJPH_DIR=${DEPS_LIB_DIR}/cmake/openjph
-		-DZLIB_INCLUDE_DIR=${DEPS_INC_DIR}
-        -DZLIB_LIBRARY=${DEPS_LIB_DIR}/libz.a
 	CMAKE_CACHE_ARGS
-		"-DCMAKE_CXX_FLAGS:STRING=${CMAKE_CXX_FLAGS} -I${DEPS_INC_DIR}/openjph"
+		"-DCMAKE_CXX_FLAGS:STRING=${CMAKE_CXX_FLAGS} -I${INC_DIR}/openjph"
 )
 
 #####################
 # Build OpenColorIO #
 #####################
 
-ExternalProject_Add(
+lux_external_project_add(
 	OpenColorIO
-    DEPENDS openexr robin-map yaml-cpp pybind11 pystring
+    DEPENDS zlib-ng minizip-ng yaml-cpp pystring Imath bzip2 xz
 	SOURCE_DIR ${EXT_DIR}/OpenColorIO
-	PREFIX ${DEPS_PFX_DIR}/OpenColorIO
-	INSTALL_DIR ${DEPS_BUILD_DIR}
+	PREFIX ${PFX_DIR}/OpenColorIO
+	INSTALL_DIR ${BUILD_DIR}
 	CMAKE_ARGS
 		${COMMON_EXT_PROJECT_ARGS}
 		-DOCIO_BUILD_APPS=FALSE
@@ -447,20 +454,20 @@ ExternalProject_Add(
 		-DOCIO_BUILD_GPU_TESTS=FALSE
         -DBUILD_SHARED_LIBS=FALSE
         -DOCIO_INSTALL_EXT_PACKAGES=NONE
-		-DZLIB_INCLUDE_DIR=${DEPS_INC_DIR}
-        -DZLIB_LIBRARY=${DEPS_LIB_DIR}/libz.a
+		-DZLIB_INCLUDE_DIR=${INC_DIR}
+        -DZLIB_LIBRARY=${LIB_DIR}/libz.a
 )
 
 #####################
 # Build OpenImageIO #
 #####################
 
-ExternalProject_Add(
+lux_external_project_add(
 	OpenImageIO
-	DEPENDS OpenColorIO openexr robin-map yaml-cpp pybind11 pystring
+	DEPENDS robin-map zlib-ng Imath openexr libtiff libjpeg-turbo libpng OpenColorIO
 	SOURCE_DIR ${EXT_DIR}/OpenImageIO
-	PREFIX ${DEPS_PFX_DIR}/OpenImageIO
-	INSTALL_DIR ${DEPS_BUILD_DIR}
+	PREFIX ${PFX_DIR}/OpenImageIO
+	INSTALL_DIR ${BUILD_DIR}
 	CMAKE_ARGS
 		${COMMON_EXT_PROJECT_ARGS}
 		-DUSE_PYTHON=FALSE
@@ -491,31 +498,46 @@ ExternalProject_Add(
 		-DUSE_OpenJPEG=FALSE
         -DUSE_TBB=FALSE
         -DBUILD_SHARED_LIBS=FALSE
-		-DZLIB_INCLUDE_DIR=${DEPS_INC_DIR}
-        -DZLIB_LIBRARY=${DEPS_LIB_DIR}/libz.a
-		-DJPEG_ROOT=${DEPS_BUILD_DIR}
+		-DZLIB_INCLUDE_DIR=${INC_DIR}
+        -DZLIB_LIBRARY=${LIB_DIR}/libz.a
+		-DJPEG_ROOT=${BUILD_DIR}
+)
+
+#############
+# Build TBB #
+#############
+
+lux_external_project_add(
+	tbb
+	SOURCE_DIR ${EXT_DIR}/tbb
+	PREFIX ${PFX_DIR}/tbb
+	INSTALL_DIR ${BUILD_DIR}
+	CMAKE_ARGS
+		${COMMON_EXT_PROJECT_ARGS}
+		-DTBB_TEST=OFF
+		-DBUILD_SHARED_LIBS=OFF
 )
 
 ################
 # Build Embree #
 ################
 
-ExternalProject_Add(
+lux_external_project_add(
 	embree
-    DEPENDS robin-map yaml-cpp pybind11 pystring
+	DEPENDS tbb
 	SOURCE_DIR ${EXT_DIR}/embree
-	PREFIX ${DEPS_PFX_DIR}/embree
-	INSTALL_DIR ${DEPS_BUILD_DIR}
+	PREFIX ${PFX_DIR}/embree
+	INSTALL_DIR ${BUILD_DIR}
 	CMAKE_ARGS
 		${COMMON_EXT_PROJECT_ARGS}
-		# Pass the compilers.
+		# Pass the compiler.
         -DCMAKE_C_COMPILER=${CMAKE_C_COMPILER}
         -DCMAKE_CXX_COMPILER=${CMAKE_CXX_COMPILER}
         -DCMAKE_LINKER_TYPE=${CMAKE_LINKER_TYPE}
-        # Keep custom Intel LLD definitions.
+        # Intel LLD definitions.
         -DCMAKE_C_USING_LINKER_LLD=${CMAKE_C_USING_LINKER_LLD}
         -DCMAKE_CXX_USING_LINKER_LLD=${CMAKE_CXX_USING_LINKER_LLD}
-        # Forward flags to ensure PIE and LTO.
+        # Forward PIE and LTO.
         -DCMAKE_CXX_FLAGS=${CMAKE_CXX_FLAGS}
         -DCMAKE_C_FLAGS=${CMAKE_C_FLAGS}
 		-DEMBREE_STATIC_LIB=TRUE
@@ -546,15 +568,15 @@ ExternalProject_Add(
 
 set(
 	BOOST_MODULES
-	"filesystem|system|program_options|regex|system|thread|serialization|iostreams|python|chrono|array|assert|locale|format|atomic|interprocess|ptr_container|asio|uuid"
+   "filesystem|system|program_options|regex|thread|serialization|iostreams|python|chrono|array|assert|locale|format|atomic|interprocess|ptr_container|asio|uuid"
 )
 
-ExternalProject_Add(
+lux_external_project_add(
 	boost
-	DEPENDS cpython
+	DEPENDS cpython libexpat fftw
 	SOURCE_DIR ${EXT_DIR}/boost
-	PREFIX ${DEPS_PFX_DIR}/boost
-	INSTALL_DIR ${DEPS_BUILD_DIR}
+	PREFIX ${PFX_DIR}/boost
+	INSTALL_DIR ${BUILD_DIR}
 	LIST_SEPARATOR |
 	CMAKE_ARGS
 		${COMMON_EXT_PROJECT_ARGS}
@@ -565,7 +587,7 @@ ExternalProject_Add(
 		-DBUILD_SHARED_LIBS=OFF
 		-DCMAKE_INSTALL_RPATH_USE_LINK_PATH=TRUE
 		-DCMAKE_BUILD_WITH_INSTALL_RPATH=TRUE
-		-DPython_ROOT_DIR=${DEPS_BUILD_DIR}
+		-DPython_ROOT_DIR=${BUILD_DIR}
 		-DPython_FIND_STRATEGY=LOCATION
 		-DCMAKE_FIND_FRAMEWORK=LAST
 )
