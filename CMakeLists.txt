@@ -22,6 +22,12 @@
 MESSAGE(STATUS "CMAKE VERSION DETECTED " ${CMAKE_VERSION})
 cmake_minimum_required(VERSION 3.25)
 
+if(DEFINED CMAKE_GENERATOR AND NOT CMAKE_GENERATOR STREQUAL "Unix Makefiles")
+	message(FATAL_ERROR
+		"This project's build directory expects the 'Unix Makefiles' generator, "
+		"but '${CMAKE_GENERATOR}' was requested.")
+endif()
+
 ###################################
 # Set the compiler and build type #
 ###################################
