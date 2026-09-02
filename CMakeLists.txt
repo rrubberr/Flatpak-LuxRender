@@ -121,6 +121,13 @@ set(LUX_INSTALL_COMMAND
     COMMAND ${CMAKE_COMMAND} -E copy "${INNER_BUILD_DIR}/liblux.so"  "${RELEASE_DIR}/"
 )
 
+# TBB and Embree are shared!
+list(APPEND LUX_INSTALL_COMMAND
+    COMMAND ${CMAKE_COMMAND}
+        -DLIB_DIR=${LIB_DIR}
+        -DRELEASE_DIR=${RELEASE_DIR}
+        -P ${CMAKE_CURRENT_SOURCE_DIR}/cmake/InstallSharedLibs.cmake)
+
 ExternalProject_Add(
     LuxRender
     DEPENDS

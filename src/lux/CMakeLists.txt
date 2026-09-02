@@ -139,7 +139,7 @@ set(CMAKE_INSTALL_RPATH "$ORIGIN")
 
 # Dade - default compiler options.
 # Removed "-O3" from definitions in order to have CMake Release/Debug options to work.
-ADD_DEFINITIONS(-march=native -ftree-vectorize -funroll-loops -fPIC -DHAVE_PTHREAD_H)
+ADD_DEFINITIONS(-march=native -ftree-vectorize -funroll-loops -DHAVE_PTHREAD_H)
 add_compile_options(-w)
 
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fvisibility=hidden -fvisibility-inlines-hidden")

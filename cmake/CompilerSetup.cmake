@@ -19,6 +19,12 @@
 #   This project is based on PBRT; see <http://www.pbrt.org>              #
 ###########################################################################
 
+# Only run the compiler setup once to prevent duplicates.
+if(DEFINED LUX_COMPILER_SETUP_DONE)
+    return()
+endif()
+set(LUX_COMPILER_SETUP_DONE TRUE)
+
 # Use the Intel compiler if available.
 if(DEFINED ENV{ONEAPI_ROOT})
     set(INTEL_CC "$ENV{ONEAPI_ROOT}/compiler/latest/bin/icx")
