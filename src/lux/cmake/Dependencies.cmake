@@ -1,38 +1,23 @@
 ###########################################################################
-#   Copyright (C) 1998-2013 by authors (see AUTHORS.txt)                  #
+#   Copyright (C) 1998-2026 by authors (see AUTHORS.txt)                  #
 #                                                                         #
-#   This file is part of Lux.                                             #
+#   This file is part of LuxRender.                                       #
 #                                                                         #
-#   Lux is free software; you can redistribute it and/or modify           #
+#   LuxRender is free software; you can redistribute it and/or modify     #
 #   it under the terms of the GNU General Public License as published by  #
 #   the Free Software Foundation; either version 3 of the License, or     #
-#   (at your option) any later version.                                   #
+#   any later version.                                                    #
 #                                                                         #
-#   Lux is distributed in the hope that it will be useful,                #
+#   LuxRender is distributed in the hope that it will be useful,          #
 #   but WITHOUT ANY WARRANTY; without even the implied warranty of        #
-#   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the         #
+#   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the          #
 #   GNU General Public License for more details.                          #
 #                                                                         #
 #   You should have received a copy of the GNU General Public License     #
-#   along with this program.  If not, see <http://www.gnu.org/licenses/>. #
+#   along with this program. If not, see <http://www.gnu.org/licenses/>   #
 #                                                                         #
-#   Lux website: http://www.luxrender.net                                 #
+#   This project is based on PBRT; see <http://www.pbrt.org>              #
 ###########################################################################
-
-###############
-# Find OpenMP #
-###############
-
-FIND_PACKAGE(OpenMP)
-IF (OPENMP_FOUND)
-	MESSAGE(STATUS "OpenMP found - compiling with")
-	if(TARGET OpenMP::OpenMP_CXX)
-		SET (CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${OpenMP_C_FLAGS}")
-		SET (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${OpenMP_CXX_FLAGS}")
-	endif()
-ELSE(OPENMP_FOUND)
-	MESSAGE(WARNING "OpenMP not found - compiling without")
-endif(OPENMP_FOUND)
 
 ##############
 # Find Bison #
@@ -85,11 +70,8 @@ if(TARGET Imath::Imath)
     MESSAGE(STATUS "Imath include directory: ${IMATH_INC}")
 endif()
 
-FIND_PACKAGE(MINIZIP CONFIG REQUIRED)
-if(TARGET minizip::minizip)
-    get_target_property(MINIZIP_INC minizip::minizip INTERFACE_INCLUDE_DIRECTORIES)
-    MESSAGE(STATUS "minizip include directory: ${MINIZIP_INC}")
-endif()
+############
+# Find PNG #
 ############
 
 FIND_PACKAGE(PNG CONFIG REQUIRED)
